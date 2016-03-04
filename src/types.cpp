@@ -1,5 +1,6 @@
 #include "mbedcrypto/types.hpp"
 #include "conversions.hpp"
+#include "src/mbedtls_config.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
@@ -22,11 +23,26 @@ supports(cipher_t e) {
 
 bool
 supports(padding_t e) {
-#if defined(MBEDTLS_CIPHER_MODE_WITH_PADDING)
-    return true;
-#else
-#   error add padding mode to ciphers is manadatory
+#if defined(MBEDTLS_CIPHER_PADDING_PKCS7)
+    if ( e == padding_t::pkcs7 )
+        return true;
 #endif
+#if defined(MBEDTLS_CIPHER_PADDING_ONE_AND_ZEROS)
+    if ( e == padding_t::one_and_zeros)
+        return true;
+#endif
+#if defined(MBEDTLS_CIPHER_PADDING_ZEROS_AND_LEN)
+    if ( e == padding_t::zeros_and_len )
+        return true;
+#endif
+#if defined(MBEDTLS_CIPHER_PADDING_ZEROS)
+    if ( e == padding_t::zeros )
+        return true;
+#endif
+    if ( e == padding_t::none )
+        return true;
+
+    return false;
 }
 
 bool
@@ -57,6 +73,19 @@ to_string(cipher_t e) {
     if ( p == nullptr )
         return nullptr;
     return p->name;
+}
+
+const char*
+to_string(padding_t p) {
+    switch ( p ) {
+        case padding_t::none:          return "NONE";
+        case padding_t::pkcs7:         return "PKCS7";
+        case padding_t::one_and_zeros: return "ONE_AND_ZEROS";
+        case padding_t::zeros_and_len: return "ZEROS_AND_LEN";
+        case padding_t::zeros:         return "ZEROS";
+
+        default: return nullptr;
+    }
 }
 
 hash_t

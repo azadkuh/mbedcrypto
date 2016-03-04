@@ -20,15 +20,6 @@ auto hasHash = [](hash_t h) {
     REQUIRE( v == h );
 };
 
-auto cipherCheck = [](cipher_t c) {
-    cchars name = to_string(c);
-    if ( name == nullptr )
-        return;
-
-    std::cout << name << " , ";
-    auto v = from_string<cipher_t>(name);
-    REQUIRE( v == c );
-};
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace anon
 ///////////////////////////////////////////////////////////////////////////////
@@ -143,9 +134,35 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
         };
 
         std::cout << "supported cipher algorithms: ";
-        for ( auto i : Items )
-            cipherCheck(i);
+        for ( auto i : Items ) {
+            cchars name = to_string(i);
+            if ( name == nullptr )
+                continue;
+
+            std::cout << name << " , ";
+            auto v = from_string<cipher_t>(name);
+            REQUIRE( v == i );
+        }
+
         std::cout << std::endl;
     }
 
+    SECTION("paddings") {
+        const std::initializer_list<padding_t> Items = {
+            padding_t::none,
+            padding_t::pkcs7,
+            padding_t::one_and_zeros,
+            padding_t::zeros_and_len,
+            padding_t::zeros,
+        };
+
+        std::cout << "supported padding modes: ";
+        for ( auto i : Items ) {
+            if ( supports(i) )
+                std::cout << to_string(i) << " , ";
+        }
+
+        std::cout << std::endl;
+    }
 }
+

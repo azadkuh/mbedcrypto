@@ -120,8 +120,9 @@ bool supports(pk_t);
 bool supports_hash(const char*);
 bool supports_cipher(const char*);
 
-auto to_string(hash_t)   -> const char*;
-auto to_string(cipher_t) -> const char*;
+auto to_string(hash_t)    -> const char*;
+auto to_string(cipher_t)  -> const char*;
+auto to_string(padding_t) -> const char*;
 
 auto hash_from_string(const char*)   -> hash_t;
 auto cipher_from_string(const char*) -> cipher_t;
