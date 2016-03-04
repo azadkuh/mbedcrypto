@@ -43,5 +43,7 @@ Makefile*
 # node.js external modules
 node_modules
 # YouCompleteMe
+.vimrc
+.gvimrc
 .ycm_extra_conf.*
 
