@@ -40,5 +40,3 @@ add_library(mbedcrypto STATIC
     ../src/conversions.cpp
     )
 
-target_link_libraries(mbedcrypto mbedtls)
-

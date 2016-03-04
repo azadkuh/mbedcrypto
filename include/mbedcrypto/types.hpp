@@ -9,6 +9,8 @@
 
 #ifndef MBEDCRYPTO_TYPES_HPP
 #define MBEDCRYPTO_TYPES_HPP
+
+#include <vector>
 ///////////////////////////////////////////////////////////////////////////////
 /** the availability of the following types depends on configuraion and build options.
  * types can be added or removed from compilation to optimize final binary size.
@@ -17,6 +19,7 @@
  */
 namespace mbedcrypto {
 ///////////////////////////////////////////////////////////////////////////////
+using buffer_t = std::string;
 
 /// all possible supported hash (message-digest) types in mbedtls.
 enum class hash_t {
@@ -126,12 +129,12 @@ auto cipher_from_string(const char*) -> cipher_t;
 template<typename T>
 T from_string(const char* name, T* = nullptr);
 
-template<>
+template<> inline
 auto from_string(const char* name, hash_t*) -> hash_t {
     return hash_from_string(name);
 }
 
-template<>
+template<> inline
 auto from_string(const char* name, cipher_t*) -> cipher_t {
     return cipher_from_string(name);
 }

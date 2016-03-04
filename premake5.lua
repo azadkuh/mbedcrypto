@@ -70,11 +70,9 @@ project "mbedcrypto"
     kind "StaticLib"
     location "tmp"
     language "C++"
-    links { "mbedtls" }
     files {
     "./include/mbedcrypto/types.hpp",
     "./src/conversions.hpp",
-
     "./src/types.cpp",
     "./src/conversions.cpp",
     }
@@ -83,5 +81,8 @@ project "tests"
     kind "ConsoleApp"
     location "tmp"
     language "C++"
-    files { "./tests/tdd/main.cpp" }
-    links { "mbedcrypto" }
+    files {
+        "./tests/tdd/main.cpp",
+        "./tests/tdd/test_types.cpp"
+    }
+    links { "mbedcrypto", "mbedtls" }
