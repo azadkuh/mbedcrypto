@@ -1,27 +1,42 @@
 workspace "mbedcrypto"
-    configurations {"Release"}
+    configurations { "Release" }
     objdir "tmp"
     targetdir "xbin"
 
-    language "C++"
-    includedirs { ".", "./include", "./3rdparty/mbedtls/include" }
+    includedirs {
+        ".", "./include",
+        "./3rdparty/mbedtls/include",
+        "./3rdparty/Catch/single_include",
+    }
 
-    filter "configurations:Release"
+    filter { "configurations:Release" }
         optimize "On"
         if os.is("linux") or os.is("macosx") then
-            buildoptions{"-O3 -g0 -Wall -Wextra -Wnon-virtual-dtor -pedantic -Wcast-align -Wunused -Woverloaded-virtual -Wno-unused-parameter"}
+            buildoptions { "-O3 -g0 -Wall -Wextra -pedantic -Wcast-align -Wunused -Wno-unused-parameter" }
 
         elseif os.is("windows") then
-            defines {"NDEBUG"}
-            buildoptions{"-nologo -Zc:wchar_t -FS -O2 -MD -Zc:strictStrings -W3" }
+            defines { "NDEBUG" }
+            buildoptions { "-nologo -Zc:wchar_t -FS -O2 -MD -Zc:strictStrings -W3" }
         end
+
+    filter { "language:C++" }
+        if os.is("linux") or os.is("macosx") then
+            buildoptions { "-std=c++14 -Wnon-virtual-dtor -Woverloaded-virtual -Wcast-align"  }
+        end
+        if os.is("macosx") then
+            buildoptions { "-stdlib=libc++" }
+            -- a bug for clang under os x, default LDFLAGS by premake (-Wl,-x and -s) cause problems
+            premake.tools.gcc.ldflags.flags._Symbols = nil
+        end
+
 
 project "mbedtls"
     kind "StaticLib"
     location "tmp"
     language "C"
     defines { "MBEDTLS_CONFIG_FILE=\"\\\"./src/mbedtls_config.h\\\"\"" }
-    files {"./src/mbedtls_config.h",
+    files {
+    "./src/mbedtls_config.h",
     "./3rdparty/mbedtls/library/base64.c",
     "./3rdparty/mbedtls/library/md4.c",
     "./3rdparty/mbedtls/library/md5.c",
@@ -51,3 +66,22 @@ project "mbedtls"
     "./3rdparty/mbedtls/library/platform.c",
     }
 
+project "mbedcrypto"
+    kind "StaticLib"
+    location "tmp"
+    language "C++"
+    links { "mbedtls" }
+    files {
+    "./include/mbedcrypto/types.hpp",
+    "./src/conversions.hpp",
+
+    "./src/types.cpp",
+    "./src/conversions.cpp",
+    }
+
+project "tests"
+    kind "ConsoleApp"
+    location "tmp"
+    language "C++"
+    files { "./tests/tdd/main.cpp" }
+    links { "mbedcrypto" }
