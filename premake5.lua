@@ -37,6 +37,7 @@ project "mbedtls"
     defines { "MBEDTLS_CONFIG_FILE=\"\\\"./src/mbedtls_config.h\\\"\"" }
     files {
     "./src/mbedtls_config.h",
+    "./3rdparty/mbedtls/library/error.c",
     "./3rdparty/mbedtls/library/base64.c",
     "./3rdparty/mbedtls/library/md4.c",
     "./3rdparty/mbedtls/library/md5.c",
@@ -71,10 +72,9 @@ project "mbedcrypto"
     location "tmp"
     language "C++"
     files {
-    "./include/mbedcrypto/types.hpp",
-    "./src/conversions.hpp",
-    "./src/types.cpp",
-    "./src/conversions.cpp",
+    "./include/mbedcrypto/**.hpp",
+    "./src/**.hpp",
+    "./src/**.cpp",
     }
 
 project "tests"
@@ -82,7 +82,7 @@ project "tests"
     location "tmp"
     language "C++"
     files {
-        "./tests/tdd/main.cpp",
-        "./tests/tdd/test_types.cpp"
+        "./tests/tdd/**.hpp",
+        "./tests/tdd/**.cpp",
     }
     links { "mbedcrypto", "mbedtls" }

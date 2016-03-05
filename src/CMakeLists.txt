@@ -4,6 +4,7 @@ add_definitions( -DMBEDTLS_CONFIG_FILE=\"../src/mbedtls_config.h\" )
 
 add_library(mbedtls STATIC
     ../src/mbedtls_config.h
+    ../3rdparty/mbedtls/library/error.c
     ../3rdparty/mbedtls/library/base64.c
     ../3rdparty/mbedtls/library/md4.c
     ../3rdparty/mbedtls/library/md5.c
@@ -33,10 +34,10 @@ add_library(mbedtls STATIC
     ../3rdparty/mbedtls/library/platform.c
     )
 
-add_library(mbedcrypto STATIC
-    ../include/mbedcrypto/types.hpp
-    ../src/conversions.hpp
-    ../src/types.cpp
-    ../src/conversions.cpp
+file(GLOB mbedcrypto_src
+    ../include/mbedcrypto/**.hpp
+    ../src/**.hpp
+    ../src/**.cpp
     )
+add_library(mbedcrypto STATIC ${mbedcrypto_src})
 

@@ -11,6 +11,8 @@
 #ifndef __MBEDTLS_CONFIG_H__
 #define __MBEDTLS_CONFIG_H__
 ///////////////////////////////////////////////////////////////////////////////
+// errors
+#define MBEDTLS_ERROR_C
 
 // base
 #define MBEDTLS_BASE64_C
