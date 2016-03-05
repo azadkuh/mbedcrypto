@@ -1,6 +1,5 @@
 #include "conversions.hpp"
 
-#include <stdexcept>
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
 namespace {
@@ -28,7 +27,7 @@ auto from_native(Native n, const Array& items) {
             return i.e;
     }
 
-    throw std::logic_error("invalid converion type");
+    throw std::logic_error("invalid conversion type");
 }
 
 ///////////////////////////////////////////////////////////////////////////////

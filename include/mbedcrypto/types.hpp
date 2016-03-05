@@ -1,6 +1,6 @@
 /** @file types.hpp
  *
- * @copyright (C) 2015, GMTII
+ * @copyright (C) 2016
  * @date 2016.03.03
  * @version 1.0.0
  * @author amir zamani <azadkuh@live.com>
@@ -10,7 +10,8 @@
 #ifndef MBEDCRYPTO_TYPES_HPP
 #define MBEDCRYPTO_TYPES_HPP
 
-#include <vector>
+#include <stdexcept>
+#include <string>
 ///////////////////////////////////////////////////////////////////////////////
 /** the availability of the following types depends on configuraion and build options.
  * types can be added or removed from compilation to optimize final binary size.
@@ -107,6 +108,31 @@ enum class pk_t {
     rsa_alt,
     rsassa_pss,
 };
+
+///////////////////////////////////////////////////////////////////////////////
+
+struct exception : public std::runtime_error
+{
+    using std::runtime_error::runtime_error;
+
+    explicit exception(int code, const char* message = "")
+        : std::runtime_error(message), code_(code) {}
+
+    explicit exception(int code, const std::string& message)
+        : std::runtime_error(message), code_(code) {}
+
+    int     code()const noexcept { return code_;}
+
+    /// mbedtls error string for code_, empty if code_ is not available (0)
+    auto    error_string()const -> std::string;
+
+    /// returns as: what (code): error_string
+    /// remove each part if it's not specified
+    auto    to_string()const -> std::string;
+
+protected:
+    int     code_ = 0; ///< mbedtls c-api error code
+}; // struct exception
 
 ///////////////////////////////////////////////////////////////////////////////
 

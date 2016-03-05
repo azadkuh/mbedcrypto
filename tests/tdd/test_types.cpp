@@ -2,7 +2,6 @@
 #include "mbedcrypto/types.hpp"
 #include "src/mbedtls_config.h"
 
-
 #include <iostream>
 #include <initializer_list>
 ///////////////////////////////////////////////////////////////////////////////
