@@ -1,5 +1,6 @@
 # 3rdparty, tmp and build direcotry
 3rdparty
+build
 tmp
 xbin
 docs
