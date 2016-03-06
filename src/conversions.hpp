@@ -10,6 +10,7 @@
 #ifndef MBEDCRYPTO_CONVERSIONS_HPP
 #define MBEDCRYPTO_CONVERSIONS_HPP
 
+#include "mbedtls_config.h"
 #include "mbedtls/md.h"
 #include "mbedtls/cipher.h"
 #include "mbedtls/pk.h"
