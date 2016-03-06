@@ -28,20 +28,48 @@ digest_pair(hash_t type) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+
+struct impl_base {
+    mbedtls_md_context_t   ctx_;
+
+    explicit impl_base() noexcept {
+        mbedtls_md_init(&ctx_);
+    }
+
+    ~impl_base() {
+        mbedtls_md_free(&ctx_);
+    }
+
+    void setup(hash_t type, bool hmac) {
+        const auto* cinfot = native_type(type);
+        int ret = mbedtls_md_setup(&ctx_, cinfot, (hmac) ? 1:0);
+        if ( ret != 0  ||  cinfot == nullptr )
+            throw exception(ret, "failed to initialize hash object");
+    }
+
+}; // struct impl_base
+
+///////////////////////////////////////////////////////////////////////////////
 } // namespace anon
 ///////////////////////////////////////////////////////////////////////////////
 
-class hash::impl
-{
-public:
+struct hash::impl : public impl_base {};
+struct hmac::impl : public impl_base {};
 
-}; // hash::impl
 ///////////////////////////////////////////////////////////////////////////////
 
-hash::hash() : d_ptr(new hash::impl{}) {
+hash::hash(hash_t type) : d_ptr(new hash::impl) {
+    d_ptr->setup(type, false);
 }
 
 hash::~hash() {
+}
+
+hmac::hmac(hash_t type) : d_ptr(new hmac::impl) {
+    d_ptr->setup(type, true);
+}
+
+hmac::~hmac() {
 }
 
 size_t
@@ -86,6 +114,24 @@ hash::of_file(hash_t type, const char* filePath) {
     throw exception("feature is not available in this build");
 
 #endif
+}
+
+buffer_t
+hmac::make(hash_t type, const buffer_t& key,
+        const unsigned char* src, size_t length) {
+    auto digest = digest_pair(type);
+
+    int ret = mbedtls_md_hmac(
+            std::get<0>(digest),
+            reinterpret_cast<const unsigned char*>(key.data()), key.size(),
+            src, length,
+            reinterpret_cast<unsigned char*>(&std::get<1>(digest).front())
+            );
+
+    if ( ret != 0 )
+        throw exception(ret, "failed to compute hmac value");
+
+    return std::get<1>(digest);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

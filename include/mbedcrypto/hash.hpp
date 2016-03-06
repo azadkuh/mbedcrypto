@@ -24,6 +24,7 @@ public:
     /// makes the hash value for a buffer in single operation
     static buffer_t make(hash_t type, const unsigned char* src, size_t src_length);
 
+    /// overload
     static buffer_t make(hash_t type, const buffer_t& src) {
         return make(type,
                 reinterpret_cast<const unsigned char*>(src.data()),
@@ -31,17 +32,45 @@ public:
                 );
     }
 
+    /// makes the hash value of a file content
     static buffer_t of_file(hash_t type, const char* filePath);
 
 public:
-    explicit hash();
+    explicit hash(hash_t type);
     ~hash();
 
 
 protected:
-    class impl;
+    struct impl;
     std::unique_ptr<impl> d_ptr;
 }; // hash
+
+///////////////////////////////////////////////////////////////////////////////
+
+class hmac
+{
+public:
+    /// makes a generic HMAC checksum by custom key.
+    /// HMAC key size could be of any size
+    static buffer_t make(hash_t type, const buffer_t& key,
+            const unsigned char* src, size_t src_length);
+
+    /// overload
+    static buffer_t make(hash_t type, const buffer_t& key, const buffer_t& src) {
+        return make(type, key,
+                reinterpret_cast<const unsigned char*>(src.data()),
+                src.size()
+                );
+    }
+
+public:
+    explicit hmac(hash_t type);
+    ~hmac();
+
+protected:
+    struct impl;
+    std::unique_ptr<impl> d_ptr;
+}; // hmac
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -53,6 +82,10 @@ inline buffer_t make_hash(hash_t type, const buffer_t& src) {
     return hash::make(type, src);
 }
 
+inline buffer_t make_hmac(hash_t type, const buffer_t& key,
+        const buffer_t& src) {
+    return hmac::make(type, key, src);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
