@@ -39,6 +39,21 @@ public:
     explicit hash(hash_t type);
     ~hash();
 
+    /// resets and prepares the object to digest a new message.
+    void start();
+
+    /// updates the hash by chunks of data.
+    /// may be called repeatedly between start() and finish().
+    void update(const unsigned char* chunk, size_t chunk_size);
+
+    void update(const buffer_t& chunk) {
+        return update(reinterpret_cast<const unsigned char*>(chunk.data()),
+                chunk.size()
+                );
+    }
+
+    /// returns the final digest of previous updates.
+    buffer_t finish();
 
 protected:
     struct impl;
@@ -66,6 +81,25 @@ public:
 public:
     explicit hmac(hash_t type);
     ~hmac();
+
+    /// resets and prepares the object to digest a new message.
+    void start(const buffer_t& key);
+    /// same as above, but does not change the previous key.
+    void start();
+
+
+    /// updates the hash by chunks of data.
+    /// may be called repeatedly between start() and finish().
+    void update(const unsigned char* chunk, size_t chunk_size);
+
+    void update(const buffer_t& chunk) {
+        return update(reinterpret_cast<const unsigned char*>(chunk.data()),
+                chunk.size()
+                );
+    }
+
+    /// returns the final digest of previous updates.
+    buffer_t finish();
 
 protected:
     struct impl;

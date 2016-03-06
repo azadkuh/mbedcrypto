@@ -84,6 +84,19 @@ const char* hmac_ripemd160() {
     return "d8a3cd3129090b0fff57f6ade2a33e2d67c4c0a2";
 }
 
+template<class BufferT, class Func, class... Args> void
+chunker(const BufferT& src, Func&& func, Args&&... args) {
+    constexpr size_t ChunkSize = 32;
+    const auto* data = reinterpret_cast<const unsigned char*>(src.data());
+
+    for ( size_t i = 0;    (i+ChunkSize) < src.size();    i += ChunkSize ) {
+        func(data + i, ChunkSize, std::forward<Args&&>(args)...);
+    }
+
+    size_t residue = src.size() % ChunkSize;
+    if ( residue )
+        func(data + src.size() - residue, residue, std::forward<Args&&>(args)...);
+}
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace anon
 ///////////////////////////////////////////////////////////////////////////////
@@ -95,7 +108,7 @@ TEST_CASE("hash tests", "[hash]") {
         const buffer_t src(test::long_text());
         const buffer_t key(test::short_text());
 
-        #if defined(MBEDTLS_MD2_C)
+#if defined(MBEDTLS_MD2_C)
         REQUIRE( hash_size(hash_t::md2) == 16 );
         REQUIRE( to_hex(make_hash(hash_t::md2, src)) == long_md2() );
         REQUIRE( to_hex(make_hmac(hash_t::md2, key, src)) == hmac_md2() );
@@ -153,6 +166,36 @@ TEST_CASE("hash tests", "[hash]") {
 
         hash h1(hash_t::sha1);
         hash h2(from_string<hash_t>("MD5"));
+    }
+
+    SECTION("update ...") {
+        #if defined(MBEDTLS_SHA1_C)
+        const buffer_t src(test::long_text());
+        const buffer_t key(test::short_text());
+
+        // hash
+        hash md(hash_t::sha1);
+        md.start();
+        chunker(src, [&md](const auto* p, size_t length) {
+            md.update(p, length);
+        });
+
+        auto h1 = to_hex(md.finish());
+        auto h2 = to_hex(make_hash(hash_t::sha1, src));
+        REQUIRE( h1 == h2 );
+
+        // hmac
+        hmac hm(hash_t::sha1);
+        hm.start(key);
+        chunker(src, [&hm](const auto* p, size_t length) {
+            hm.update(p, length);
+        });
+
+        h1 = to_hex(hm.finish());
+        h2 = to_hex(make_hmac(hash_t::sha1, key, src));
+        REQUIRE( h1 == h2 );
+
+        #endif // MBEDTLS_SHA1_C
     }
 }
 
