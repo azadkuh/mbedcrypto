@@ -51,12 +51,12 @@ hash::length(hash_t type) {
 }
 
 buffer_t
-hash::make(hash_t type, const buffer_t& src) {
+hash::make(hash_t type, const unsigned char* src, size_t length) {
     auto digest = digest_pair(type);
 
     int ret = mbedtls_md(
             std::get<0>(digest),
-            reinterpret_cast<const unsigned char*>(src.data()), src.size(),
+            src, length,
             reinterpret_cast<unsigned char*>(&std::get<1>(digest).front())
             );
 

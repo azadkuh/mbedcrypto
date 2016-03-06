@@ -22,7 +22,14 @@ public:
     static size_t   length(hash_t type);
 
     /// makes the hash value for a buffer in single operation
-    static buffer_t make(hash_t type, const buffer_t& src);
+    static buffer_t make(hash_t type, const unsigned char* src, size_t src_length);
+
+    static buffer_t make(hash_t type, const buffer_t& src) {
+        return make(type,
+                reinterpret_cast<const unsigned char*>(src.data()),
+                src.size()
+                );
+    }
 
     static buffer_t of_file(hash_t type, const char* filePath);
 
