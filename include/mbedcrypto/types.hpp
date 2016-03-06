@@ -167,6 +167,24 @@ auto from_string(const char* name, cipher_t*) -> cipher_t {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+
+/// encodes a buffer to hex string
+buffer_t to_hex(const unsigned char* src, size_t length);
+
+/// decodes a hex string
+buffer_t from_hex(const char* src, size_t length = 0);
+
+inline
+buffer_t to_hex(const buffer_t& src) {
+    return to_hex(reinterpret_cast<const unsigned char*>(src.data()), src.size());
+}
+
+inline
+buffer_t from_hex(const buffer_t& src) {
+    return from_hex(reinterpret_cast<const char*>(src.data()), src.size());
+}
+
+///////////////////////////////////////////////////////////////////////////////
 #if defined(WIN32)
 #   if defined(MBEDCRYPTO_DYNAMIC)
 #       if defined(MBEDCRYPTO_EXPORT)
