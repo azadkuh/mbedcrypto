@@ -1,0 +1,31 @@
+/** @file generator.hpp
+ *
+ * @copyright (C) 2016
+ * @date 2016.03.06
+ * @version 1.0.0
+ * @author amir zamani <azadkuh@live.com>
+ *
+ */
+
+#ifndef TESTS_GENERATOR_HPP
+#define TESTS_GENERATOR_HPP
+
+#include "mbedcrypto/types.hpp"
+///////////////////////////////////////////////////////////////////////////////
+namespace mbedcrypto {
+namespace test {
+///////////////////////////////////////////////////////////////////////////////
+
+const char* short_text();
+const char* long_text();
+
+buffer_t short_binary();
+buffer_t long_binary();
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+} // namespace test
+} // namespace mbedcrypto
+///////////////////////////////////////////////////////////////////////////////
+#endif // TESTS_GENERATOR_HPP

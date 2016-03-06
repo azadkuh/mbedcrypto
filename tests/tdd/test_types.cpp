@@ -1,4 +1,6 @@
 #include <catch.hpp>
+
+#include "generator.hpp"
 #include "mbedcrypto/types.hpp"
 #include "mbedcrypto/hash.hpp"
 #include "src/mbedtls_config.h"
@@ -20,17 +22,7 @@ auto hasHash = [](hash_t h) {
     REQUIRE( v == h );
 };
 
-const unsigned char Binary[] = {
-    0x68, 0x40, 0x4c, 0x76, 0x37, 0x71, 0x88, 0x14,
-    0x3a, 0xe9, 0x67, 0x3f, 0x94, 0x13, 0xda, 0xdd,
-    0x03, 0x80, 0x9d, 0x31, 0x00, 0xff, 0xd7, 0x78,
-    0xba, 0xac, 0x90, 0xf0, 0xa3, 0x0e, 0xc0, 0xca,
-    0x71, 0x4f, 0xe4, 0x23, 0x48, 0xf2, 0x3e, 0x5d,
-    0x85, 0x63, 0xfb, 0x62, 0x67, 0x08, 0xf5, 0x77,
-    0x00, 0x25, 0xf6, 0x2c, 0x74, 0x10, 0x77, 0x59,
-    0xdf, 0xb2, 0x18
-};
-
+// of test::short_binary()
 const char Hex[] =
     "68404c76377188143ae9673f9413dadd"
     "03809d3100ffd778baac90f0a30ec0ca"
@@ -196,16 +188,14 @@ TEST_CASE("hex tests", "[hex]") {
     using namespace mbedcrypto;
 
     SECTION("to hex") {
-        constexpr size_t bin_size = sizeof(Binary);
-        const buffer_t binary(reinterpret_cast<const char*>(Binary), bin_size);
+        const buffer_t binary = test::short_binary();
         const buffer_t hex(Hex);
 
         REQUIRE ( to_hex(binary) == hex );
     }
 
     SECTION("from hex") {
-        constexpr size_t bin_size = sizeof(Binary);
-        const buffer_t binary(reinterpret_cast<const char*>(Binary), bin_size);
+        const buffer_t binary = test::short_binary();
         const buffer_t hex(Hex);
 
         REQUIRE( from_hex(hex) == binary );
