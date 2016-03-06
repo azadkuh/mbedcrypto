@@ -4,13 +4,24 @@
 
 #include "mbedtls/error.h"
 #include <sstream>
+#include <algorithm>
+#include <cctype>
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
 namespace {
 ///////////////////////////////////////////////////////////////////////////////
-constexpr inline char
+constexpr char
 hex_lower(unsigned char b) noexcept {
     return "0123456789abcdef"[b & 0x0f];
+}
+
+std::string
+to_upper(const char* p) {
+    std::string s(p);
+    std::transform(s.cbegin(), s.cend(), s.begin(),
+            [](char c) {return std::toupper(c);}
+            );
+    return s;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -42,6 +53,7 @@ exception::to_string()const {
     return ss.str();
 }
 
+///////////////////////////////////////////////////////////////////////////////
 bool
 supports(hash_t e) {
     return mbedtls_md_info_from_type(to_native(e)) != nullptr;
@@ -83,12 +95,12 @@ supports(pk_t e) {
 
 bool
 supports_hash(const char* name) {
-    return mbedtls_md_info_from_string(name) != nullptr;
+    return mbedtls_md_info_from_string(to_upper(name).c_str()) != nullptr;
 }
 
 bool
 supports_cipher(const char* name) {
-    return mbedtls_cipher_info_from_string(name) != nullptr;
+    return mbedtls_cipher_info_from_string(to_upper(name).c_str()) != nullptr;
 }
 
 const char*
@@ -122,18 +134,20 @@ to_string(padding_t p) {
 hash_t
 hash_from_string(const char* name) {
     auto t = mbedtls_md_get_type(
-            mbedtls_md_info_from_string(name)
+            mbedtls_md_info_from_string(to_upper(name).c_str())
             );
     return from_native(t);
 }
 
 cipher_t
 cipher_from_string(const char* name) {
-    const auto* p = mbedtls_cipher_info_from_string(name);
+    const auto* p = mbedtls_cipher_info_from_string(to_upper(name).c_str());
     if ( p == nullptr )
         return cipher_t::none;
     return from_native(p->type);
 }
+
+///////////////////////////////////////////////////////////////////////////////
 
 buffer_t
 to_hex(const unsigned char* src, size_t length) {

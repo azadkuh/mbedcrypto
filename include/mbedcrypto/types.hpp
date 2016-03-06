@@ -136,13 +136,15 @@ protected:
 
 ///////////////////////////////////////////////////////////////////////////////
 
-/// returns true if an algorithm or a type is present at runtime.
+// returns true if an algorithm or a type is present at runtime.
 bool supports(hash_t);
 bool supports(cipher_t);
 bool supports(padding_t);
 bool supports(pk_t);
 
-/// returns true if an algorithm or a type is present at runtime (by name string).
+// returns true if an algorithm or a type is present at runtime (by name string).
+// both lower or upper case names are supported.
+
 bool supports_hash(const char*);
 bool supports_cipher(const char*);
 
