@@ -1,12 +1,10 @@
 #include <catch.hpp>
-
-#include "generator.hpp"
-#include "mbedcrypto/types.hpp"
-#include "mbedcrypto/hash.hpp"
-#include "src/mbedtls_config.h"
-
 #include <iostream>
 #include <initializer_list>
+
+#include "src/mbedtls_config.h"
+#include "generator.hpp"
+
 ///////////////////////////////////////////////////////////////////////////////
 namespace {
 using cchars = const char*;
@@ -41,37 +39,31 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
 
         #if defined(MBEDTLS_MD2_C)
         hasHash(hash_t::md2);
-        REQUIRE( hash_size(hash_t::md2) == 16 );
         #else
         REQUIRE_FALSE( supports(hash_t::md2) );
         #endif
 
         #if defined(MBEDTLS_MD4_C)
         hasHash(hash_t::md4);
-        REQUIRE( hash_size(hash_t::md4) == 16 );
         #else // MBEDTLS_MD4_C
         REQUIRE_FALSE( supports(hash_t::md4) );
         #endif // MBEDTLS_MD4_C
 
         #if defined(MBEDTLS_MD5_C)
         hasHash(hash_t::md5);
-        REQUIRE( hash_size(hash_t::md5) == 16 );
         #else // MBEDTLS_MD5_C
         REQUIRE_FALSE( supports(hash_t::md5) );
         #endif // MBEDTLS_MD5_C
 
         #if defined(MBEDTLS_SHA1_C)
         hasHash(hash_t::sha1);
-        REQUIRE( hash_size(hash_t::sha1) == 20 );
         #else // MBEDTLS_SHA1_C
         REQUIRE_FALSE( supports(hash_t::sha1) );
         #endif // MBEDTLS_SHA1_C
 
         #if defined(MBEDTLS_SHA256_C)
         hasHash(hash_t::sha224);
-        REQUIRE( hash_size(hash_t::sha224) == 28 );
         hasHash(hash_t::sha256);
-        REQUIRE( hash_size(hash_t::sha256) == 32 );
         #else // MBEDTLS_SHA256_C
         REQUIRE_FALSE( supports(hash_t::sha224) );
         REQUIRE_FALSE( supports(hash_t::sha256) );
@@ -79,9 +71,7 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
 
         #if defined(MBEDTLS_SHA512_C)
         hasHash(hash_t::sha384);
-        REQUIRE( hash_size(hash_t::sha384) == 48 );
         hasHash(hash_t::sha512);
-        REQUIRE( hash_size(hash_t::sha512) == 64 );
         #else // MBEDTLS_SHA512_C
         REQUIRE_FALSE( supports(hash_t::sha384) );
         REQUIRE_FALSE( supports(hash_t::sha512) );
@@ -89,7 +79,6 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
 
         #if defined(MBEDTLS_RIPEMD160_C)
         hasHash(hash_t::ripemd160);
-        REQUIRE( hash_size(hash_t::ripemd160) == 20 );
         #else // MBEDTLS_RIPEMD160_C
         REQUIRE_FALSE( supports(hash_t::ripemd160) );
         #endif // MBEDTLS_RIPEMD160_C
