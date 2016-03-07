@@ -33,7 +33,7 @@ chunker(size_t chunk_size, const BufferT& src, Func&& func, Args&&... args) {
 
     const auto* data = reinterpret_cast<const unsigned char*>(src.data());
 
-    for ( size_t i = 0;    (i+chunk_size) < src.size();    i += chunk_size ) {
+    for ( size_t i = 0;    (i+chunk_size) <= src.size();    i += chunk_size ) {
         func(data + i, chunk_size, std::forward<Args&&>(args)...);
     }
 

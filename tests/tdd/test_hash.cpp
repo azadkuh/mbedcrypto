@@ -120,30 +120,46 @@ TEST_CASE("hash tests", "[hash]") {
 
     SECTION("update ...") {
         #if defined(MBEDTLS_SHA1_C)
-        const buffer_t src(test::long_text());
+        const buffer_t src_text(test::long_text());
+        const buffer_t src_bin(test::long_binary());
         const buffer_t key(test::short_text());
-        constexpr size_t chunk_size = 32;
 
         // hash
         hash md(hash_t::sha1);
         md.start();
-        test::chunker(chunk_size, src, [&md](const auto* p, size_t length) {
+        test::chunker(32, src_text, [&md](const auto* p, size_t length) {
             md.update(p, length);
         });
-
         auto h1 = to_hex(md.finish());
-        auto h2 = to_hex(make_hash(hash_t::sha1, src));
+        auto h2 = to_hex(make_hash(hash_t::sha1, src_text));
+        REQUIRE( h1 == h2 );
+
+        // reuse hash
+        md.start();
+        test::chunker(8, src_bin, [&md](const auto* p, size_t length) {
+            md.update(p, length);
+        });
+        h1 = to_hex(md.finish());
+        h2 = to_hex(make_hash(hash_t::sha1, src_bin));
         REQUIRE( h1 == h2 );
 
         // hmac
         hmac hm(hash_t::sha1);
         hm.start(key);
-        test::chunker(chunk_size, src, [&hm](const auto* p, size_t length) {
+        test::chunker(32, src_text, [&hm](const auto* p, size_t length) {
             hm.update(p, length);
         });
-
         h1 = to_hex(hm.finish());
-        h2 = to_hex(make_hmac(hash_t::sha1, key, src));
+        h2 = to_hex(make_hmac(hash_t::sha1, key, src_text));
+        REQUIRE( h1 == h2 );
+
+        // reuse hmac
+        hm.start();
+        test::chunker(10, src_bin, [&hm](const auto* p, size_t length) {
+            hm.update(p, length);
+        });
+        h1 = to_hex(hm.finish());
+        h2 = to_hex(make_hmac(hash_t::sha1, key, src_bin));
         REQUIRE( h1 == h2 );
 
         #endif // MBEDTLS_SHA1_C

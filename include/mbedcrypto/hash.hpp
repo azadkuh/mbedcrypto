@@ -15,9 +15,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
 ///////////////////////////////////////////////////////////////////////////////
+/// a class for computing hash (message digest) values for buffer or files.
 class hash
 {
-public:
+public: // single-shot hash computation
     /// returns the length of a hash algorithm in byte.
     static size_t   length(hash_t type);
 
@@ -35,7 +36,19 @@ public:
     /// makes the hash value of a file content
     static buffer_t of_file(hash_t type, const char* filePath);
 
-public:
+public: // iterative usage, reusing the instance
+    // hash sha1(hash_t::sha1);
+    // ...
+    // sha1.start();
+    // sha1.update(...);
+    // sha1.update(...);
+    // auto h1 = sha1.finish();
+    // sha1.start(); //start again
+    // sha1.update(...); // any updates ...
+    // auto h2 = sha1.finish();
+    //
+
+
     explicit hash(hash_t type);
     ~hash();
 
@@ -55,6 +68,12 @@ public:
     /// returns the final digest of previous updates.
     buffer_t finish();
 
+    // this class is move-only
+    hash(const hash&) = delete;
+    hash(hash&&)      = default;
+    hash& operator=(const hash&) = delete;
+    hash& operator=(hash&&)      = default;
+
 protected:
     struct impl;
     std::unique_ptr<impl> d_ptr;
@@ -62,11 +81,12 @@ protected:
 
 ///////////////////////////////////////////////////////////////////////////////
 
+/// HMAC (hash-based message authentication code) implementation
 class hmac
 {
-public:
+public: // single-shot hamc computation
     /// makes a generic HMAC checksum by custom key.
-    /// HMAC key size could be of any size
+    /// HMAC key could be of any size
     static buffer_t make(hash_t type, const buffer_t& key,
             const unsigned char* src, size_t src_length);
 
@@ -78,7 +98,18 @@ public:
                 );
     }
 
-public:
+public: // iterative or reuse
+    // hmac hms(hash_t::sha256);
+    // ...
+    // hms.start("an string or binary key"); // a key is mandatory for first time
+    // hms.update(...);
+    // hms.update(...);
+    // auto h1 = hms.finish();
+    // hms.start(); // do not change the previous key
+    // hms.update(...); // multiple updates ...
+    // hms.update(...);
+    // auto h2 = hms.finish();
+
     explicit hmac(hash_t type);
     ~hmac();
 
@@ -100,6 +131,12 @@ public:
 
     /// returns the final digest of previous updates.
     buffer_t finish();
+
+    // this class is move-only
+    hmac(const hmac&) = delete;
+    hmac(hmac&&)      = default;
+    hmac& operator=(const hmac&) = delete;
+    hmac& operator=(hmac&&)      = default;
 
 protected:
     struct impl;
