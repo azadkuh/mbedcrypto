@@ -10,8 +10,7 @@
 #ifndef MBEDCRYPTO_TYPES_HPP
 #define MBEDCRYPTO_TYPES_HPP
 
-#include <stdexcept>
-#include <string>
+#include "exception.hpp"
 ///////////////////////////////////////////////////////////////////////////////
 /** the availability of the following types depends on configuraion and build options.
  * types can be added or removed from compilation to optimize final binary size.
@@ -20,7 +19,6 @@
  */
 namespace mbedcrypto {
 ///////////////////////////////////////////////////////////////////////////////
-using buffer_t = std::string;
 
 /// all possible supported hash (message-digest) types in mbedtls.
 enum class hash_t {
@@ -111,31 +109,6 @@ enum class pk_t {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-struct exception : public std::runtime_error
-{
-    using std::runtime_error::runtime_error;
-
-    explicit exception(int code, const char* message = "")
-        : std::runtime_error(message), code_(code) {}
-
-    explicit exception(int code, const std::string& message)
-        : std::runtime_error(message), code_(code) {}
-
-    int     code()const noexcept { return code_;}
-
-    /// mbedtls error string for code_, empty if code_ is not available (0)
-    auto    error_string()const -> std::string;
-
-    /// returns as: what (code): error_string
-    /// remove each part if it's not specified
-    auto    to_string()const -> std::string;
-
-protected:
-    int     code_ = 0; ///< mbedtls c-api error code
-}; // struct exception
-
-///////////////////////////////////////////////////////////////////////////////
-
 // returns true if an algorithm or a type is present at runtime.
 bool supports(hash_t);
 bool supports(cipher_t);
@@ -168,37 +141,6 @@ auto from_string(const char* name, cipher_t*) -> cipher_t {
     return cipher_from_string(name);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-
-/// encodes a buffer to hex string
-buffer_t to_hex(const unsigned char* src, size_t length);
-
-/// decodes a hex string
-buffer_t from_hex(const char* src, size_t length = 0);
-
-inline
-buffer_t to_hex(const buffer_t& src) {
-    return to_hex(reinterpret_cast<const unsigned char*>(src.data()), src.size());
-}
-
-inline
-buffer_t from_hex(const buffer_t& src) {
-    return from_hex(reinterpret_cast<const char*>(src.data()), src.size());
-}
-
-///////////////////////////////////////////////////////////////////////////////
-#if defined(WIN32)
-#   if defined(MBEDCRYPTO_DYNAMIC)
-#       if defined(MBEDCRYPTO_EXPORT)
-#           define MBEDCRYPTO_API __declspec(dllexport)
-#       else // MBEDCRYPTO_EXPORT
-#           define MBEDCRYPTO_API __declspec(dllimport)
-#       endif // MBEDCRYPTO_EXPORT
-#   endif // MBEDCRYPTO_DYNAMIC
-#   define MBEDCRYPTO_API
-#else // WIN32
-#   define MBEDCRYPTO_API
-#endif // WIN32
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
 ///////////////////////////////////////////////////////////////////////////////

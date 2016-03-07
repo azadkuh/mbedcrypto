@@ -30,16 +30,6 @@ auto from_native(mbedtls_cipher_padding_t) -> padding_t;
 auto from_native(mbedtls_pk_type_t)        -> pk_t;
 
 ///////////////////////////////////////////////////////////////////////////////
-
-/// helper function for automatically thorws if an mbedtls function fails
-template<class Func, class... Args> inline void
-c_call(Func&& f, Args&&... args) {
-    auto ret = f(std::forward<Args&&>(args)...);
-    if ( ret != 0 )
-        throw exception(ret, "underlying mbedtls function failed");
-}
-
-///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
 ///////////////////////////////////////////////////////////////////////////////
 #endif // MBEDCRYPTO_CONVERSIONS_HPP

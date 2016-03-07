@@ -9,6 +9,8 @@ namespace {
 ///////////////////////////////////////////////////////////////////////////////
 static_assert(std::is_copy_constructible<hash>::value == false, "");
 static_assert(std::is_move_constructible<hash>::value == false, "");
+static_assert(std::is_copy_constructible<hmac>::value == false, "");
+static_assert(std::is_move_constructible<hmac>::value == false, "");
 
 const mbedtls_md_info_t*
 native_type(hash_t type) {

@@ -20,13 +20,6 @@ auto hasHash = [](hash_t h) {
     REQUIRE( v == h );
 };
 
-// of test::short_binary()
-const char Hex[] =
-    "68404c76377188143ae9673f9413dadd"
-    "03809d3100ffd778baac90f0a30ec0ca"
-    "714fe42348f23e5d8563fb626708f577"
-    "0025f62c74107759dfb218";
-
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace anon
 ///////////////////////////////////////////////////////////////////////////////
@@ -173,26 +166,3 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
     }
 }
 
-TEST_CASE("hex tests", "[hex]") {
-    using namespace mbedcrypto;
-
-    SECTION("to hex") {
-        const buffer_t binary = test::short_binary();
-        const buffer_t hex(Hex);
-
-        REQUIRE ( to_hex(binary) == hex );
-    }
-
-    SECTION("from hex") {
-        const buffer_t binary = test::short_binary();
-        const buffer_t hex(Hex);
-
-        REQUIRE( from_hex(hex) == binary );
-
-        const buffer_t inv_char("03fe65ds35"); // s is invalid
-        REQUIRE_THROWS( from_hex(inv_char) );
-
-        const buffer_t inv_size("0a347535fa1"); // size is invalid
-        REQUIRE_THROWS( from_hex(inv_size) );
-    }
-}
