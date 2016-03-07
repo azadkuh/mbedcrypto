@@ -1,8 +1,8 @@
 #!/bin/bash
 
-CTAGS_EXCLUDES_BASE="--exclude=.git --exclude=tmp --exclude=xbin --exclude=res"
+CTAGS_EXCLUDES_BASE="--exclude=.git --exclude=build --exclude=tmp --exclude=xbin --exclude=res"
 CTAGS_OPTIONS_BASE="--c++-kinds=+cefgnps --fields=+iaS --extra=+fq -R ."
-CLOC_EXCLUDES_BASE="--exclude-dir=.git,xbin,tmp,res"
+CLOC_EXCLUDES_BASE="--exclude-dir=.git,xbin,build,tmp,res"
 CLOC_EXCLUDES_LANGS="--exclude-lang=Prolog,make"
 
 
