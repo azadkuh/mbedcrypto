@@ -30,6 +30,7 @@ TEST_CASE("random generator tests", "[random]") {
     rnd.reseed_interval(200);
     rnd.prediction_resistance(true);
 
-    buf = rnd.make(93);
+    mbedcrypto::random rnd2;
+    buf = rnd2.make(93);
     REQUIRE( buf.size() == 93 );
 }

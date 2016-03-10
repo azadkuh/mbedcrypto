@@ -65,15 +65,15 @@ struct hmac::impl : public impl_base {};
 
 ///////////////////////////////////////////////////////////////////////////////
 
-hash::hash(hash_t type) : d_ptr(new hash::impl) {
-    d_ptr->setup(type, false);
+hash::hash(hash_t type) : pimpl(new hash::impl) {
+    pimpl->setup(type, false);
 }
 
 hash::~hash() {
 }
 
-hmac::hmac(hash_t type) : d_ptr(new hmac::impl) {
-    d_ptr->setup(type, true);
+hmac::hmac(hash_t type) : pimpl(new hmac::impl) {
+    pimpl->setup(type, true);
 }
 
 hmac::~hmac() {
@@ -134,19 +134,19 @@ hmac::make(hash_t type, const buffer_t& key,
 
 void
 hash::start() {
-    c_call(mbedtls_md_starts, &d_ptr->ctx_);
+    c_call(mbedtls_md_starts, &pimpl->ctx_);
 }
 
 void
 hash::update(const unsigned char* src, size_t length) {
-    c_call(mbedtls_md_update, &d_ptr->ctx_,
+    c_call(mbedtls_md_update, &pimpl->ctx_,
             src, length);
 }
 
 buffer_t
 hash::finish() {
-    buffer_t digest(d_ptr->size(), '\0');
-    c_call(mbedtls_md_finish, &d_ptr->ctx_,
+    buffer_t digest(pimpl->size(), '\0');
+    c_call(mbedtls_md_finish, &pimpl->ctx_,
             reinterpret_cast<unsigned char*>(&digest.front())
             );
 
@@ -155,7 +155,7 @@ hash::finish() {
 
 void
 hmac::start(const buffer_t& key) {
-    c_call(mbedtls_md_hmac_starts, &d_ptr->ctx_,
+    c_call(mbedtls_md_hmac_starts, &pimpl->ctx_,
             reinterpret_cast<const unsigned char*>(key.data()),
             key.size()
           );
@@ -163,19 +163,19 @@ hmac::start(const buffer_t& key) {
 
 void
 hmac::start() {
-    c_call(mbedtls_md_hmac_reset, &d_ptr->ctx_);
+    c_call(mbedtls_md_hmac_reset, &pimpl->ctx_);
 }
 
 void
 hmac::update(const unsigned char* src, size_t length) {
-    c_call(mbedtls_md_hmac_update, &d_ptr->ctx_,
+    c_call(mbedtls_md_hmac_update, &pimpl->ctx_,
             src, length);
 }
 
 buffer_t
 hmac::finish() {
-    buffer_t digest(d_ptr->size(), '\0');
-    c_call(mbedtls_md_hmac_finish, &d_ptr->ctx_,
+    buffer_t digest(pimpl->size(), '\0');
+    c_call(mbedtls_md_hmac_finish, &pimpl->ctx_,
             reinterpret_cast<unsigned char*>(&digest.front())
             );
 

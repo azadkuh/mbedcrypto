@@ -44,12 +44,12 @@ struct random::impl
 }; // class random::imp
 
 ///////////////////////////////////////////////////////////////////////////////
-random::random(const buffer_t& b) : d_ptr(std::make_unique<impl>()) {
-    d_ptr->setup(reinterpret_cast<const unsigned char*>(b.data()), b.size());
+random::random(const buffer_t& b) : pimpl(std::make_unique<impl>()) {
+    pimpl->setup(reinterpret_cast<const unsigned char*>(b.data()), b.size());
 }
 
-random::random() : d_ptr(std::make_unique<impl>()) {
-    d_ptr->setup(nullptr, 0);
+random::random() : pimpl(std::make_unique<impl>()) {
+    pimpl->setup(nullptr, 0);
 }
 
 random::~random() {
@@ -57,18 +57,18 @@ random::~random() {
 
 void
 random::entropy_length(size_t len) noexcept {
-    mbedtls_ctr_drbg_set_entropy_len(&d_ptr->ctx_, len);
+    mbedtls_ctr_drbg_set_entropy_len(&pimpl->ctx_, len);
 }
 
 void
 random::reseed_interval(size_t interval) noexcept {
-    mbedtls_ctr_drbg_set_reseed_interval(&d_ptr->ctx_, interval);
+    mbedtls_ctr_drbg_set_reseed_interval(&pimpl->ctx_, interval);
 }
 
 void
 random::prediction_resistance(bool p) noexcept {
     mbedtls_ctr_drbg_set_prediction_resistance(
-            &d_ptr->ctx_,
+            &pimpl->ctx_,
             p ? MBEDTLS_CTR_DRBG_PR_ON : MBEDTLS_CTR_DRBG_PR_OFF
             );
 }
@@ -76,7 +76,7 @@ random::prediction_resistance(bool p) noexcept {
 int
 random::make(unsigned char* buffer, size_t length) noexcept {
     return mbedtls_ctr_drbg_random(
-            &d_ptr->ctx_,
+            &pimpl->ctx_,
             buffer,
             length
             );
@@ -86,7 +86,7 @@ buffer_t
 random::make(size_t length) {
     buffer_t buf(length, '\0');
     c_call(mbedtls_ctr_drbg_random,
-            &d_ptr->ctx_,
+            &pimpl->ctx_,
             reinterpret_cast<unsigned char*>(&buf.front()),
             length
           );
@@ -97,14 +97,14 @@ random::make(size_t length) {
 void
 random::reseed() {
     c_call(mbedtls_ctr_drbg_reseed,
-            &d_ptr->ctx_, nullptr, 0
+            &pimpl->ctx_, nullptr, 0
           );
 }
 
 void
 random::reseed(const buffer_t& custom) {
     c_call(mbedtls_ctr_drbg_reseed,
-            &d_ptr->ctx_,
+            &pimpl->ctx_,
             reinterpret_cast<const unsigned char*>(custom.data()),
             custom.size()
           );
@@ -112,13 +112,13 @@ random::reseed(const buffer_t& custom) {
 
 int
 random::reseed(const unsigned char* custom, size_t length) noexcept {
-    return mbedtls_ctr_drbg_reseed(&d_ptr->ctx_, custom, length);
+    return mbedtls_ctr_drbg_reseed(&pimpl->ctx_, custom, length);
 }
 
 void
 random::update(const buffer_t& additional) {
     mbedtls_ctr_drbg_update(
-            &d_ptr->ctx_,
+            &pimpl->ctx_,
             reinterpret_cast<const unsigned char*>(additional.data()),
             additional.size()
           );
@@ -127,7 +127,7 @@ random::update(const buffer_t& additional) {
 void
 random::update(const unsigned char* additional, size_t length) noexcept {
     mbedtls_ctr_drbg_update(
-            &d_ptr->ctx_, additional, length
+            &pimpl->ctx_, additional, length
             );
 }
 

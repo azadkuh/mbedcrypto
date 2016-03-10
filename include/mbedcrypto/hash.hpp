@@ -76,7 +76,7 @@ public: // iterative usage, reusing the instance
 
 protected:
     struct impl;
-    std::unique_ptr<impl> d_ptr;
+    std::unique_ptr<impl> pimpl;
 }; // hash
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -140,7 +140,7 @@ public: // iterative or reuse
 
 protected:
     struct impl;
-    std::unique_ptr<impl> d_ptr;
+    std::unique_ptr<impl> pimpl;
 }; // hmac
 
 ///////////////////////////////////////////////////////////////////////////////

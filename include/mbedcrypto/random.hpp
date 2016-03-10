@@ -70,7 +70,7 @@ public: // auxiliary methods
 
 protected:
     struct impl;
-    std::unique_ptr<impl> d_ptr;
+    std::unique_ptr<impl> pimpl;
 }; // random
 
 ///////////////////////////////////////////////////////////////////////////////
