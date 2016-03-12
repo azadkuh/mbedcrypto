@@ -86,7 +86,8 @@ public:
     /// output_size the size of output, also will be updated by actual size.
     int  finish(unsigned char* output, size_t& output_size) noexcept;
 
-
+    /// helper function, runs start()/update()/finish() in a single call, single allocation
+    auto crypt(const buffer_t& input) -> buffer_t;
 
 
     // move only

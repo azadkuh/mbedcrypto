@@ -227,6 +227,34 @@ cipher::finish(unsigned char* output, size_t& output_size) noexcept {
             );
 }
 
+buffer_t
+cipher::crypt(const buffer_t& input) {
+    start();
+
+    const size_t osize = 32 + input.size() + pimpl->block_size();
+    buffer_t output(osize, '\0');
+    auto* out_ptr = reinterpret_cast<unsigned char*>(&output.front());
+
+    size_t out_index = 0;
+    c_call(mbedtls_cipher_update,
+            &pimpl->ctx_,
+            reinterpret_cast<const unsigned char*>(input.data()),
+            input.size(),
+            out_ptr,
+            &out_index
+          );
+
+    size_t fin_len = 0;
+    c_call(mbedtls_cipher_finish,
+            &pimpl->ctx_,
+            out_ptr + out_index,
+            &fin_len
+          );
+
+    output.resize(out_index + fin_len);
+    return output;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
 ///////////////////////////////////////////////////////////////////////////////
