@@ -13,7 +13,6 @@ using namespace mbedcrypto;
 auto hasHash = [](hash_t h) {
     REQUIRE( supports(h) );
     cchars name = to_string(h);
-    std::cout << name << " , ";
 
     REQUIRE( supports_hash(name) );
     auto v = from_string<hash_t>(name);
@@ -26,8 +25,31 @@ auto hasHash = [](hash_t h) {
 TEST_CASE("mbedcrypto types checkings", "[types]") {
     using namespace mbedcrypto;
 
+    SECTION("list installed algorithms") {
+        auto hashes = installed_hashes();
+        REQUIRE( hashes.size() > 0 );
+        std::cout << "\nsupported hash algorithms: ";
+        for ( auto h : hashes ) {
+            std::cout << to_string(h) << " , ";
+        }
+
+        auto ciphers = installed_ciphers();
+        REQUIRE( ciphers.size() > 0 );
+        std::cout << "\nsupported cipher algorithms: ";
+        for ( auto c : ciphers ) {
+            std::cout << to_string(c) << " , ";
+        }
+
+        auto paddings = installed_paddings();
+        REQUIRE( paddings.size() > 0 );
+        std::cout << "\nsupported padding algorithms: ";
+        for ( auto p : paddings ) {
+            std::cout << to_string(p) << " , ";
+        }
+        std::cout << std::endl;
+    }
+
     SECTION("hashes") {
-        std::cout << "supported hash algorithms: ";
         REQUIRE_FALSE( supports(hash_t::none) );
 
         #if defined(MBEDTLS_MD2_C)
@@ -133,18 +155,14 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
             cipher_t::camellia_256_ccm,
         };
 
-        std::cout << "supported cipher algorithms: ";
         for ( auto i : Items ) {
             cchars name = to_string(i);
             if ( name == nullptr )
                 continue;
 
-            std::cout << name << " , ";
             auto v = from_string<cipher_t>(name);
             REQUIRE( v == i );
         }
-
-        std::cout << std::endl;
     }
 
     SECTION("paddings") {
@@ -156,13 +174,15 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
             padding_t::zeros,
         };
 
-        std::cout << "supported padding modes: ";
         for ( auto i : Items ) {
-            if ( supports(i) )
-                std::cout << to_string(i) << " , ";
-        }
+            cchars name = to_string(i);
+            if ( name == nullptr )
+                continue;
 
-        std::cout << std::endl;
+            auto v = from_string<padding_t>(name);
+            REQUIRE( v == i );
+        }
     }
+
 }
 

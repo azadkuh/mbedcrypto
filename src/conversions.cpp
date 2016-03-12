@@ -157,6 +157,30 @@ from_native(mbedtls_pk_type_t n) {
     return from_native(n, gPks);
 }
 
+std::vector<hash_t>
+installed_hashes() {
+    std::vector<hash_t> my;
+
+    for ( const auto& p : gHashes ) {
+        if ( mbedtls_md_info_from_type(p.n) != nullptr )
+            my.push_back(p.e);
+    }
+
+    return my;
+}
+
+std::vector<cipher_t>
+installed_ciphers() {
+    std::vector<cipher_t> my;
+
+    for ( const auto& p : gCiphers ) {
+        if ( mbedtls_cipher_info_from_type(p.n) != nullptr )
+            my.push_back(p.e);
+    }
+
+    return my;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
 ///////////////////////////////////////////////////////////////////////////////

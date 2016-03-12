@@ -8,6 +8,16 @@
 namespace mbedcrypto {
 namespace {
 ///////////////////////////////////////////////////////////////////////////////
+const struct {
+    padding_t   p;
+    const char* n;
+} gPaddings[] = {
+    {padding_t::none,          "NONE"},
+    {padding_t::pkcs7,         "PKCS7"},
+    {padding_t::one_and_zeros, "ONE_AND_ZEROS"},
+    {padding_t::zeros_and_len, "ZEROS_AND_LEN"},
+    {padding_t::zeros,         "ZEROS"}
+};
 
 std::string
 to_upper(const char* p) {
@@ -56,6 +66,26 @@ supports(padding_t e) {
     return false;
 }
 
+std::vector<padding_t>
+installed_paddings() {
+    std::vector<padding_t> my;
+
+#if defined(MBEDTLS_CIPHER_PADDING_PKCS7)
+    my.push_back(padding_t::pkcs7);
+#endif
+#if defined(MBEDTLS_CIPHER_PADDING_ONE_AND_ZEROS)
+    my.push_back(padding_t::one_and_zeros);
+#endif
+#if defined(MBEDTLS_CIPHER_PADDING_ZEROS_AND_LEN)
+    my.push_back(padding_t::zeros_and_len );
+#endif
+#if defined(MBEDTLS_CIPHER_PADDING_ZEROS)
+    my.push_back(padding_t::zeros );
+#endif
+
+    return my;
+}
+
 bool
 supports(pk_t e) {
     return mbedtls_pk_info_from_type(to_native(e)) != nullptr;
@@ -88,15 +118,12 @@ to_string(cipher_t e) {
 
 const char*
 to_string(padding_t p) {
-    switch ( p ) {
-        case padding_t::none:          return "NONE";
-        case padding_t::pkcs7:         return "PKCS7";
-        case padding_t::one_and_zeros: return "ONE_AND_ZEROS";
-        case padding_t::zeros_and_len: return "ZEROS_AND_LEN";
-        case padding_t::zeros:         return "ZEROS";
-
-        default: return nullptr;
+    for ( const auto& i : gPaddings ) {
+        if ( i.p == p )
+            return i.n;
     }
+
+    return nullptr;
 }
 
 hash_t
@@ -113,6 +140,17 @@ cipher_from_string(const char* name) {
     if ( p == nullptr )
         return cipher_t::none;
     return from_native(p->type);
+}
+
+padding_t
+padding_from_string(const char* name) {
+    auto uname = to_upper(name);
+    for ( const auto& i : gPaddings ) {
+        if ( uname == i.n )
+            return i.p;
+    }
+
+    return padding_t::none;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
