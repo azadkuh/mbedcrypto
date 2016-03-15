@@ -60,12 +60,15 @@ struct cipher::impl
         c_call(mbedtls_cipher_setkey,
                 &ctx_,
                 reinterpret_cast<const unsigned char*>(key_data.data()),
-                key_data.size(),
+                key_data.size() << 3, // bitlen
                 m == cipher::encrypt_mode ? MBEDTLS_ENCRYPT : MBEDTLS_DECRYPT
               );
     }
 
     void padding(padding_t p) {
+        if ( p == padding_t::none )
+            return; // do nothing!
+
         c_call(mbedtls_cipher_set_padding_mode,
                 &ctx_,
                 to_native(p)

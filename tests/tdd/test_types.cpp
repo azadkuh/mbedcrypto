@@ -3,6 +3,7 @@
 #include <initializer_list>
 
 #include "src/mbedtls_config.h"
+#include "mbedcrypto/cipher.hpp"
 #include "generator.hpp"
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -39,6 +40,9 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
         for ( auto c : ciphers ) {
             std::cout << to_string(c) << " , ";
         }
+        std::cout << "\nthis system "
+            << (cipher::supports_aes_ni() ? "supports" : "does not support")
+            << " AESNI (hardware accelerated AES)";
 
         auto paddings = installed_paddings();
         REQUIRE( paddings.size() > 0 );
