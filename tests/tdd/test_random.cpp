@@ -33,4 +33,7 @@ TEST_CASE("random generator tests", "[random]") {
     mbedcrypto::random rnd2;
     buf = rnd2.make(93);
     REQUIRE( buf.size() == 93 );
+
+    // big buffer must be possible
+    REQUIRE_NOTHROW( rnd.make(32004) );
 }

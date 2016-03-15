@@ -36,6 +36,7 @@ public:
 
     /// returns a random binary buffer with specified length
     /// @note automatically reseeds if reseed_interval is passed.
+    /// length can be in any size because underlying class makes random in chunks.
     auto make(size_t length) -> buffer_t;
     /// low level overload
     int  make(unsigned char* buffer, size_t length)noexcept;
