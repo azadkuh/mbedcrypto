@@ -15,6 +15,18 @@
 namespace mbedcrypto {
 ///////////////////////////////////////////////////////////////////////////////
 
+/// block mode: https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation
+enum class cipher_bm {
+    none,       ///< none or unknown
+    ecb,        ///< electronic codebook
+    cbc,        ///< cipher block chaining
+    cfb,        ///< cipher feedback
+    ctr,        ///< counter
+    gcm,        ///< Galois/counter mode
+    stream,     ///< as in arc4_128 or null ciphers
+    ccm,        ///< = cbc + mac
+};
+
 class cipher
 {
 public:
@@ -38,6 +50,9 @@ public:
 
     /// returns key length (in bits) for a cipher
     static size_t key_bitlen(cipher_t type);
+
+    /// return block mode of a cipher type
+    static auto block_mode(cipher_t type) -> cipher_bm;
 
     /// encrypts the input in single shot
     static auto encrypt(cipher_t, padding_t,

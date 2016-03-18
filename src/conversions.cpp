@@ -1,5 +1,5 @@
 #include "conversions.hpp"
-
+#include "mbedcrypto/cipher.hpp"
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
 namespace {
@@ -96,6 +96,17 @@ const enum_map<cipher_t, mbedtls_cipher_type_t> gCiphers[] = {
     {cipher_t::camellia_256_ccm,    MBEDTLS_CIPHER_CAMELLIA_256_CCM},
 };
 
+const enum_map<cipher_bm, mbedtls_cipher_mode_t> gCipherModes[] = {
+    {cipher_bm::none,   MBEDTLS_MODE_NONE},
+    {cipher_bm::ecb,    MBEDTLS_MODE_ECB},
+    {cipher_bm::cbc,    MBEDTLS_MODE_CBC},
+    {cipher_bm::cfb,    MBEDTLS_MODE_CFB},
+    {cipher_bm::ctr,    MBEDTLS_MODE_CTR},
+    {cipher_bm::gcm,    MBEDTLS_MODE_GCM},
+    {cipher_bm::stream, MBEDTLS_MODE_STREAM},
+    {cipher_bm::ccm,    MBEDTLS_MODE_CCM},
+};
+
 const enum_map<padding_t, mbedtls_cipher_padding_t> gPaddings[] = {
     {padding_t::pkcs7,         MBEDTLS_PADDING_PKCS7},
     {padding_t::one_and_zeros, MBEDTLS_PADDING_ONE_AND_ZEROS},
@@ -132,9 +143,19 @@ to_native(cipher_t e) {
     return to_native(e, gCiphers);
 }
 
+mbedtls_cipher_mode_t
+to_native(cipher_bm e) {
+    return to_native(e, gCipherModes);
+}
+
 cipher_t
 from_native(mbedtls_cipher_type_t n) {
     return from_native(n, gCiphers);
+}
+
+cipher_bm
+from_native(mbedtls_cipher_mode_t n) {
+    return from_native(n, gCipherModes);
 }
 
 mbedtls_cipher_padding_t

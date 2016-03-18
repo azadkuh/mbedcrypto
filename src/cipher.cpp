@@ -143,6 +143,12 @@ cipher::key_bitlen(cipher_t type) {
     return cinfot->key_bitlen;
 }
 
+cipher_bm
+cipher::block_mode(cipher_t type) {
+    const auto* cinfot = native_info(type);
+    return from_native(cinfot->mode);
+}
+
 buffer_t
 cipher::encrypt(cipher_t type, padding_t pad,
         const buffer_t& iv, const buffer_t& key,
