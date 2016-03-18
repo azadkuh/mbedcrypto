@@ -29,14 +29,21 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
     SECTION("list installed algorithms") {
         auto hashes = installed_hashes();
         REQUIRE( hashes.size() > 0 );
-        std::cout << "\nsupported hash algorithms: ";
+        std::cout << "\nsupports " << hashes.size() << " hash algorithms: ";
         for ( auto h : hashes ) {
             std::cout << to_string(h) << " , ";
         }
 
+        auto paddings = installed_paddings();
+        REQUIRE( paddings.size() > 0 );
+        std::cout << "\nsupports " << paddings.size() << " padding algorithms: ";
+        for ( auto p : paddings ) {
+            std::cout << to_string(p) << " , ";
+        }
+
         auto ciphers = installed_ciphers();
         REQUIRE( ciphers.size() > 0 );
-        std::cout << "\nsupported cipher algorithms: ";
+        std::cout << "\nsupports " << ciphers.size() << " cipher algorithms: ";
         for ( auto c : ciphers ) {
             std::cout << to_string(c) << " , ";
         }
@@ -44,12 +51,6 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
             << (cipher::supports_aes_ni() ? "supports" : "does not support")
             << " AESNI (hardware accelerated AES)";
 
-        auto paddings = installed_paddings();
-        REQUIRE( paddings.size() > 0 );
-        std::cout << "\nsupported padding algorithms: ";
-        for ( auto p : paddings ) {
-            std::cout << to_string(p) << " , ";
-        }
         std::cout << std::endl;
     }
 
