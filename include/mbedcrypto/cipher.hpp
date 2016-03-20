@@ -18,10 +18,10 @@ namespace mbedcrypto {
 /// block mode: https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation
 enum class cipher_bm {
     none,       ///< none or unknown
-    ecb,        ///< electronic codebook
-    cbc,        ///< cipher block chaining
-    cfb,        ///< cipher feedback
-    ctr,        ///< counter
+    ecb,        ///< electronic codebook, no padding, input size = N * block_size
+    cbc,        ///< cipher block chaining, requires padding, custom input size
+    cfb,        ///< cipher feedback, no padding, custom input size
+    ctr,        ///< counter, not padding, custom input size
     gcm,        ///< Galois/counter mode
     stream,     ///< as in arc4_128 or null ciphers
     ccm,        ///< = cbc + mac
@@ -54,12 +54,16 @@ public:
     /// return block mode of a cipher type
     static auto block_mode(cipher_t type) -> cipher_bm;
 
-    /// encrypts the input in single shot
+    /// encrypts the input in single shot.
+    /// input can be in any size for cipher modes except ecb.
+    /// for ecb the size = block_size * N, where N >= 1
     static auto encrypt(cipher_t, padding_t,
             const buffer_t& iv, const buffer_t& key,
             const buffer_t& input) -> buffer_t;
 
     /// decrypts the input in single shot
+    /// input can be in any size for cipher modes except ecb.
+    /// for ecb the size = block_size * N, where N >= 1
     static auto decrypt(cipher_t, padding_t,
             const buffer_t& iv, const buffer_t& key,
             const buffer_t& input) -> buffer_t;
@@ -89,20 +93,37 @@ public:
 
     /// ciphers (encrypts/decrypts) chunks of data between start()/finish() pair.
     auto update(const buffer_t& input) -> buffer_t;
+    /// returns the final chunk (w/ padding)
+    auto finish() -> buffer_t;
+
+    /// overload. reads count bytes from in_index of input and write into
+    ///  out_index of output. returns the actual size of bytes written into output.
+    size_t update(size_t count,
+            const buffer_t& input, size_t in_index,
+            buffer_t& output, size_t out_index);
+    /// overload, writes into out_index of output
+    /// returns the actual size of bytes written into output.
+    size_t finish(buffer_t& output, size_t out_index);
+
     /// low level overload. the output buffer must be at least input_size + block_size()
     ///  for the selected cipher_t.
     /// output_size the size of output, also will be updated by actual size.
     int  update(const unsigned char* input, size_t input_size,
             unsigned char* output, size_t& output_size) noexcept;
 
-    /// returns the final chunk (w/ padding)
-    auto finish() -> buffer_t;
     /// low level overload. the output size must be block_size() + 32.
     /// output_size the size of output, also will be updated by actual size.
     int  finish(unsigned char* output, size_t& output_size) noexcept;
 
+
     /// helper function, runs start()/update()/finish() in a single call, single allocation
     auto crypt(const buffer_t& input) -> buffer_t;
+
+public: // properties
+    size_t block_size() const noexcept;
+    size_t iv_size()    const noexcept;
+    size_t key_bitlen() const noexcept;
+    auto   block_mode() const noexcept -> cipher_bm;
 
 
     // move only
@@ -115,9 +136,6 @@ protected:
     struct impl;
     std::unique_ptr<impl> pimpl;
 }; // cipher
-
-///////////////////////////////////////////////////////////////////////////////
-
 
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto

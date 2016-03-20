@@ -17,25 +17,23 @@ native_info(cipher_t type) {
 
     if ( cinfot == nullptr )
         throw exception(
-                MBEDTLS_ERR_CIPHER_FEATURE_UNAVAILABLE, "unsuppotred cipher"
+                MBEDTLS_ERR_CIPHER_FEATURE_UNAVAILABLE, "unsupported cipher"
                 );
 
     return cinfot;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-} // namespace anon
-///////////////////////////////////////////////////////////////////////////////
 
-struct cipher::impl
+struct cipher_impl
 {
     mbedtls_cipher_context_t ctx_;
 
-    explicit impl() {
+    explicit cipher_impl() {
         mbedtls_cipher_init(&ctx_);
     }
 
-    ~impl() {
+    ~cipher_impl() {
         mbedtls_cipher_free(&ctx_);
     }
 
@@ -46,6 +44,18 @@ struct cipher::impl
 
     size_t block_size()const noexcept {
         return mbedtls_cipher_get_block_size(&ctx_);
+    }
+
+    size_t iv_size()const noexcept {
+        return ctx_.cipher_info->iv_size;
+    }
+
+    size_t key_bitlen()const noexcept {
+        return ctx_.cipher_info->key_bitlen;
+    }
+
+    cipher_bm block_mode() const noexcept {
+        return from_native(ctx_.cipher_info->mode);
     }
 
     void iv(const buffer_t& iv_data) {
@@ -75,39 +85,103 @@ struct cipher::impl
               );
     }
 
-    static buffer_t crypt(
-            cipher_t type, padding_t pad,
-            const buffer_t& iv, const buffer_t& key,
-            cipher::mode m,
-            const buffer_t& input) {
+}; // struct cipher_impl
 
-        impl im;
-        im.setup(type);
-        im.padding(pad);
-        im.iv(iv);
-        im.key(key, m);
+///////////////////////////////////////////////////////////////////////////////
 
-        size_t osize = 32 + input.size() + im.block_size();
+class crypt_engine {
+    cipher_t  type_       = cipher_t::none;
+    cipher_bm block_mode_ = cipher_bm::none;
+    size_t    block_size_ = 0;
+    size_t    input_size_ = 0;
+    size_t    chunks_     = 0;
+    const buffer_t& input_;
+
+    explicit crypt_engine(cipher_t type, const buffer_t& input)
+        : type_(type),
+        block_mode_(cipher::block_mode(type)),
+        block_size_(cipher::block_size(type)),
+        input_size_(input.size()),
+        input_(input) {
+
+            // compute number of chunks
+            if ( block_mode_ == cipher_bm::ecb ) {
+                if ( input_size_ == 0   ||   input_size_ % block_size_ )
+                    throw exception("ecb cipher block:"
+                            " a valid input size must be dividable by block size");
+
+                chunks_ = input_size_ / block_size_;
+
+            } else { // for any other cipher block do in single shot
+                chunks_ = 1;
+            }
+        }
+
+    buffer_t compute(padding_t pad,
+        const buffer_t& iv, const buffer_t& key, cipher::mode m) {
+
+        // prepare ciphering parameters
+        cipher_impl cim;
+        cim.setup(type_);
+        cim.padding(pad);
+        cim.iv(iv);
+        cim.key(key, m);
+
+        // prepare output size
+        size_t osize = 32 + input_size_ + block_size_;
         buffer_t output(osize, '\0');
 
-        c_call(mbedtls_cipher_crypt,
-                &im.ctx_,
-                reinterpret_cast<const unsigned char*>(iv.data()),
-                iv.size(),
-                reinterpret_cast<const unsigned char*>(input.data()),
-                input.size(),
-                reinterpret_cast<unsigned char*>(&output.front()),
-                &osize
-              );
+        const auto* pSrc = reinterpret_cast<const unsigned char*>(input_.data());
+        auto* pDes       = reinterpret_cast<unsigned char*>(&output.front());
+
+        if ( chunks_ == 1 ) {
+            c_call(mbedtls_cipher_crypt,
+                    &cim.ctx_,
+                    reinterpret_cast<const unsigned char*>(iv.data()),
+                    iv.size(),
+                    pSrc, input_size_,
+                    pDes, &osize
+                  );
+
+        } else {
+            osize = 0;
+
+            for ( size_t i = 0;    i < chunks_;    ++i ) {
+                size_t done_size = 0;
+                c_call(mbedtls_cipher_crypt,
+                        &cim.ctx_,
+                        reinterpret_cast<const unsigned char*>(iv.data()),
+                        iv.size(),
+                        pSrc, block_size_,
+                        pDes, &done_size
+                      );
+
+                osize += done_size;
+                pSrc  += block_size_;
+                pDes  += block_size_;
+            }
+        }
 
         output.resize(osize);
         return output;
     }
 
+public:
+    static buffer_t run(cipher_t type, padding_t pad,
+            const buffer_t& iv, const buffer_t& key, cipher::mode m,
+            const buffer_t& input) {
 
-}; // cipher::impl
+        // check cipher mode against input size
+        crypt_engine cengine(type, input);
+        return cengine.compute(pad, iv, key, m);
+    }
+
+}; // struct crypt_engine
 
 ///////////////////////////////////////////////////////////////////////////////
+} // namespace anon
+///////////////////////////////////////////////////////////////////////////////
+struct cipher::impl : public cipher_impl{};
 
 cipher::cipher(cipher_t type) : pimpl(std::make_unique<impl>()) {
     pimpl->setup(type);
@@ -137,30 +211,50 @@ cipher::iv_size(cipher_t type) {
     return cinfot->iv_size;
 }
 
-size_t
-cipher::key_bitlen(cipher_t type) {
-    const auto* cinfot = native_info(type);
-    return cinfot->key_bitlen;
-}
-
 cipher_bm
 cipher::block_mode(cipher_t type) {
     const auto* cinfot = native_info(type);
     return from_native(cinfot->mode);
 }
 
+size_t
+cipher::key_bitlen(cipher_t type) {
+    const auto* cinfot = native_info(type);
+    return cinfot->key_bitlen;
+}
+
+size_t
+cipher::block_size() const noexcept {
+    return pimpl->block_size();
+}
+
+size_t
+cipher::iv_size() const noexcept {
+    return pimpl->iv_size();
+}
+
+size_t
+cipher::key_bitlen() const noexcept {
+    return pimpl->key_bitlen();
+}
+
+cipher_bm
+cipher::block_mode() const noexcept {
+    return pimpl->block_mode();
+}
+
 buffer_t
 cipher::encrypt(cipher_t type, padding_t pad,
         const buffer_t& iv, const buffer_t& key,
         const buffer_t& input) {
-    return impl::crypt(type, pad, iv, key, encrypt_mode, input);
+    return crypt_engine::run(type, pad, iv, key, encrypt_mode, input);
 }
 
 buffer_t
 cipher::decrypt(cipher_t type, padding_t pad,
         const buffer_t& iv, const buffer_t& key,
         const buffer_t& input) {
-    return impl::crypt(type, pad, iv, key, decrypt_mode, input);
+    return crypt_engine::run(type, pad, iv, key, decrypt_mode, input);
 }
 
 cipher&
@@ -203,6 +297,22 @@ cipher::update(const buffer_t& input) {
     return output;
 }
 
+size_t
+cipher::update(size_t count,
+        const buffer_t& input, size_t in_index,
+        buffer_t& output, size_t out_index) {
+    size_t usize = 0;
+    c_call(mbedtls_cipher_update,
+            &pimpl->ctx_,
+            reinterpret_cast<const unsigned char*>(input.data()) + in_index,
+            count,
+            reinterpret_cast<unsigned char*>(&output.front()) + out_index,
+            &usize
+          );
+
+    return usize;
+}
+
 int
 cipher::update(const unsigned char* input, size_t input_size,
         unsigned char* output, size_t& output_size) noexcept {
@@ -226,6 +336,18 @@ cipher::finish() {
 
     output.resize(osize);
     return output;
+}
+
+size_t
+cipher::finish(buffer_t& output, size_t out_index) {
+    size_t fsize = 0;
+    c_call(mbedtls_cipher_finish,
+            &pimpl->ctx_,
+            reinterpret_cast<unsigned char*>(&output.front()) + out_index,
+            &fsize
+          );
+
+    return fsize;
 }
 
 int
