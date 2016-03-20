@@ -160,6 +160,7 @@ TEST_CASE("test ciphers against mbedtls", "[cipher]") {
         auto block_size    = cipher::block_size(ct);
         auto key_len       = cipher::key_bitlen(ct) / 8; // bits to bytes
         auto iv_len        = cipher::iv_size(ct);
+        size_t chunk_size  = chunk_size_of(ct);
 
         const auto iv      = drbg.make(iv_len);
         const auto key     = drbg.make(key_len);
@@ -187,27 +188,35 @@ TEST_CASE("test ciphers against mbedtls", "[cipher]") {
             REQUIRE( (dec1 == input) );
 
             // cipher object
-            size_t chunk_size = chunk_size_of(ct);
             cipher cipenc(ct);
             cipenc
                 .padding(padding)
                 .iv(iv)
                 .key(key, cipher::encrypt_mode);
-            auto enc2 = chunker(chunk_size, input, cipenc);
+            // by single update
+            cipenc.start();
+            auto enc2 = cipenc.update(input);
+            enc2.append(cipenc.finish());
             REQUIRE( (enc2 == enc1) );
+
+            // by many chunked updates
+            auto enc3 = chunker(chunk_size, input, cipenc);
+            REQUIRE( (enc3 == enc1) );
 
             cipher cipdec(ct);
             cipdec
                 .padding(padding)
                 .iv(iv)
                 .key(key, cipher::decrypt_mode);
-            auto dec2 = chunker(chunk_size, enc2, cipdec);
-
+            // by single update
+            cipdec.start();
+            auto dec2 = cipdec.update(enc2);
+            dec2.append(cipdec.finish());
             REQUIRE( (dec2 == input) );
 
-            std::cerr << to_string(ct) << ": from "
-                << input.size() << " to " << enc2.size() << std::endl;
-
+            // by many chunked updates
+            auto dec3 = chunker(chunk_size, enc3, cipdec);
+            REQUIRE( (dec3 == input) );
 
         } catch ( mbedcrypto::exception& cerr ) {
             std::cerr << "error(" << to_string(ct) << ") :"
