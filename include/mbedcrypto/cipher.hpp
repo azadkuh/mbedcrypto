@@ -79,7 +79,7 @@ public:
     /// @sa key_bitlen()
     auto key(const buffer_t& key_data, mode) -> cipher&;
 
-    /// iv (initial vector or nonce) length depends on cipher algorithm
+    /// iv (initial vector or nonce) length depends on cipher algorithm.
     /// @sa iv_size()
     /// @warning some algorithms does not use iv at all, for those ciphers
     ///  this function has no effect
@@ -92,6 +92,8 @@ public:
     void start();
 
     /// ciphers (encrypts/decrypts) chunks of data between start()/finish() pair.
+    /// input size is arbitrary except for ecb ciphers where the size must be
+    ///  N * block_size
     auto update(const buffer_t& input) -> buffer_t;
     /// returns the final chunk (w/ padding)
     auto finish() -> buffer_t;

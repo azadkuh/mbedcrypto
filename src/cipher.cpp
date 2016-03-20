@@ -28,6 +28,7 @@ native_info(cipher_t type) {
 struct cipher_impl
 {
     mbedtls_cipher_context_t ctx_;
+    buffer_t iv_data_;
 
     explicit cipher_impl() {
         mbedtls_cipher_init(&ctx_);
@@ -58,6 +59,10 @@ struct cipher_impl
         return from_native(ctx_.cipher_info->mode);
     }
 
+    void iv() {
+        iv(iv_data_);
+    }
+
     void iv(const buffer_t& iv_data) {
         c_call(mbedtls_cipher_set_iv,
                 &ctx_,
@@ -83,6 +88,38 @@ struct cipher_impl
                 &ctx_,
                 to_native(p)
               );
+    }
+
+    // updates in chunks
+    int update_chunked(const unsigned char* pinput, size_t isize,
+            unsigned char* poutput, size_t& osize) {
+
+        auto bsize = block_size();
+        if ( isize % bsize )
+            return MBEDTLS_ERR_CIPHER_FULL_BLOCK_EXPECTED;
+
+        size_t i_index = 0;
+        size_t o_index = 0;
+
+        size_t chunks = isize / bsize;
+        for ( size_t i = 0;    i < chunks;    ++i ) {
+            size_t usize = 0;
+            int ret = mbedtls_cipher_update(
+                    &ctx_,
+                    pinput + i_index,
+                    bsize,
+                    poutput + o_index,
+                    &usize
+                    );
+            if ( ret < 0 )
+                return ret;
+
+            i_index += bsize;
+            o_index += usize;
+        }
+
+        osize = o_index;
+        return 0; // success
     }
 
 }; // struct cipher_impl
@@ -260,6 +297,7 @@ cipher::decrypt(cipher_t type, padding_t pad,
 cipher&
 cipher::iv(const buffer_t& iv_data) {
     pimpl->iv(iv_data);
+    pimpl->iv_data_ = iv_data;
     return *this;
 }
 
@@ -277,21 +315,34 @@ cipher::padding(padding_t p) {
 
 void
 cipher::start() {
+    pimpl->iv();
     c_call(mbedtls_cipher_reset, &pimpl->ctx_);
 }
 
 buffer_t
 cipher::update(const buffer_t& input) {
-    size_t osize = input.size() + pimpl->block_size();
+    size_t osize = input.size() + pimpl->block_size() + 32;
     buffer_t output(osize, '\0');
 
-    c_call(mbedtls_cipher_update,
-            &pimpl->ctx_,
-            reinterpret_cast<const unsigned char*>(input.data()),
-            input.size(),
-            reinterpret_cast<unsigned char*>(&output.front()),
-            &osize
-          );
+    if ( block_mode() == cipher_bm::ecb ) {
+        int ret = pimpl->update_chunked(
+                reinterpret_cast<const unsigned char*>(input.data()),
+                input.size(),
+                reinterpret_cast<unsigned char*>(&output.front()),
+                osize
+                );
+        if ( ret != 0 )
+            throw exception(ret, "failed to update the cipher");
+
+    } else {
+        c_call(mbedtls_cipher_update,
+                &pimpl->ctx_,
+                reinterpret_cast<const unsigned char*>(input.data()),
+                input.size(),
+                reinterpret_cast<unsigned char*>(&output.front()),
+                &osize
+              );
+    }
 
     output.resize(osize);
     return output;
@@ -302,13 +353,26 @@ cipher::update(size_t count,
         const buffer_t& input, size_t in_index,
         buffer_t& output, size_t out_index) {
     size_t usize = 0;
-    c_call(mbedtls_cipher_update,
-            &pimpl->ctx_,
-            reinterpret_cast<const unsigned char*>(input.data()) + in_index,
-            count,
-            reinterpret_cast<unsigned char*>(&output.front()) + out_index,
-            &usize
-          );
+
+    if ( block_mode() == cipher_bm::ecb ) {
+        int ret = pimpl->update_chunked(
+                reinterpret_cast<const unsigned char*>(input.data()) + in_index,
+                count,
+                reinterpret_cast<unsigned char*>(&output.front()) + out_index,
+                usize
+                );
+        if ( ret != 0 )
+            throw exception(ret, "failed to update the cipher");
+
+    } else {
+        c_call(mbedtls_cipher_update,
+                &pimpl->ctx_,
+                reinterpret_cast<const unsigned char*>(input.data()) + in_index,
+                count,
+                reinterpret_cast<unsigned char*>(&output.front()) + out_index,
+                &usize
+              );
+    }
 
     return usize;
 }
@@ -316,6 +380,14 @@ cipher::update(size_t count,
 int
 cipher::update(const unsigned char* input, size_t input_size,
         unsigned char* output, size_t& output_size) noexcept {
+    if ( block_mode() == cipher_bm::ecb ) {
+        return pimpl->update_chunked(
+                input, input_size,
+                output, output_size
+                );
+    }
+
+    // for other block modes
     return mbedtls_cipher_update(
             &pimpl->ctx_,
             input, input_size,

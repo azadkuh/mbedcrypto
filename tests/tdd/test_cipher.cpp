@@ -8,6 +8,7 @@
 
 #include "generator.hpp"
 #include <iostream>
+#include <fstream>
 ///////////////////////////////////////////////////////////////////////////////
 namespace {
 using namespace mbedcrypto;
@@ -29,6 +30,86 @@ public:
     }
 
 }; // finder
+
+padding_t
+padding_of(cipher_bm bm) {
+    switch ( bm ) {
+        case cipher_bm::cbc:
+            return padding_t::pkcs7;
+
+        case cipher_bm::ecb:
+        case cipher_bm::cfb:
+        case cipher_bm::ctr:
+            return padding_t::none;
+
+        default:
+            return padding_t::none;
+    }
+}
+
+size_t
+chunk_size_of(cipher_t ct) {
+    switch ( cipher::block_mode(ct) ) {
+        case cipher_bm::ecb:
+            return cipher::block_size(ct);
+
+        case cipher_bm::cbc:
+        case cipher_bm::cfb:
+        case cipher_bm::ctr:
+            return 160; // custom value, could be any value > 0
+
+        default:
+            throw std::logic_error("invalid cipher type");
+            return 0;
+    }
+}
+
+buffer_t
+make_input(cipher_bm bm, size_t bs, mbedcrypto::random& drbg) {
+    switch ( bm ) {
+        case cipher_bm::ecb:
+            return drbg.make(100 * bs);
+
+        case cipher_bm::cbc:
+        case cipher_bm::cfb:
+        case cipher_bm::ctr:
+            return drbg.make(3241);
+
+        default:
+            return buffer_t();
+    }
+}
+
+buffer_t
+chunker(size_t chunk_size, const buffer_t& input, cipher& cip) {
+    cip.start();
+
+    size_t isize = input.size();
+    size_t osize = isize + cip.block_size() + 32;
+    buffer_t output(osize, '\0');
+
+    size_t i_index = 0;
+    size_t o_index = 0;
+
+    // blocks
+    size_t chunks = isize / chunk_size;
+    for ( size_t i = 0;    i < chunks;    ++i ) {
+        o_index += cip.update(chunk_size, input, i_index, output, o_index);
+        i_index += chunk_size;
+    }
+
+    // last block
+    size_t residue = isize % chunk_size;
+    if ( residue )
+        o_index += cip.update(residue, input, i_index, output, o_index);
+
+    // finalize
+    o_index += cip.finish(output, o_index);
+
+    output.resize(o_index);
+    return output;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace anon
 ///////////////////////////////////////////////////////////////////////////////
@@ -66,6 +147,75 @@ TEST_CASE("test block mode", "[cipher][types]") {
         }
     }
 
+}
+
+TEST_CASE("test ciphers against mbedtls", "[cipher]") {
+    using namespace mbedcrypto;
+
+    mbedcrypto::random drbg;
+
+    const auto types = installed_ciphers();
+    for ( auto ct : types ) {
+        auto block_mode    = cipher::block_mode(ct);
+        auto block_size    = cipher::block_size(ct);
+        auto key_len       = cipher::key_bitlen(ct) / 8; // bits to bytes
+        auto iv_len        = cipher::iv_size(ct);
+
+        const auto iv      = drbg.make(iv_len);
+        const auto key     = drbg.make(key_len);
+        const auto padding = padding_of(block_mode);
+        const auto input   = make_input(block_mode, block_size, drbg);
+
+        if ( input.empty() ) {
+            std::cerr << "no input for: " << to_string(ct) << std::endl;
+            continue;
+        }
+
+        try {
+            // single shot calls
+            auto enc1 = cipher::encrypt(
+                    ct, padding,
+                    iv, key,
+                    input
+                    );
+            auto dec1 = cipher::decrypt(
+                    ct, padding,
+                    iv, key,
+                    enc1
+                    );
+            INFO( to_string(ct) );
+            REQUIRE( (dec1 == input) );
+
+            // cipher object
+            size_t chunk_size = chunk_size_of(ct);
+            cipher cipenc(ct);
+            cipenc
+                .padding(padding)
+                .iv(iv)
+                .key(key, cipher::encrypt_mode);
+            auto enc2 = chunker(chunk_size, input, cipenc);
+            REQUIRE( (enc2 == enc1) );
+
+            cipher cipdec(ct);
+            cipdec
+                .padding(padding)
+                .iv(iv)
+                .key(key, cipher::decrypt_mode);
+            auto dec2 = chunker(chunk_size, enc2, cipdec);
+
+            REQUIRE( (dec2 == input) );
+
+            std::cerr << to_string(ct) << ": from "
+                << input.size() << " to " << enc2.size() << std::endl;
+
+
+        } catch ( mbedcrypto::exception& cerr ) {
+            std::cerr << "error(" << to_string(ct) << ") :"
+                << cerr.to_string() << std::endl;
+            REQUIRE_FALSE( "exception failure" );
+        }
+
+    }
 }
 
 
