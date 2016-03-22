@@ -52,7 +52,6 @@ struct pki::impl
               );
     }
 
-
 }; // pki::impl
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -71,6 +70,11 @@ pki::type()const noexcept {
     return from_native(
             mbedtls_pk_get_type(&pimpl->ctx_)
             );
+}
+
+const char*
+pki::name()const noexcept {
+    return mbedtls_pk_get_name(&pimpl->ctx_);
 }
 
 void
@@ -106,6 +110,40 @@ pki::parse_public_key(const buffer_t& public_key) {
         reinterpret_cast<const unsigned char*>(public_key.data()),
         public_key.size()
         );
+}
+
+void
+pki::load_key(const char* file_path, const buffer_t& password) {
+    #if !defined(MBEDTLS_FS_IO)
+    throw exception("not implemented in current build system");
+    #endif // MBEDTLS_FS_IO
+
+    // resets
+    mbedtls_pk_free(&pimpl->ctx_);
+
+    const auto* ppass = (password.size() != 0) ?
+        reinterpret_cast<const char*>(password.data()) : nullptr;
+
+    c_call(mbedtls_pk_parse_keyfile,
+            &pimpl->ctx_,
+            file_path,
+            ppass
+          );
+}
+
+void
+pki::load_public_key(const char* file_path) {
+    #if !defined(MBEDTLS_FS_IO)
+    throw exception("not implemented in current build system");
+    #endif // MBEDTLS_FS_IO
+
+    // resets
+    mbedtls_pk_free(&pimpl->ctx_);
+
+    c_call(mbedtls_pk_parse_public_keyfile,
+            &pimpl->ctx_,
+            file_path
+          );
 }
 
 bool

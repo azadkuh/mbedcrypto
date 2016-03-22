@@ -21,6 +21,7 @@ public:
     pki();
     ~pki();
 
+public: // parse or load public or private keys
     /// (re)initializes by private key data.
     /// @warning key data must end with a null byte
     void parse_key(const buffer_t& private_key,
@@ -30,16 +31,30 @@ public:
     /// @warning key data must end with a null byte
     void parse_public_key(const buffer_t& public_key);
 
+    /// loads the private key from a file.
+    void load_key(const char* file_path,
+            const buffer_t& password = buffer_t{});
+
+    /// loads public key from a file.
+    void load_public_key(const char* file_path);
+
+public: // properties
     /// returns the type fed by constructor or key
     pk_t type()const noexcept;
+
+    /// returns the name of current algorithm
+    auto name()const noexcept -> const char*;
+
     /// returns true if the current key can do specific operation
     bool can_do(pk_t other_type)const noexcept;
 
     /// size of underlying key in bits, ex 2048 or ...
     size_t bitlen()const;
+
     /// size of underlying key in bytes
     size_t length()const;
 
+public:
     /// verifies a signature and its padding if relevant
     bool verify(hash_t hash_type, const buffer_t& hash_value,
             const buffer_t& signature);
