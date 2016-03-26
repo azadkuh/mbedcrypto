@@ -42,6 +42,11 @@ buffer_t sample_private_key_password();
 /// $> openssl rsa -in mprivate.pem -pubout -out mpublic.pem
 /// @endcode
 buffer_t sample_public_key();
+/// with the above private key and long text
+/// $> openssl dgst -sha1 -sign private.pem -out signature.bin long.txt
+/// verification:
+/// $> openssl dgst -sha1 -verify public.pem -signature signature.bin long.txt
+buffer_t long_text_signature();
 
 ///////////////////////////////////////////////////////////////////////////////
 

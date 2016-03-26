@@ -44,8 +44,8 @@ public:
             hash_t halgo, const buffer_t& hmvalue) -> const buffer_t& {
 
         if ( halgo == hash_t::none ) {
-            if ( (hmvalue.size() << 3) >= pk->bitlen() )
-                throw exception("the message is larger than the key value");
+            if ( (hmvalue.size() << 3) > pk->bitlen() )
+                throw exception("the message is larger than the key size");
 
             return hmvalue;
         }
@@ -198,7 +198,7 @@ pki::length()const {
 }
 
 buffer_t
-pki::sign(hash_t halgo, const buffer_t& hmvalue) {
+pki::sign(const buffer_t& hmvalue, hash_t halgo) {
     const auto& hvalue = hm_prepare{}(this, halgo, hmvalue);
 
     size_t olen = MBEDTLS_MPI_MAX_SIZE;
@@ -219,8 +219,8 @@ pki::sign(hash_t halgo, const buffer_t& hmvalue) {
 }
 
 bool
-pki::verify(hash_t hash_type, const buffer_t& hm_value,
-        const buffer_t& signature) {
+pki::verify(const buffer_t& signature,
+        const buffer_t& hm_value, hash_t hash_type) {
     const auto& hvalue = hm_prepare{}(this, hash_type, hm_value);
 
     int ret = mbedtls_pk_verify(&pimpl->ctx_,
@@ -245,6 +245,50 @@ pki::verify(hash_t hash_type, const buffer_t& hm_value,
     }
 
     return false;
+}
+
+buffer_t
+pki::encrypt(const buffer_t& hmvalue, hash_t hash_type) {
+    const auto& hvalue = hm_prepare{}(this, hash_type, hmvalue);
+
+    size_t olen = MBEDTLS_MPI_MAX_SIZE;
+    buffer_t output(olen, '\0');
+    c_call(mbedtls_pk_encrypt,
+            &pimpl->ctx_,
+            reinterpret_cast<const unsigned char*>(hvalue.data()),
+            hvalue.size(),
+            reinterpret_cast<unsigned char*>(&output.front()),
+            &olen,
+            olen,
+            random_func,
+            &pimpl->rnd_
+          );
+
+    output.resize(olen);
+    return output;
+}
+
+buffer_t
+pki::decrypt(const buffer_t& encrypted_value) {
+    if ( (encrypted_value.size() << 3) > bitlen() )
+        throw exception("the encrypted value is larger than the key size");
+
+    size_t olen = MBEDTLS_MPI_MAX_SIZE;
+    buffer_t output(olen, '\0');
+
+    c_call(mbedtls_pk_decrypt,
+            &pimpl->ctx_,
+            reinterpret_cast<const unsigned char*>(encrypted_value.data()),
+            encrypted_value.size(),
+            reinterpret_cast<unsigned char*>(&output.front()),
+            &olen,
+            olen,
+            random_func,
+            &pimpl->rnd_
+          );
+
+    output.resize(olen);
+    return output;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

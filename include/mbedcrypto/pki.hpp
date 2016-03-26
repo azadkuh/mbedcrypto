@@ -55,13 +55,28 @@ public: // properties
     size_t length()const;
 
 public:
-    /// signs a hash value (or a message) by current private key
-    auto sign(hash_t hash_algo,
-            const buffer_t& hash_or_message) -> buffer_t;
+    /// signs a hash value (or a plain message) by the private key.
+    /// hash_or_message could be a hash value or message.
+    ///  if message size is larger than private key, it is hashed first
+    ///  by hash_algo, so hash_algo is only needed for plain messages.
+    ///
+    /// @note for RSA keys, the signature is padded by PKCS#1 v1.5
+    auto sign(const buffer_t& hash_or_message,
+            hash_t hash_algo = hash_t::none) -> buffer_t;
 
     /// verifies a signature and its padding if relevant
-    bool verify(hash_t hash_type, const buffer_t& hash_or_message,
-            const buffer_t& signature);
+    bool verify(const buffer_t& signature,
+            const buffer_t& hash_or_message,
+            hash_t hash_type = hash_t::none);
+
+    /// encrypt a hash value (or a plain message) by the public key
+    /// @sa sign()
+    auto encrypt(const buffer_t& hash_or_message,
+            hash_t hash_algo = hash_t::none) -> buffer_t;
+
+    /// decrypt an encrypted buffer by public key
+    auto decrypt(const buffer_t& encrypted_value) -> buffer_t;
+
 
     // move only
     pki(const pki&)            = delete;
