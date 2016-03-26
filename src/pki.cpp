@@ -1,5 +1,6 @@
 #include "mbedcrypto/pki.hpp"
 #include "mbedcrypto/random.hpp"
+#include "mbedcrypto/hash.hpp"
 #include "conversions.hpp"
 
 #include "mbedtls/pk.h"
@@ -28,6 +29,32 @@ ends_with(const buffer_t& str, char c) {
     return str.rfind(c) == str.size()-1;
 }
 
+int
+random_func(void* ctx, unsigned char* p, size_t len) {
+    mbedcrypto::random* rnd = reinterpret_cast<mbedcrypto::random*>(ctx);
+    return rnd->make(p, len);
+}
+
+class hm_prepare
+{
+    buffer_t hash_;
+
+public:
+    auto operator()(const pki* pk,
+            hash_t halgo, const buffer_t& hmvalue) -> const buffer_t& {
+
+        if ( halgo == hash_t::none ) {
+            if ( (hmvalue.size() << 3) >= pk->bitlen() )
+                throw exception("the message is larger than the key value");
+
+            return hmvalue;
+        }
+
+        hash_ = hash::make(halgo, hmvalue);
+        return hash_;
+    }
+}; // hm_prepare
+
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace anon
 ///////////////////////////////////////////////////////////////////////////////
@@ -35,6 +62,7 @@ ends_with(const buffer_t& str, char c) {
 struct pki::impl
 {
     mbedtls_pk_context ctx_;
+    mbedcrypto::random rnd_;
 
     explicit impl() {
         mbedtls_pk_init(&ctx_);
@@ -169,13 +197,36 @@ pki::length()const {
     return size_t(ret);
 }
 
+buffer_t
+pki::sign(hash_t halgo, const buffer_t& hmvalue) {
+    const auto& hvalue = hm_prepare{}(this, halgo, hmvalue);
+
+    size_t olen = MBEDTLS_MPI_MAX_SIZE;
+    buffer_t output(olen, '\0');
+    c_call(mbedtls_pk_sign,
+            &pimpl->ctx_,
+            to_native(halgo),
+            reinterpret_cast<const unsigned char*>(hvalue.data()),
+            hvalue.size(),
+            reinterpret_cast<unsigned char*>(&output.front()),
+            &olen,
+            random_func,
+            &pimpl->rnd_
+          );
+
+    output.resize(olen);
+    return output;
+}
+
 bool
-pki::verify(hash_t hash_type, const buffer_t& hash_value,
+pki::verify(hash_t hash_type, const buffer_t& hm_value,
         const buffer_t& signature) {
+    const auto& hvalue = hm_prepare{}(this, hash_type, hm_value);
+
     int ret = mbedtls_pk_verify(&pimpl->ctx_,
             to_native(hash_type),
-            reinterpret_cast<const unsigned char*>(hash_value.data()),
-            hash_value.size(),
+            reinterpret_cast<const unsigned char*>(hvalue.data()),
+            hvalue.size(),
             reinterpret_cast<const unsigned char*>(signature.data()),
             signature.size()
             );

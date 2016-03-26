@@ -55,8 +55,12 @@ public: // properties
     size_t length()const;
 
 public:
+    /// signs a hash value (or a message) by current private key
+    auto sign(hash_t hash_algo,
+            const buffer_t& hash_or_message) -> buffer_t;
+
     /// verifies a signature and its padding if relevant
-    bool verify(hash_t hash_type, const buffer_t& hash_value,
+    bool verify(hash_t hash_type, const buffer_t& hash_or_message,
             const buffer_t& signature);
 
     // move only
