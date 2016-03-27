@@ -10,12 +10,7 @@ std::string
 exception::error_string()const {
     if ( code_ == 0 )
         return std::string{};
-
-    std::string message(160, '\0'); // mbedtls error strings are smaller than this
-    mbedtls_strerror(code_, &message.front(), message.size()-1);
-    message.resize(std::strlen(message.data()));
-
-    return message;
+    return mbedtls_error_string(code_);
 }
 
 std::string
@@ -24,14 +19,24 @@ exception::to_string()const {
     if ( code_ == 0 )
         return w;
 
-    std::stringstream ss;
-    if ( std::strlen(w) > 0 )
-        ss << w << " ";
+    if ( std::strlen(w) == 0 )
+        return mbedtls_error_string(code_);
 
-    ss << "(" << code_ << "): " << error_string();
-    return ss.str();
+    return std::string(w) + " " + mbedtls_error_string(code_);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
+std::string
+mbedtls_error_string(int err) {
+    constexpr size_t KMaxSize = 160;
+    char buffer[KMaxSize+1] = {0};
+    mbedtls_strerror(err, buffer, KMaxSize);
+
+    std::stringstream ss;
+    ss << "(-0x" <<  std::hex << -1*err << "): " << buffer;
+    return ss.str();
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
