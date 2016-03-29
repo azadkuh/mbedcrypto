@@ -66,7 +66,7 @@ struct cipher_impl
     void iv(const buffer_t& iv_data) {
         c_call(mbedtls_cipher_set_iv,
                 &ctx_,
-                reinterpret_cast<const unsigned char*>(iv_data.data()),
+                to_const_ptr(iv_data),
                 iv_data.size()
               );
     }
@@ -74,7 +74,7 @@ struct cipher_impl
     void key(const buffer_t& key_data, cipher::mode m) {
         c_call(mbedtls_cipher_setkey,
                 &ctx_,
-                reinterpret_cast<const unsigned char*>(key_data.data()),
+                to_const_ptr(key_data),
                 key_data.size() << 3, // bitlen
                 m == cipher::encrypt_mode ? MBEDTLS_ENCRYPT : MBEDTLS_DECRYPT
               );
@@ -168,13 +168,13 @@ class crypt_engine {
         size_t osize = 32 + input_size_ + block_size_;
         buffer_t output(osize, '\0');
 
-        const auto* pSrc = reinterpret_cast<const unsigned char*>(input_.data());
-        auto* pDes       = reinterpret_cast<unsigned char*>(&output.front());
+        const auto* pSrc = to_const_ptr(input_);
+        auto* pDes       = to_ptr(output);
 
         if ( chunks_ == 1 ) {
             c_call(mbedtls_cipher_crypt,
                     &cim.ctx_,
-                    reinterpret_cast<const unsigned char*>(iv.data()),
+                    to_const_ptr(iv),
                     iv.size(),
                     pSrc, input_size_,
                     pDes, &osize
@@ -187,7 +187,7 @@ class crypt_engine {
                 size_t done_size = 0;
                 c_call(mbedtls_cipher_crypt,
                         &cim.ctx_,
-                        reinterpret_cast<const unsigned char*>(iv.data()),
+                        to_const_ptr(iv),
                         iv.size(),
                         pSrc, block_size_,
                         pDes, &done_size
@@ -326,9 +326,9 @@ cipher::update(const buffer_t& input) {
 
     if ( block_mode() == cipher_bm::ecb ) {
         int ret = pimpl->update_chunked(
-                reinterpret_cast<const unsigned char*>(input.data()),
+                to_const_ptr(input),
                 input.size(),
-                reinterpret_cast<unsigned char*>(&output.front()),
+                to_ptr(output),
                 osize
                 );
         if ( ret != 0 )
@@ -337,9 +337,9 @@ cipher::update(const buffer_t& input) {
     } else {
         c_call(mbedtls_cipher_update,
                 &pimpl->ctx_,
-                reinterpret_cast<const unsigned char*>(input.data()),
+                to_const_ptr(input),
                 input.size(),
-                reinterpret_cast<unsigned char*>(&output.front()),
+                to_ptr(output),
                 &osize
               );
     }
@@ -356,9 +356,9 @@ cipher::update(size_t count,
 
     if ( block_mode() == cipher_bm::ecb ) {
         int ret = pimpl->update_chunked(
-                reinterpret_cast<const unsigned char*>(input.data()) + in_index,
+                to_const_ptr(input) + in_index,
                 count,
-                reinterpret_cast<unsigned char*>(&output.front()) + out_index,
+                to_ptr(output) + out_index,
                 usize
                 );
         if ( ret != 0 )
@@ -367,9 +367,9 @@ cipher::update(size_t count,
     } else {
         c_call(mbedtls_cipher_update,
                 &pimpl->ctx_,
-                reinterpret_cast<const unsigned char*>(input.data()) + in_index,
+                to_const_ptr(input) + in_index,
                 count,
-                reinterpret_cast<unsigned char*>(&output.front()) + out_index,
+                to_ptr(output) + out_index,
                 &usize
               );
     }
@@ -402,7 +402,7 @@ cipher::finish() {
 
     c_call(mbedtls_cipher_finish,
             &pimpl->ctx_,
-            reinterpret_cast<unsigned char*>(&output.front()),
+            to_ptr(output),
             &osize
           );
 
@@ -415,7 +415,7 @@ cipher::finish(buffer_t& output, size_t out_index) {
     size_t fsize = 0;
     c_call(mbedtls_cipher_finish,
             &pimpl->ctx_,
-            reinterpret_cast<unsigned char*>(&output.front()) + out_index,
+            to_ptr(output) + out_index,
             &fsize
           );
 
@@ -436,12 +436,12 @@ cipher::crypt(const buffer_t& input) {
 
     const size_t osize = 32 + input.size() + pimpl->block_size();
     buffer_t output(osize, '\0');
-    auto* out_ptr = reinterpret_cast<unsigned char*>(&output.front());
+    auto* out_ptr = to_ptr(output);
 
     size_t out_index = 0;
     c_call(mbedtls_cipher_update,
             &pimpl->ctx_,
-            reinterpret_cast<const unsigned char*>(input.data()),
+            to_const_ptr(input),
             input.size(),
             out_ptr,
             &out_index

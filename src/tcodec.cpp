@@ -18,7 +18,7 @@ hex_lower(unsigned char b) noexcept {
 buffer_t
 hex::encode(const unsigned char* src, size_t length) {
     buffer_t buffer(length << 1, '\0');
-    unsigned char* hexdata = reinterpret_cast<unsigned char*>(&buffer.front());
+    unsigned char* hexdata = to_ptr(buffer);
 
     for ( size_t i = 0;    i < length;    ++i ) {
         hexdata[i << 1]       = hex_lower(src[i] >> 4);
@@ -40,7 +40,7 @@ hex::decode(const char* src, size_t length) {
         throw exception("invalid size for hex string");
 
     buffer_t buffer(length >> 1, '\0');
-    unsigned char* bindata = reinterpret_cast<unsigned char*>(&buffer.front());
+    unsigned char* bindata = to_ptr(buffer);
 
     size_t j = 0, k = 0;
     for ( size_t i = 0;    i < length;    ++i, ++src ) {
@@ -87,16 +87,12 @@ base64::decode_size(const unsigned char* src, size_t srclen) noexcept {
 
 size_t
 base64::encode_size(const buffer_t& src) {
-    return encode_size(reinterpret_cast<const unsigned char*>(src.data()),
-            src.size()
-            );
+    return encode_size(to_const_ptr(src), src.size());
 }
 
 size_t
 base64::decode_size(const buffer_t& src) {
-    return decode_size(reinterpret_cast<const unsigned char*>(src.data()),
-            src.size()
-            );
+    return decode_size(to_const_ptr(src), src.size());
 }
 
 int
@@ -135,12 +131,7 @@ base64::encode(const buffer_t& src, buffer_t& dest) {
 
     dest.resize(requiredSize);
     size_t dsize = requiredSize;
-    int ret = encode(
-            reinterpret_cast<const unsigned char*>(src.data()),
-            src.size(),
-            reinterpret_cast<unsigned char*>(&dest.front()),
-            dsize
-            );
+    int ret = encode(to_const_ptr(src), src.size(), to_ptr(dest), dsize);
 
     if ( ret != 0 )
         throw exception(ret, "failed to base64 encode");
@@ -157,12 +148,7 @@ base64::decode(const buffer_t& src, buffer_t& dest) {
 
     dest.resize(requiredSize);
     size_t dsize = requiredSize;
-    int ret = decode(
-            reinterpret_cast<const unsigned char*>(src.data()),
-            src.size(),
-            reinterpret_cast<unsigned char*>(&dest.front()),
-            dsize
-            );
+    int ret = decode(to_const_ptr(src), src.size(), to_ptr(dest), dsize);
 
     if ( ret != 0 )
         throw exception(ret, "failed to base64 decode");

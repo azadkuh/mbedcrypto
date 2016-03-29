@@ -11,7 +11,7 @@
 #ifndef MBEDCRYPTO_TEXT_CODEC_HPP
 #define MBEDCRYPTO_TEXT_CODEC_HPP
 
-#include "mbedcrypto/exception.hpp"
+#include "mbedcrypto/types.hpp"
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
 ///////////////////////////////////////////////////////////////////////////////
@@ -27,18 +27,12 @@ struct hex {
 
     /// overload
     static buffer_t encode(const buffer_t& src) {
-        return encode(
-                reinterpret_cast<const unsigned char*>(src.data()),
-                src.size()
-                );
+        return encode(to_const_ptr(src), src.size());
     }
 
     /// overload
     static buffer_t decode(const buffer_t& src) {
-        return decode(
-                reinterpret_cast<const char*>(src.data()),
-                src.size()
-                );
+        return decode(src.data(), src.size());
     }
 
 }; // struct hex

@@ -113,12 +113,11 @@ pki::parse_key(const buffer_t& private_key, const buffer_t& password) {
     // resets
     mbedtls_pk_free(&pimpl->ctx_);
 
-    const auto* ppass = (password.size() != 0) ?
-        reinterpret_cast<const unsigned char*>(password.data()) : nullptr;
+    const auto* ppass = (password.size() != 0) ? to_const_ptr(password) : nullptr;
 
     c_call(mbedtls_pk_parse_key,
             &pimpl->ctx_,
-            reinterpret_cast<const unsigned char*>(private_key.data()),
+            to_const_ptr(private_key),
             private_key.size(),
             ppass,
             password.size()
@@ -135,7 +134,7 @@ pki::parse_public_key(const buffer_t& public_key) {
 
     c_call(mbedtls_pk_parse_public_key,
         &pimpl->ctx_,
-        reinterpret_cast<const unsigned char*>(public_key.data()),
+        to_const_ptr(public_key),
         public_key.size()
         );
 }
@@ -149,8 +148,7 @@ pki::load_key(const char* file_path, const buffer_t& password) {
     // resets
     mbedtls_pk_free(&pimpl->ctx_);
 
-    const auto* ppass = (password.size() != 0) ?
-        reinterpret_cast<const char*>(password.data()) : nullptr;
+    const auto* ppass = (password.size() != 0) ? password.data() : nullptr;
 
     c_call(mbedtls_pk_parse_keyfile,
             &pimpl->ctx_,
@@ -206,9 +204,9 @@ pki::sign(const buffer_t& hmvalue, hash_t halgo) {
     c_call(mbedtls_pk_sign,
             &pimpl->ctx_,
             to_native(halgo),
-            reinterpret_cast<const unsigned char*>(hvalue.data()),
+            to_const_ptr(hvalue),
             hvalue.size(),
-            reinterpret_cast<unsigned char*>(&output.front()),
+            to_ptr(output),
             &olen,
             random_func,
             &pimpl->rnd_
@@ -225,9 +223,9 @@ pki::verify(const buffer_t& signature,
 
     int ret = mbedtls_pk_verify(&pimpl->ctx_,
             to_native(hash_type),
-            reinterpret_cast<const unsigned char*>(hvalue.data()),
+            to_const_ptr(hvalue),
             hvalue.size(),
-            reinterpret_cast<const unsigned char*>(signature.data()),
+            to_const_ptr(signature),
             signature.size()
             );
 
@@ -255,9 +253,9 @@ pki::encrypt(const buffer_t& hmvalue, hash_t hash_type) {
     buffer_t output(olen, '\0');
     c_call(mbedtls_pk_encrypt,
             &pimpl->ctx_,
-            reinterpret_cast<const unsigned char*>(hvalue.data()),
+            to_const_ptr(hvalue),
             hvalue.size(),
-            reinterpret_cast<unsigned char*>(&output.front()),
+            to_ptr(output),
             &olen,
             olen,
             random_func,
@@ -278,9 +276,9 @@ pki::decrypt(const buffer_t& encrypted_value) {
 
     c_call(mbedtls_pk_decrypt,
             &pimpl->ctx_,
-            reinterpret_cast<const unsigned char*>(encrypted_value.data()),
+            to_const_ptr(encrypted_value),
             encrypted_value.size(),
-            reinterpret_cast<unsigned char*>(&output.front()),
+            to_ptr(output),
             &olen,
             olen,
             random_func,

@@ -92,7 +92,7 @@ hash::make(hash_t type, const unsigned char* src, size_t length) {
     c_call(mbedtls_md,
             std::get<0>(digest),
             src, length,
-            reinterpret_cast<unsigned char*>(&std::get<1>(digest).front())
+            to_ptr(std::get<1>(digest))
             );
 
     return std::get<1>(digest);
@@ -106,7 +106,7 @@ hash::of_file(hash_t type, const char* filePath) {
     c_call(mbedtls_md_file,
             std::get<0>(digest),
             filePath,
-            reinterpret_cast<unsigned char*>(&std::get<1>(digest).front())
+            to_ptr(std::get<1>(digest))
             );
 
     return std::get<1>(digest);
@@ -124,9 +124,9 @@ hmac::make(hash_t type, const buffer_t& key,
 
     c_call(mbedtls_md_hmac,
             std::get<0>(digest),
-            reinterpret_cast<const unsigned char*>(key.data()), key.size(),
+            to_const_ptr(key), key.size(),
             src, length,
-            reinterpret_cast<unsigned char*>(&std::get<1>(digest).front())
+            to_ptr(std::get<1>(digest))
             );
 
     return std::get<1>(digest);
@@ -147,7 +147,7 @@ buffer_t
 hash::finish() {
     buffer_t digest(pimpl->size(), '\0');
     c_call(mbedtls_md_finish, &pimpl->ctx_,
-            reinterpret_cast<unsigned char*>(&digest.front())
+            to_ptr(digest)
             );
 
     return digest;
@@ -156,7 +156,7 @@ hash::finish() {
 void
 hmac::start(const buffer_t& key) {
     c_call(mbedtls_md_hmac_starts, &pimpl->ctx_,
-            reinterpret_cast<const unsigned char*>(key.data()),
+            to_const_ptr(key),
             key.size()
           );
 }
@@ -176,7 +176,7 @@ buffer_t
 hmac::finish() {
     buffer_t digest(pimpl->size(), '\0');
     c_call(mbedtls_md_hmac_finish, &pimpl->ctx_,
-            reinterpret_cast<unsigned char*>(&digest.front())
+            to_ptr(digest)
             );
 
     return digest;

@@ -28,7 +28,7 @@ public: // single-shot hash computation
     /// overload
     static buffer_t make(hash_t type, const buffer_t& src) {
         return make(type,
-                reinterpret_cast<const unsigned char*>(src.data()),
+                to_const_ptr(src),
                 src.size()
                 );
     }
@@ -60,9 +60,7 @@ public: // iterative usage, reusing the instance
     void update(const unsigned char* chunk, size_t chunk_size);
 
     void update(const buffer_t& chunk) {
-        return update(reinterpret_cast<const unsigned char*>(chunk.data()),
-                chunk.size()
-                );
+        return update(to_const_ptr(chunk), chunk.size());
     }
 
     /// returns the final digest of previous updates.
@@ -92,10 +90,7 @@ public: // single-shot hamc computation
 
     /// overload
     static buffer_t make(hash_t type, const buffer_t& key, const buffer_t& src) {
-        return make(type, key,
-                reinterpret_cast<const unsigned char*>(src.data()),
-                src.size()
-                );
+        return make(type, key, to_const_ptr(src), src.size());
     }
 
 public: // iterative or reuse
@@ -124,9 +119,7 @@ public: // iterative or reuse
     void update(const unsigned char* chunk, size_t chunk_size);
 
     void update(const buffer_t& chunk) {
-        return update(reinterpret_cast<const unsigned char*>(chunk.data()),
-                chunk.size()
-                );
+        return update(to_const_ptr(chunk), chunk.size());
     }
 
     /// returns the final digest of previous updates.

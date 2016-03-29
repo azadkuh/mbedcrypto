@@ -1,4 +1,5 @@
 #include "mbedcrypto/random.hpp"
+#include "mbedcrypto/types.hpp"
 
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
@@ -80,7 +81,7 @@ struct random::impl
 
 ///////////////////////////////////////////////////////////////////////////////
 random::random(const buffer_t& b) : pimpl(std::make_unique<impl>()) {
-    pimpl->setup(reinterpret_cast<const unsigned char*>(b.data()), b.size());
+    pimpl->setup(to_const_ptr(b), b.size());
 }
 
 random::random() : pimpl(std::make_unique<impl>()) {
@@ -118,7 +119,7 @@ random::make(size_t length) {
     buffer_t buf(length, '\0');
     c_call(make_chunked,
             pimpl->ctx_,
-            reinterpret_cast<unsigned char*>(&buf.front()),
+            to_ptr(buf),
             length
           );
 
@@ -136,7 +137,7 @@ void
 random::reseed(const buffer_t& custom) {
     c_call(mbedtls_ctr_drbg_reseed,
             &pimpl->ctx_,
-            reinterpret_cast<const unsigned char*>(custom.data()),
+            to_const_ptr(custom),
             custom.size()
           );
 }
@@ -150,7 +151,7 @@ void
 random::update(const buffer_t& additional) {
     mbedtls_ctr_drbg_update(
             &pimpl->ctx_,
-            reinterpret_cast<const unsigned char*>(additional.data()),
+            to_const_ptr(additional),
             additional.size()
           );
 }

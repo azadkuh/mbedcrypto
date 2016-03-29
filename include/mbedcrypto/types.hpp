@@ -163,6 +163,20 @@ template<> inline
 auto from_string(const char* name, pk_t*) -> pk_t {
     return pk_from_string(name);
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// helper function used internally
+inline auto
+to_const_ptr(const buffer_t& b) {
+    return reinterpret_cast<const unsigned char*>(b.data());
+}
+
+inline auto
+to_ptr(buffer_t& b) {
+    return reinterpret_cast<unsigned char*>(&b.front());
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
 ///////////////////////////////////////////////////////////////////////////////
