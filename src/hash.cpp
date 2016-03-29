@@ -2,6 +2,7 @@
 #include "conversions.hpp"
 
 #include <type_traits>
+#include <tuple>
 #include "mbedtls/md.h"
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
