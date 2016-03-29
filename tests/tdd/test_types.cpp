@@ -51,6 +51,12 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
             << (cipher::supports_aes_ni() ? "supports" : "does not support")
             << " AESNI (hardware accelerated AES)";
 
+        auto pks = installed_pks();
+        std::cout << "\nsupports " << pks.size() << " pk (public key) algorithms: ";
+        for ( auto p : pks ) {
+            std::cout << to_string(p) << " , ";
+        }
+
         std::cout << std::endl;
     }
 
