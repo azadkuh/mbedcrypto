@@ -120,6 +120,7 @@ bool supports(pk_t);
 auto installed_hashes()   -> std::vector<hash_t>;
 auto installed_ciphers()  -> std::vector<cipher_t>;
 auto installed_paddings() -> std::vector<padding_t>;
+auto installed_pks()      -> std::vector<pk_t>;
 
 
 // returns true if an algorithm or a type is present at runtime (by name string).
@@ -127,14 +128,18 @@ auto installed_paddings() -> std::vector<padding_t>;
 
 bool supports_hash(const char*);
 bool supports_cipher(const char*);
+bool supports_padding(const char*);
+bool supports_pk(const char*);
 
 auto to_string(hash_t)    -> const char*;
 auto to_string(cipher_t)  -> const char*;
 auto to_string(padding_t) -> const char*;
+auto to_string(pk_t)      -> const char*;
 
 auto hash_from_string(const char*)    -> hash_t;
 auto cipher_from_string(const char*)  -> cipher_t;
 auto padding_from_string(const char*) -> padding_t;
+auto pk_from_string(const char*)      -> pk_t;
 
 template<typename T>
 T from_string(const char* name, T* = nullptr);
@@ -154,6 +159,10 @@ auto from_string(const char* name, padding_t*) -> padding_t {
     return padding_from_string(name);
 }
 
+template<> inline
+auto from_string(const char* name, pk_t*) -> pk_t {
+    return pk_from_string(name);
+}
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
 ///////////////////////////////////////////////////////////////////////////////

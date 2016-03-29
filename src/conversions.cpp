@@ -182,9 +182,9 @@ std::vector<hash_t>
 installed_hashes() {
     std::vector<hash_t> my;
 
-    for ( const auto& p : gHashes ) {
-        if ( mbedtls_md_info_from_type(p.n) != nullptr )
-            my.push_back(p.e);
+    for ( const auto& i : gHashes ) {
+        if ( supports(i.e) )
+            my.push_back(i.e);
     }
 
     return my;
@@ -194,9 +194,33 @@ std::vector<cipher_t>
 installed_ciphers() {
     std::vector<cipher_t> my;
 
-    for ( const auto& p : gCiphers ) {
-        if ( mbedtls_cipher_info_from_type(p.n) != nullptr )
-            my.push_back(p.e);
+    for ( const auto& i : gCiphers ) {
+        if ( supports(i.e) )
+            my.push_back(i.e);
+    }
+
+    return my;
+}
+
+std::vector<padding_t>
+installed_paddings() {
+    std::vector<padding_t> my;
+
+    for ( const auto& i : gPaddings ) {
+       if ( supports(i.e) )
+           my.push_back(i.e);
+    }
+
+    return my;
+}
+
+std::vector<pk_t>
+installed_pks() {
+    std::vector<pk_t> my;
+
+    for ( const auto& i : gPks ) {
+       if ( supports(i.e) )
+           my.push_back(i.e);
     }
 
     return my;
