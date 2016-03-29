@@ -1,8 +1,17 @@
 project(mbedcrypto)
 
+# modify this file to add/remove features and modules from mbedtls
 add_definitions( -DMBEDTLS_CONFIG_FILE=\"../src/mbedtls_config.h\" )
 
-add_library(mbedtls STATIC
+file(GLOB mbedcrypto_src
+    ../include/mbedcrypto/**.hpp
+    ../src/**.hpp
+    ../src/**.cpp
+    )
+
+add_library(mbedcrypto ${mbedcrypto_src})
+# add required mbedtls sources
+target_sources(mbedcrypto PRIVATE
     ../src/mbedtls_config.h
     ../3rdparty/mbedtls/library/error.c
     ../3rdparty/mbedtls/library/base64.c
@@ -33,11 +42,3 @@ add_library(mbedtls STATIC
     ../3rdparty/mbedtls/library/oid.c
     ../3rdparty/mbedtls/library/platform.c
     )
-
-file(GLOB mbedcrypto_src
-    ../include/mbedcrypto/**.hpp
-    ../src/**.hpp
-    ../src/**.cpp
-    )
-add_library(mbedcrypto STATIC ${mbedcrypto_src})
-
