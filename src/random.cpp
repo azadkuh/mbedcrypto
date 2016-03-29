@@ -117,7 +117,7 @@ random::make(unsigned char* buffer, size_t length) noexcept {
 buffer_t
 random::make(size_t length) {
     buffer_t buf(length, '\0');
-    c_call(make_chunked,
+    mbedcrypto_c_call(make_chunked,
             pimpl->ctx_,
             to_ptr(buf),
             length
@@ -128,14 +128,14 @@ random::make(size_t length) {
 
 void
 random::reseed() {
-    c_call(mbedtls_ctr_drbg_reseed,
+    mbedcrypto_c_call(mbedtls_ctr_drbg_reseed,
             &pimpl->ctx_, nullptr, 0
           );
 }
 
 void
 random::reseed(const buffer_t& custom) {
-    c_call(mbedtls_ctr_drbg_reseed,
+    mbedcrypto_c_call(mbedtls_ctr_drbg_reseed,
             &pimpl->ctx_,
             to_const_ptr(custom),
             custom.size()

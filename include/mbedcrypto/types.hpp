@@ -12,6 +12,7 @@
 
 #include "exception.hpp"
 #include <vector>
+#include <memory>
 ///////////////////////////////////////////////////////////////////////////////
 /** the availability of the following types depends on configuraion and build options.
  * types can be added or removed from compilation to optimize final binary size.

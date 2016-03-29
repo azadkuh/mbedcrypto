@@ -1,5 +1,6 @@
 #include "mbedcrypto/tcodec.hpp"
 
+#include <cstring>
 #include "mbedtls/base64.h"
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {

@@ -50,13 +50,15 @@ auto mbedtls_error_string(int err) -> std::string;
 
 /// helper function used internally for throwing an exception if a c mbedtls function fails.
 template<class Func, class... Args> inline void
-c_call(Func&& c_func, Args&&... args) {
+c_call_impl(const char* error_tag, Func&& c_func, Args&&... args) {
     auto ret = c_func(std::forward<Args&&>(args)...);
     if ( ret != 0 )
-        throw exception(ret, "underlying mbedtls function failed");
+        throw exception(ret, error_tag);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
+#define mbedcrypto_c_call(FUNC, ...) \
+    mbedcrypto::c_call_impl(#FUNC, FUNC, __VA_ARGS__)
 ///////////////////////////////////////////////////////////////////////////////
 #endif // MBEDCRYPTO_EXCEPTION_HPP

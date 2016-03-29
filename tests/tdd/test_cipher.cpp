@@ -7,6 +7,7 @@
 #include "src/conversions.hpp"
 
 #include "generator.hpp"
+#include <cstring>
 #include <iostream>
 #include <fstream>
 ///////////////////////////////////////////////////////////////////////////////

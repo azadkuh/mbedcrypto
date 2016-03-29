@@ -40,7 +40,7 @@ struct cipher_impl
 
     void setup(cipher_t type) {
         const auto* cinfot = native_info(type);
-        c_call(mbedtls_cipher_setup, &ctx_, cinfot);
+        mbedcrypto_c_call(mbedtls_cipher_setup, &ctx_, cinfot);
     }
 
     size_t block_size()const noexcept {
@@ -64,7 +64,7 @@ struct cipher_impl
     }
 
     void iv(const buffer_t& iv_data) {
-        c_call(mbedtls_cipher_set_iv,
+        mbedcrypto_c_call(mbedtls_cipher_set_iv,
                 &ctx_,
                 to_const_ptr(iv_data),
                 iv_data.size()
@@ -72,7 +72,7 @@ struct cipher_impl
     }
 
     void key(const buffer_t& key_data, cipher::mode m) {
-        c_call(mbedtls_cipher_setkey,
+        mbedcrypto_c_call(mbedtls_cipher_setkey,
                 &ctx_,
                 to_const_ptr(key_data),
                 key_data.size() << 3, // bitlen
@@ -84,7 +84,7 @@ struct cipher_impl
         if ( p == padding_t::none )
             return; // do nothing!
 
-        c_call(mbedtls_cipher_set_padding_mode,
+        mbedcrypto_c_call(mbedtls_cipher_set_padding_mode,
                 &ctx_,
                 to_native(p)
               );
@@ -172,7 +172,7 @@ class crypt_engine {
         auto* pDes       = to_ptr(output);
 
         if ( chunks_ == 1 ) {
-            c_call(mbedtls_cipher_crypt,
+            mbedcrypto_c_call(mbedtls_cipher_crypt,
                     &cim.ctx_,
                     to_const_ptr(iv),
                     iv.size(),
@@ -185,7 +185,7 @@ class crypt_engine {
 
             for ( size_t i = 0;    i < chunks_;    ++i ) {
                 size_t done_size = 0;
-                c_call(mbedtls_cipher_crypt,
+                mbedcrypto_c_call(mbedtls_cipher_crypt,
                         &cim.ctx_,
                         to_const_ptr(iv),
                         iv.size(),
@@ -316,7 +316,7 @@ cipher::padding(padding_t p) {
 void
 cipher::start() {
     pimpl->iv();
-    c_call(mbedtls_cipher_reset, &pimpl->ctx_);
+    mbedcrypto_c_call(mbedtls_cipher_reset, &pimpl->ctx_);
 }
 
 buffer_t
@@ -335,7 +335,7 @@ cipher::update(const buffer_t& input) {
             throw exception(ret, "failed to update the cipher");
 
     } else {
-        c_call(mbedtls_cipher_update,
+        mbedcrypto_c_call(mbedtls_cipher_update,
                 &pimpl->ctx_,
                 to_const_ptr(input),
                 input.size(),
@@ -365,7 +365,7 @@ cipher::update(size_t count,
             throw exception(ret, "failed to update the cipher");
 
     } else {
-        c_call(mbedtls_cipher_update,
+        mbedcrypto_c_call(mbedtls_cipher_update,
                 &pimpl->ctx_,
                 to_const_ptr(input) + in_index,
                 count,
@@ -400,7 +400,7 @@ cipher::finish() {
     size_t osize = pimpl->block_size() + 32;
     buffer_t output(osize, '\0');
 
-    c_call(mbedtls_cipher_finish,
+    mbedcrypto_c_call(mbedtls_cipher_finish,
             &pimpl->ctx_,
             to_ptr(output),
             &osize
@@ -413,7 +413,7 @@ cipher::finish() {
 size_t
 cipher::finish(buffer_t& output, size_t out_index) {
     size_t fsize = 0;
-    c_call(mbedtls_cipher_finish,
+    mbedcrypto_c_call(mbedtls_cipher_finish,
             &pimpl->ctx_,
             to_ptr(output) + out_index,
             &fsize
@@ -439,7 +439,7 @@ cipher::crypt(const buffer_t& input) {
     auto* out_ptr = to_ptr(output);
 
     size_t out_index = 0;
-    c_call(mbedtls_cipher_update,
+    mbedcrypto_c_call(mbedtls_cipher_update,
             &pimpl->ctx_,
             to_const_ptr(input),
             input.size(),
@@ -448,7 +448,7 @@ cipher::crypt(const buffer_t& input) {
           );
 
     size_t fin_len = 0;
-    c_call(mbedtls_cipher_finish,
+    mbedcrypto_c_call(mbedtls_cipher_finish,
             &pimpl->ctx_,
             out_ptr + out_index,
             &fin_len

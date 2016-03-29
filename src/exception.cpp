@@ -1,6 +1,7 @@
 #include "mbedcrypto/exception.hpp"
 
 #include <sstream>
+#include <cstring>
 #include "mbedtls/error.h"
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {

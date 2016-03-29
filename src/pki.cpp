@@ -74,7 +74,7 @@ struct pki::impl
 
     void setup(pk_t type) {
         const auto* pinfot = native_info(type);
-        c_call(mbedtls_pk_setup,
+        mbedcrypto_c_call(mbedtls_pk_setup,
                 &ctx_,
                 pinfot
               );
@@ -115,7 +115,7 @@ pki::parse_key(const buffer_t& private_key, const buffer_t& password) {
 
     const auto* ppass = (password.size() != 0) ? to_const_ptr(password) : nullptr;
 
-    c_call(mbedtls_pk_parse_key,
+    mbedcrypto_c_call(mbedtls_pk_parse_key,
             &pimpl->ctx_,
             to_const_ptr(private_key),
             private_key.size(),
@@ -132,7 +132,7 @@ pki::parse_public_key(const buffer_t& public_key) {
     // resets
     mbedtls_pk_free(&pimpl->ctx_);
 
-    c_call(mbedtls_pk_parse_public_key,
+    mbedcrypto_c_call(mbedtls_pk_parse_public_key,
         &pimpl->ctx_,
         to_const_ptr(public_key),
         public_key.size()
@@ -150,7 +150,7 @@ pki::load_key(const char* file_path, const buffer_t& password) {
 
     const auto* ppass = (password.size() != 0) ? password.data() : nullptr;
 
-    c_call(mbedtls_pk_parse_keyfile,
+    mbedcrypto_c_call(mbedtls_pk_parse_keyfile,
             &pimpl->ctx_,
             file_path,
             ppass
@@ -166,7 +166,7 @@ pki::load_public_key(const char* file_path) {
     // resets
     mbedtls_pk_free(&pimpl->ctx_);
 
-    c_call(mbedtls_pk_parse_public_keyfile,
+    mbedcrypto_c_call(mbedtls_pk_parse_public_keyfile,
             &pimpl->ctx_,
             file_path
           );
@@ -197,11 +197,12 @@ pki::length()const {
 
 buffer_t
 pki::sign(const buffer_t& hmvalue, hash_t halgo) {
-    const auto& hvalue = hm_prepare{}(this, halgo, hmvalue);
+    hm_prepare hm;
+    const auto& hvalue = hm(this, halgo, hmvalue);
 
-    size_t olen = MBEDTLS_MPI_MAX_SIZE;
+    size_t olen = 32 + (bitlen() >> 3);
     buffer_t output(olen, '\0');
-    c_call(mbedtls_pk_sign,
+    mbedcrypto_c_call(mbedtls_pk_sign,
             &pimpl->ctx_,
             to_native(halgo),
             to_const_ptr(hvalue),
@@ -219,7 +220,8 @@ pki::sign(const buffer_t& hmvalue, hash_t halgo) {
 bool
 pki::verify(const buffer_t& signature,
         const buffer_t& hm_value, hash_t hash_type) {
-    const auto& hvalue = hm_prepare{}(this, hash_type, hm_value);
+    hm_prepare hm;
+    const auto& hvalue = hm(this, hash_type, hm_value);
 
     int ret = mbedtls_pk_verify(&pimpl->ctx_,
             to_native(hash_type),
@@ -247,11 +249,12 @@ pki::verify(const buffer_t& signature,
 
 buffer_t
 pki::encrypt(const buffer_t& hmvalue, hash_t hash_type) {
-    const auto& hvalue = hm_prepare{}(this, hash_type, hmvalue);
+    hm_prepare hm;
+    const auto& hvalue = hm(this, hash_type, hmvalue);
 
-    size_t olen = MBEDTLS_MPI_MAX_SIZE;
+    size_t olen = 32 + (bitlen() >> 3);
     buffer_t output(olen, '\0');
-    c_call(mbedtls_pk_encrypt,
+    mbedcrypto_c_call(mbedtls_pk_encrypt,
             &pimpl->ctx_,
             to_const_ptr(hvalue),
             hvalue.size(),
@@ -271,10 +274,10 @@ pki::decrypt(const buffer_t& encrypted_value) {
     if ( (encrypted_value.size() << 3) > bitlen() )
         throw exception("the encrypted value is larger than the key size");
 
-    size_t olen = MBEDTLS_MPI_MAX_SIZE;
+    size_t olen = 32 + (bitlen() >> 3);
     buffer_t output(olen, '\0');
 
-    c_call(mbedtls_pk_decrypt,
+    mbedcrypto_c_call(mbedtls_pk_decrypt,
             &pimpl->ctx_,
             to_const_ptr(encrypted_value),
             encrypted_value.size(),

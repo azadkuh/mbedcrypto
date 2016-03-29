@@ -1,4 +1,5 @@
 #include <catch.hpp>
+#include <cstring>
 #include "mbedcrypto/types.hpp"
 #include "mbedtls/md.h"
 

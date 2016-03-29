@@ -44,7 +44,7 @@ struct impl_base {
 
     void setup(hash_t type, bool hmac) {
         const auto* cinfot = native_type(type);
-        c_call(mbedtls_md_setup, &ctx_, cinfot, (hmac) ? 1 : 0);
+        mbedcrypto_c_call(mbedtls_md_setup, &ctx_, cinfot, (hmac) ? 1 : 0);
     }
 
     size_t size() const {
@@ -89,7 +89,7 @@ buffer_t
 hash::make(hash_t type, const unsigned char* src, size_t length) {
     auto digest = digest_pair(type);
 
-    c_call(mbedtls_md,
+    mbedcrypto_c_call(mbedtls_md,
             std::get<0>(digest),
             src, length,
             to_ptr(std::get<1>(digest))
@@ -103,7 +103,7 @@ hash::of_file(hash_t type, const char* filePath) {
 #if defined(MBEDTLS_FS_IO)
     auto digest = digest_pair(type);
 
-    c_call(mbedtls_md_file,
+    mbedcrypto_c_call(mbedtls_md_file,
             std::get<0>(digest),
             filePath,
             to_ptr(std::get<1>(digest))
@@ -122,7 +122,7 @@ hmac::make(hash_t type, const buffer_t& key,
         const unsigned char* src, size_t length) {
     auto digest = digest_pair(type);
 
-    c_call(mbedtls_md_hmac,
+    mbedcrypto_c_call(mbedtls_md_hmac,
             std::get<0>(digest),
             to_const_ptr(key), key.size(),
             src, length,
@@ -134,19 +134,19 @@ hmac::make(hash_t type, const buffer_t& key,
 
 void
 hash::start() {
-    c_call(mbedtls_md_starts, &pimpl->ctx_);
+    mbedcrypto_c_call(mbedtls_md_starts, &pimpl->ctx_);
 }
 
 void
 hash::update(const unsigned char* src, size_t length) {
-    c_call(mbedtls_md_update, &pimpl->ctx_,
+    mbedcrypto_c_call(mbedtls_md_update, &pimpl->ctx_,
             src, length);
 }
 
 buffer_t
 hash::finish() {
     buffer_t digest(pimpl->size(), '\0');
-    c_call(mbedtls_md_finish, &pimpl->ctx_,
+    mbedcrypto_c_call(mbedtls_md_finish, &pimpl->ctx_,
             to_ptr(digest)
             );
 
@@ -155,7 +155,7 @@ hash::finish() {
 
 void
 hmac::start(const buffer_t& key) {
-    c_call(mbedtls_md_hmac_starts, &pimpl->ctx_,
+    mbedcrypto_c_call(mbedtls_md_hmac_starts, &pimpl->ctx_,
             to_const_ptr(key),
             key.size()
           );
@@ -163,19 +163,19 @@ hmac::start(const buffer_t& key) {
 
 void
 hmac::start() {
-    c_call(mbedtls_md_hmac_reset, &pimpl->ctx_);
+    mbedcrypto_c_call(mbedtls_md_hmac_reset, &pimpl->ctx_);
 }
 
 void
 hmac::update(const unsigned char* src, size_t length) {
-    c_call(mbedtls_md_hmac_update, &pimpl->ctx_,
+    mbedcrypto_c_call(mbedtls_md_hmac_update, &pimpl->ctx_,
             src, length);
 }
 
 buffer_t
 hmac::finish() {
     buffer_t digest(pimpl->size(), '\0');
-    c_call(mbedtls_md_hmac_finish, &pimpl->ctx_,
+    mbedcrypto_c_call(mbedtls_md_hmac_finish, &pimpl->ctx_,
             to_ptr(digest)
             );
 
