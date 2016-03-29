@@ -7,6 +7,7 @@
 #include "src/conversions.hpp"
 
 #include "generator.hpp"
+#include <cstring>
 #include <iostream>
 #include <fstream>
 ///////////////////////////////////////////////////////////////////////////////
@@ -79,17 +80,19 @@ TEST_CASE("pki cryptography", "[pki]") {
     }
 
     SECTION("encrypt and decrypt") {
+        const std::string message(test::long_text());
+        const auto hvalue = hash::make(hash_t::sha256, message);
+
         pki pke;
         pke.parse_public_key(test::sample_public_key());
 
-        REQUIRE_THROWS( pke.encrypt(test::long_text()) );
-        auto encv = pke.encrypt(test::long_text(), hash_t::sha256);
+        REQUIRE_THROWS( pke.encrypt(message) );
+        auto encv = pke.encrypt(message, hash_t::sha256);
 
         pki pkd;
         pkd.parse_key(test::sample_private_key());
-        REQUIRE_THROWS( pkd.decrypt(test::long_text()) );
-        auto hvalue = hash::make(hash_t::sha256, test::long_text());
-        auto decv   = pkd.decrypt(encv);
+        REQUIRE_THROWS( pkd.decrypt(message) );
+        auto decv = pkd.decrypt(encv);
         REQUIRE( decv == hvalue );
     }
 }
