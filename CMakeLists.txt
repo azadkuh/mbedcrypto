@@ -6,16 +6,10 @@ option(BUILD_SHARED_LIBS
 include(CheckCXXCompilerFlag)
 
 if ( CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "GNU" )
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g0 -Wall -Wextra"
-       " -pedantic -Wcast-align -Wunused -Wno-unused-parameter"
-       )
-    set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_CXX_FLAGS}"
-       " -std=c++1y -Wnon-virtual-dtor -Woverloaded-virtual"
-       )
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g0 -Wall -Wextra -pedantic -Wcast-align -Wunused -Wno-unused-parameter")
+    set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_CXX_FLAGS} -std=c++1y -Wnon-virtual-dtor -Woverloaded-virtual")
 elseif ( CMAKE_C_COMPILER_ID STREQUAL "MSVC" )
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -nologo -Zm200 -Zc:wchar_t"
-       " -FS -O2 -MD -Zc:strictStrings -W3"
-       )
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -nologo -Zm200 -Zc:wchar_t -FS -O2 -MD -Zc:strictStrings -W3")
     if (BUILD_SHARED_LIBS)
         add_definitions(-DMBEDCRYPTO_DYNAMIC -DMBEDCRYPTO_EXPORT)
         message(SEND_ERROR
