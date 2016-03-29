@@ -20,8 +20,9 @@
 #       else // MBEDCRYPTO_EXPORT
 #           define MBEDCRYPTO_API __declspec(dllimport)
 #       endif // MBEDCRYPTO_EXPORT
+#   else // MBEDCYPTO_DYNAMIC
+#       define MBEDCRYPTO_API
 #   endif // MBEDCRYPTO_DYNAMIC
-#   define MBEDCRYPTO_API
 #else // WIN32
 #   define MBEDCRYPTO_API
 #endif // WIN32
