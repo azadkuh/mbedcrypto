@@ -102,11 +102,11 @@ enum class padding_t {
 enum class pk_t {
     none,           ///< unknwon or invalid
     rsa,
-    eckey,
-    eckey_dh,
-    ecdsa,
+    eckey,          ///< elliptic key
+    eckey_dh,       ///< elliptic key Diffie–Hellman
+    ecdsa,          ///< elliptic key digital signature algorithm
     rsa_alt,
-    rsassa_pss,
+    rsassa_pss,     ///< RSA standard signature algorithm, probabilistic signature scheme
 };
 
 ///////////////////////////////////////////////////////////////////////////////
