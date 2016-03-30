@@ -100,8 +100,8 @@ enum class padding_t {
 
 /// all possible public key algorithms (PKI types), RSA is included in default build.
 enum class pk_t {
-    none,           ///< unknwon or invalid
-    rsa,
+    none,           ///< unknown or invalid
+    rsa,            ///< RSA (default)
     eckey,          ///< elliptic key
     eckey_dh,       ///< elliptic key Diffie–Hellman
     ecdsa,          ///< elliptic key digital signature algorithm

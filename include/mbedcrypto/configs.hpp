@@ -12,7 +12,18 @@
 
 #include <string>
 ///////////////////////////////////////////////////////////////////////////////
-// win32 stuff
+namespace mbedcrypto {
+
+/// std::string is able to hold both TEXT and Binary data.
+/// as encryption is frequently being used with both text strings and binaries,
+///  std::string is more convenient than std::vector<unsigned char> or
+///  std::basic_string<unsigned char>.
+/// although std::vector<unsigned char> is a better options for binary contents.
+using buffer_t = std::string;
+
+} // namespace mbedcrypto
+///////////////////////////////////////////////////////////////////////////////
+// win32 shared lib stuff for future updates, not implented yet
 #if defined(WIN32)
 #   if defined(MBEDCRYPTO_DYNAMIC)
 #       if defined(MBEDCRYPTO_EXPORT)
@@ -26,17 +37,5 @@
 #else // WIN32
 #   define MBEDCRYPTO_API
 #endif // WIN32
-///////////////////////////////////////////////////////////////////////////////
-namespace mbedcrypto {
-
-/// std::string is able to hold both TEXT and Binary data.
-/// as encryption is frequently being used with both text strings and binaries,
-///  std::string is more convenient than std::vector<unsigned char> or
-///  std::basic_string<unsigned char>.
-/// although std::vector<unsigned char> is a better options for binary contents.
-using buffer_t = std::string;
-
-} // namespace mbedcrypto
-
 ///////////////////////////////////////////////////////////////////////////////
 #endif // MBEDCRYPTO_CONFIGS_HPP
