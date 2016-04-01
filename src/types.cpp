@@ -1,6 +1,5 @@
 #include "mbedcrypto/types.hpp"
 #include "conversions.hpp"
-#include "src/mbedtls_config.h"
 
 #include <algorithm>
 #include <cctype>

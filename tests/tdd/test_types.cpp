@@ -2,7 +2,7 @@
 #include <iostream>
 #include <initializer_list>
 
-#include "src/mbedtls_config.h"
+#include "mbedcrypto_mbedtls_config.h"
 #include "mbedcrypto/cipher.hpp"
 #include "generator.hpp"
 

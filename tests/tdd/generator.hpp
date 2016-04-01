@@ -66,6 +66,8 @@ chunker(size_t chunk_size, const BufferT& src, Func&& func, Args&&... args) {
         func(data + src.size() - residue, residue, std::forward<Args&&>(args)...);
 }
 
+/// dumps content of data as binary to filename
+void dump_to_file(const buffer_t& data, const char* filename);
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace test
 } // namespace mbedcrypto

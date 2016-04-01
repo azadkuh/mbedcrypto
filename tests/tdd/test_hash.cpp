@@ -1,7 +1,7 @@
 #include <catch.hpp>
 #include <iostream>
 
-#include "src/mbedtls_config.h"
+#include "mbedcrypto_mbedtls_config.h"
 #include "generator.hpp"
 #include "mbedcrypto/tcodec.hpp"
 #include "mbedcrypto/hash.hpp"
@@ -102,8 +102,8 @@ TEST_CASE("hash tests", "[hash]") {
         const char hmac_ripemd160[] = "d8a3cd3129090b0fff57f6ade2a33e2d67c4c0a2";
 
         REQUIRE( hash_size(hash_t::ripemd160) == 20 );
-        REQUIRE( to_hex(make_hash(hash_t::ripemd160, src)) == long_ripemd160() );
-        REQUIRE( to_hex(make_hmac(hash_t::ripemd160, key, src)) == hmac_ripemd160() );
+        REQUIRE( to_hex(make_hash(hash_t::ripemd160, src))      == hash_ripemd160 );
+        REQUIRE( to_hex(make_hmac(hash_t::ripemd160, key, src)) == hmac_ripemd160 );
         #endif // MBEDTLS_RIPEMD160_C
     }
 

@@ -1,5 +1,6 @@
 #include "generator.hpp"
 
+#include <fstream>
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
 namespace test {
@@ -75,6 +76,12 @@ const unsigned char SignatureSha1[] = {
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace anon
 ///////////////////////////////////////////////////////////////////////////////
+
+void
+dump_to_file(const buffer_t& data, const char* filename) {
+    std::fstream f(filename, std::fstream::out | std::fstream::binary);
+    f << data;
+}
 
 const char*
 short_text() {

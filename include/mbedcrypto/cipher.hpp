@@ -24,7 +24,7 @@ enum class cipher_bm {
     ctr,        ///< counter, not padding, custom input size
     gcm,        ///< Galois/counter mode
     stream,     ///< as in arc4_128 or null ciphers
-    ccm,        ///< = cbc + mac
+    ccm,        ///< counter with cbc-mac (not yet supported)
 };
 
 class cipher
