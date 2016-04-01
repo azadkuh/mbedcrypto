@@ -9,7 +9,6 @@
 #include "generator.hpp"
 #include <cstring>
 #include <iostream>
-#include <fstream>
 ///////////////////////////////////////////////////////////////////////////////
 namespace {
 using namespace mbedcrypto;
@@ -41,6 +40,8 @@ padding_of(cipher_bm bm) {
         case cipher_bm::ecb:
         case cipher_bm::cfb:
         case cipher_bm::ctr:
+        case cipher_bm::stream:
+        case cipher_bm::gcm:
             return padding_t::none;
 
         default:
@@ -57,10 +58,14 @@ chunk_size_of(cipher_t ct) {
         case cipher_bm::cbc:
         case cipher_bm::cfb:
         case cipher_bm::ctr:
+        case cipher_bm::stream:
+        case cipher_bm::gcm:
+        case cipher_bm::ccm:
             return 160; // custom value, could be any value > 0
 
         default:
-            throw std::logic_error("invalid cipher type");
+            throw std::logic_error(std::string("invalid cipher type: ")
+                    + to_string(ct));
             return 0;
     }
 }
@@ -74,9 +79,11 @@ make_input(cipher_bm bm, size_t bs, mbedcrypto::random& drbg) {
         case cipher_bm::cbc:
         case cipher_bm::cfb:
         case cipher_bm::ctr:
+        case cipher_bm::stream:
+        case cipher_bm::gcm:
             return drbg.make(3241);
 
-        default:
+        default: // not supported types
             return buffer_t();
     }
 }
@@ -157,23 +164,23 @@ TEST_CASE("test ciphers against mbedtls", "[cipher]") {
 
     const auto types = installed_ciphers();
     for ( auto ct : types ) {
-        auto block_mode    = cipher::block_mode(ct);
-        auto block_size    = cipher::block_size(ct);
-        auto key_len       = cipher::key_bitlen(ct) / 8; // bits to bytes
-        auto iv_len        = cipher::iv_size(ct);
-        size_t chunk_size  = chunk_size_of(ct);
-
-        const auto iv      = drbg.make(iv_len);
-        const auto key     = drbg.make(key_len);
-        const auto padding = padding_of(block_mode);
-        const auto input   = make_input(block_mode, block_size, drbg);
-
-        if ( input.empty() ) {
-            std::cerr << "no input for: " << to_string(ct) << std::endl;
-            continue;
-        }
-
         try {
+            auto block_mode    = cipher::block_mode(ct);
+            auto block_size    = cipher::block_size(ct);
+            auto key_len       = cipher::key_bitlen(ct) / 8; // bits to bytes
+            auto iv_len        = cipher::iv_size(ct);
+            size_t chunk_size  = chunk_size_of(ct);
+
+            const auto iv      = drbg.make(iv_len);
+            const auto key     = drbg.make(key_len);
+            const auto padding = padding_of(block_mode);
+            const auto input   = make_input(block_mode, block_size, drbg);
+
+            if ( input.empty() ) {
+                std::cerr << "not supported yet: " << to_string(ct) << std::endl;
+                continue;
+            }
+
             // single shot calls
             auto enc1 = cipher::encrypt(
                     ct, padding,
@@ -202,7 +209,9 @@ TEST_CASE("test ciphers against mbedtls", "[cipher]") {
 
             // by many chunked updates
             auto enc3 = chunker(chunk_size, input, cipenc);
-            REQUIRE( (enc3 == enc1) );
+            // in arc4 the encrypted data may be different (no iv in arc4)
+            if ( block_mode != cipher_bm::stream   &&   block_mode != cipher_bm::gcm )
+                REQUIRE( (enc3 == enc1) );
 
             cipher cipdec(ct);
             cipdec
