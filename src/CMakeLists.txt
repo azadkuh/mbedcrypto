@@ -1,7 +1,7 @@
 project(mbedcrypto)
 
 # modify this file to add/remove features and modules from mbedtls
-add_definitions( -DMBEDTLS_CONFIG_FILE=\"../src/mbedtls_config.h\" )
+add_definitions( -DMBEDTLS_CONFIG_FILE=\"mbedcrypto_mbedtls_config.h\" )
 
 file(GLOB mbedcrypto_src
     ../include/mbedcrypto/**.hpp
@@ -10,35 +10,93 @@ file(GLOB mbedcrypto_src
     )
 
 add_library(mbedcrypto ${mbedcrypto_src})
-# add required mbedtls sources
-target_sources(mbedcrypto PRIVATE
-    ../src/mbedtls_config.h
-    ../3rdparty/mbedtls/library/error.c
-    ../3rdparty/mbedtls/library/base64.c
-    ../3rdparty/mbedtls/library/md4.c
-    ../3rdparty/mbedtls/library/md5.c
-    ../3rdparty/mbedtls/library/sha1.c
-    ../3rdparty/mbedtls/library/sha256.c
-    ../3rdparty/mbedtls/library/sha512.c
-    ../3rdparty/mbedtls/library/md_wrap.c
-    ../3rdparty/mbedtls/library/md.c
-    ../3rdparty/mbedtls/library/blowfish.c
-    ../3rdparty/mbedtls/library/aes.c
-    ../3rdparty/mbedtls/library/aesni.c
-    ../3rdparty/mbedtls/library/des.c
-    ../3rdparty/mbedtls/library/cipher_wrap.c
-    ../3rdparty/mbedtls/library/cipher.c
-    ../3rdparty/mbedtls/library/entropy.c
-    ../3rdparty/mbedtls/library/entropy_poll.c
-    ../3rdparty/mbedtls/library/ctr_drbg.c
-    ../3rdparty/mbedtls/library/rsa.c
-    ../3rdparty/mbedtls/library/pem.c
-    ../3rdparty/mbedtls/library/bignum.c
-    ../3rdparty/mbedtls/library/oid.c
-    ../3rdparty/mbedtls/library/asn1parse.c
-    ../3rdparty/mbedtls/library/pkparse.c
-    ../3rdparty/mbedtls/library/pk_wrap.c
-    ../3rdparty/mbedtls/library/pk.c
-    ../3rdparty/mbedtls/library/oid.c
-    ../3rdparty/mbedtls/library/platform.c
+set_target_properties(mbedcrypto PROPERTIES
+    SOVERSION 1
+    VERSION 1.0.0
     )
+
+# add mandatory mbedtls sources
+set(MBEDTLS_PATH "../3rdparty/mbedtls/library")
+target_sources(mbedcrypto PRIVATE
+    ${MBEDTLS_PATH}/error.c
+    ${MBEDTLS_PATH}/base64.c
+    ${MBEDTLS_PATH}/md5.c
+    ${MBEDTLS_PATH}/sha1.c
+    ${MBEDTLS_PATH}/sha256.c
+    ${MBEDTLS_PATH}/sha512.c
+    ${MBEDTLS_PATH}/md_wrap.c
+    ${MBEDTLS_PATH}/md.c
+    ${MBEDTLS_PATH}/aes.c
+    ${MBEDTLS_PATH}/aesni.c
+    ${MBEDTLS_PATH}/cipher_wrap.c
+    ${MBEDTLS_PATH}/cipher.c
+    ${MBEDTLS_PATH}/entropy.c
+    ${MBEDTLS_PATH}/entropy_poll.c
+    ${MBEDTLS_PATH}/ctr_drbg.c
+    ${MBEDTLS_PATH}/rsa.c
+    ${MBEDTLS_PATH}/pem.c
+    ${MBEDTLS_PATH}/bignum.c
+    ${MBEDTLS_PATH}/oid.c
+    ${MBEDTLS_PATH}/asn1parse.c
+    ${MBEDTLS_PATH}/pkparse.c
+    ${MBEDTLS_PATH}/pk_wrap.c
+    ${MBEDTLS_PATH}/pk.c
+    ${MBEDTLS_PATH}/oid.c
+    ${MBEDTLS_PATH}/platform.c
+    )
+
+#optional mbedtls definitions and sources based on specified options
+
+if(BUILD_MD2)
+    set(MBEDTLS_MD2_C ON)
+    target_sources(mbedcrypto PRIVATE ${MBEDTLS_PATH}/md2.c)
+endif()
+if(BUILD_MD4)
+    set(MBEDTLS_MD4_C ON)
+    target_sources(mbedcrypto PRIVATE ${MBEDTLS_PATH}/md4.c)
+endif()
+if(BUILD_RIPEMD160)
+    set(MBEDTLS_RIPEMD160_C ON)
+    target_sources(mbedcrypto PRIVATE ${MBEDTLS_PATH}/ripemd160.c)
+endif()
+
+if(BUILD_ALL_CIPHER_PADDINGS)
+    set(MBEDTLS_CIPHER_PADDING_ONE_AND_ZEROS ON)
+    set(MBEDTLS_CIPHER_PADDING_ZEROS_AND_LEN ON)
+    set(MBEDTLS_CIPHER_PADDING_ZEROS ON)
+endif()
+
+if(BUILD_CFB)
+    set(MBEDTLS_CIPHER_MODE_CFB ON)
+endif()
+if(BUILD_CTR)
+    set(MBEDTLS_CIPHER_MODE_CTR ON)
+endif()
+if(BUILD_GCM)
+    set(MBEDTLS_GCM_C ON)
+    target_sources(mbedcrypto PRIVATE ${MBEDTLS_PATH}/gcm.c)
+endif()
+if(BUILD_CCM)
+    set(MBEDTLS_CCM_C ON)
+    target_sources(mbedcrypto PRIVATE ${MBEDTLS_PATH}/ccm.c)
+endif()
+
+if(BUILD_DES)
+    set(MBEDTLS_DES_C ON)
+    target_sources(mbedcrypto PRIVATE ${MBEDTLS_PATH}/des.c)
+endif()
+if(BUILD_BLOWFISH)
+    set(MBEDTLS_BLOWFISH_C ON)
+    target_sources(mbedcrypto PRIVATE ${MBEDTLS_PATH}/blowfish.c)
+endif()
+if(BUILD_CAMELLIA)
+    set(MBEDTLS_CAMELLIA_C ON)
+    target_sources(mbedcrypto PRIVATE ${MBEDTLS_PATH}/camellia.c)
+endif()
+if(BUILD_ARC4)
+    set(MBEDTLS_ARC4_C ON)
+    target_sources(mbedcrypto PRIVATE ${MBEDTLS_PATH}/arc4.c)
+endif()
+
+
+configure_file(mbedcrypto_mbedtls_config.h.in ${CMAKE_BINARY_DIR}/mbedcrypto_mbedtls_config.h)

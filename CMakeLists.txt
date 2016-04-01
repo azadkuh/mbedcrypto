@@ -1,8 +1,31 @@
 cmake_minimum_required(VERSION 3.0)
-option(BUILD_SHARED_LIBS
-    "build mbedcrypto as a unix shared (so/dylib) library"
-    OFF)
 
+option(BUILD_SHARED_LIBS "build mbedcrypto as a unix shared (so/dylib) library" OFF)
+option(BUILD_TESTS "build test units and apps" ON)
+
+# optional hash algorithms:
+option(BUILD_MD2       "enable md2 hash (unsecure and deprecated)" OFF)
+option(BUILD_MD4       "enable md4 hash" OFF)
+option(BUILD_RIPEMD160 "enable ripemd160 hash" OFF)
+
+# optional cipher padding modes: (pkc7 is always built and does not depend on this option)
+option(BUILD_ALL_CIPHER_PADDINGS
+    "add one_and_zeros, zeros_and_length and zeros modes"
+    ON)
+
+# optional cipher block modes:
+option(BUILD_CFB "enable cfb (cipher feedback mode)" ON)
+option(BUILD_CTR "enable ctr (cipher counter mode)" ON)
+option(BUILD_GCM "enable gcm (Galois cipher mode)" OFF)
+option(BUILD_CCM "enable ccm (counter cbc-mac cipher mode)" OFF)
+
+# optional cipher algorithms:
+option(BUILD_DES      "enable des and triple-des cipher" ON)
+option(BUILD_BLOWFISH "enable blowfish cipher" OFF)
+option(BUILD_CAMELLIA "enable camellia cipher" OFF)
+option(BUILD_ARC4     "enable arc4 cipher" OFF)
+
+# compiler checks and flags
 include(CheckCXXCompilerFlag)
 
 if(CMAKE_C_COMPILER_ID MATCHES ".*Clang" OR CMAKE_C_COMPILER_ID MATCHES "GNU")
@@ -28,15 +51,19 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin" AND BUILD_SHARED_LIBS)
 endif()
 
 
-include_directories(.
-    ./include
-    ./3rdparty/mbedtls/include
-    ./3rdparty/Catch/single_include
-    )
-
+# output directory
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/xbin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/xbin)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/xbin)
 
+include_directories(.
+    ./include
+    ./3rdparty/mbedtls/include
+    ./3rdparty/Catch/single_include
+    ${CMAKE_CURRENT_BINARY_DIR}
+    )
+
 add_subdirectory(src)
-add_subdirectory(tests)
+if(BUILD_TESTS)
+    add_subdirectory(tests)
+endif()
