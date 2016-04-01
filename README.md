@@ -16,9 +16,9 @@ a sister project for `Qt5` developers is available as [qpolarssl](https://github
 - *low dependency*:
   - the `mbedtls`<sup>[note](#mbedtls)</sup> as underlying cryptography engine, is the only mandatory dependency.
   - [catch](https://github.com/philsquared/Catch): only for unit testing.
-  - `cmake` (or optionally `premake5`) for building the library and the unit test app.
+  - `cmake` for building the library and the unit test app.
 - *high+low level*: both high level (c++ objects / exception) and low level (c pointer / error code) functions are available. see [samples](#usage)
-- *highly configurable*: by updating [src/mbedtls_config.h](./src/mbedtls_config.h) adding or removing algorithms are quite easy.
+- *highly configurable*: to add or remove the algorithms, simply change `cmake` build options. see [build options](#build-options)
 
 
 ## supported algorithms
@@ -29,26 +29,24 @@ following algorithms are included in `mbedcrypto` in *default build* (see [sampl
   - `base64`
 
 - **hashes (message digest)**: see [samples](#hashes)
-  - `md4`
   - `md5`
   - `sha1`
   - `sha224` / `sha256`
   - `sha384` / `sha512`
   - `hmac`
-  - optional hashes: `ripemd160`, `md2` (deprecated)
+  - optional hashes: `ripemd160`, `md4`, `md2` (deprecated)
 
 - **ciphers (symmetric)**: see [samples](#ciphers)
   - `aes` (128, 192, 256 bits) and `aes-ni` (hardware accelerated)
-  - `des` and `3des` (triple des)
-  - `blowfish`
-  - optional ciphers: `camellia` and `arc4`
+  - `des` and `3des` (triple-des)
+  - optional ciphers: `blowfish`, `camellia` and `arc4`
 
 - **cipher block modes**:
   - `ecb` electronic codebook
   - `cbc` cipher block chaining
   - `cfb` cipher feedback
   - `ctr` counter mode
-  - optional block modes: `gcm` Galois/counter mode, `stream` (for `arc4`) and `ccm` (= cbc + mac)
+  - optional block modes: `gcm` Galois/counter mode, `stream` (for `arc4`) and `ccm` (counter cbc-mac)
 
 - **paddings**:
   - `pkcs7`
@@ -63,52 +61,51 @@ following algorithms are included in `mbedcrypto` in *default build* (see [sampl
   - `rsa`
   - optional pks: `eckey` elliptic curve, `eckey_dh` elliptic key Diffie–Hellman, `ecdsa` elliptic key digital signature algorithm, `rsa_alt` and `rsassa_pss` RSA standard signature algorithm, probabilistic signature scheme
 
+total number of supported algorithms:
+
+- hashes: 9
+- paddings: 5
+- ciphers: 47
+- pki: 6
+
+see [types.hpp](./include/mbedcrypto/types.hpp)
 
 
 ## setup
 after cloning this repository, first update the dependencies:
 ```bash
 # on mbedcrypto directory
-$> ./update-dependencies.sh
+$medcrypto/> ./update-dependencies.sh
 ```
-this script automatically setups `3rdparty` directory, then tries to fetch or update dependencies from github.
+this script automatically setups `3rdparty` directory, then tries to pull or update dependencies from github.
 
-there are two methods to build the `mbedcrypto`, although my `premake5` script may have less feature or maintained less frequently than the `cmake` one.
-
-### cmake
-to make the project by `cmake`:
+then:
 ```bash
-$> mkdir build
-$> cd build
+$medcrypto/> mkdir build
+$medcrypto/> cd build
 
 # under Linux or OS X
-$> cmake ..
-$> make
+$build/> cmake ..
+$build/> make
 
 # under Windows (MSVC)
-$> cmake ..
-$> cmake --build . --config Release
+$build/> cmake ..
+$build/> cmake --build . --config Release
 ```
-
 
 optionally if you use `gcc` or `clang`, you can also build `mbedcrypto` as a shared library as:
 ```bash
-$> cmake .. -DBUILD_SHARED_LIBS=ON
-$> make
+$build/> cmake .. -DBUILD_SHARED_LIBS=ON
+$build/> make
 ```
 
-### premake5
-it's also possible to build the project by `premake5` as:
+### build options
+to add or remove algorithms, change [CMakeLists.txt](./CMakeLists.txt) options or set them via command line:
 ```bash
-# on mbedcrypto directory
+$build/> cmake .. -DBUILD_MD4=ON -DBUILD_ARC4=ON -DBUILD_DES=OFF
 
-# under Linux / OSX
-$> premake5 gmake
-$> make
-
-# under Windows (MSVC)
-$> premake5.exe vs2015 # or any other installed toolset
-$> msbuild.exe mbedcrypto.sln /p:Configuration=Release
+# to disable making of the test app:
+$build/> cmake .. -DBUILD_TESTS=OFF
 ```
 
 > the `mbedcrypto` library and the companion unit test app would be built on `xbin` directory.
@@ -359,6 +356,26 @@ REQUIRE( decv == hvalue );
 ```
 
 see [pki.hpp](./include/mbedcrypto/pki.hpp)
+
+---
+
+## tests
+samples and unit tests are available under [tests/tdd](./tests/tdd/) folder.
+
+the test application has been built by [catch](https://github.com/philsquared/Catch):
+```bash
+$xbin/> ./tests -t
+All available tags:
+   1  [base64]
+   2  [cipher]
+   1  [exception]
+   1  [hash]
+   1  [hex]
+   2  [pki]
+   1  [random]
+   4  [types]
+8 tags
+```
 
 ---
 
