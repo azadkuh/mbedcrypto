@@ -14,7 +14,7 @@
 #include <vector>
 #include <memory>
 ///////////////////////////////////////////////////////////////////////////////
-/** the availability of the following types depends on configuraion and build options.
+/** the availability of the following types depends on configuration and build options.
  * types can be added or removed from compilation to optimize final binary size.
  * for each type there is a utility function to check the availability at runtime.
  * @sa supports()
@@ -22,21 +22,30 @@
 namespace mbedcrypto {
 ///////////////////////////////////////////////////////////////////////////////
 
-/// all possible supported hash (message-digest) types in mbedtls.
+/// all possible supported hash (message-digest) types in mbedcrypto.
+/// hints:
+/// @warning md2 is unsecure and deprecated, md4 is no much better.
+/// @warning using md5 and sha1 are insecure for password hashing,
+///  and more susceptible to hardware-accelerated attacks.
 enum class hash_t {
     none,        ///< invalid or unknown
-    md2,
-    md4,
+    md2,         ///< unsecure and unacceptable
+    md4,         ///< not recommended
     md5,
     sha1,
     sha224,
     sha256,
     sha384,
     sha512,
-    ripemd160,
+    ripemd160,   ///< no publicly known attack, but old and outdated bit size (160)
 };
 
-/// all possible supported cipher types in mbedtls.
+/// all possible supported cipher types in mbedcrypto.
+/// hints:
+/// @warning blowfish is known to be susceptible to attacks when using weak keys,
+///  you'd be better to use aes or twofish instead.
+/// @warning arc4 is a stream cipher with serious weaknesses in its initial stream output,
+///  Its use is strongly discouraged. arc4 does not use mode constructions.
 enum class cipher_t {
     none,             ///< invalid or unknown
     null,

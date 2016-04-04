@@ -16,14 +16,25 @@ namespace mbedcrypto {
 ///////////////////////////////////////////////////////////////////////////////
 
 /// block mode: https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation
+/// hints:
+/// ebc so fast, not cryptographically strong
+///  input size must be = N * block_size, so no padding is required
+/// cbc is slow and cryptographically strong
+///  needs iv and padding
+/// cfb needs iv, no padding
+/// ctr is fast and strong only with ciphers that have block_size() >= 128bits
+///  needs iv, does not require padding, transforms a block to stream
+/// gcm is fast and strong if tag size is not smaller than 96bits
+///  used in aead (authenticated encryption with additional data)
+///  needs iv, does not require padding
 enum class cipher_bm {
     none,       ///< none or unknown
-    ecb,        ///< electronic codebook, no padding, input size = N * block_size
-    cbc,        ///< cipher block chaining, requires padding, custom input size
-    cfb,        ///< cipher feedback, no padding, custom input size
-    ctr,        ///< counter, not padding, custom input size
+    ecb,        ///< electronic codebook, input size = N * block_size
+    cbc,        ///< cipher block chaining, custom input size
+    cfb,        ///< cipher feedback, custom input size
+    ctr,        ///< counter, custom input size
     gcm,        ///< Galois/counter mode
-    stream,     ///< as in arc4_128 or null ciphers
+    stream,     ///< as in arc4_128 or null ciphers (unsecure)
     ccm,        ///< counter with cbc-mac (not yet supported)
 };
 
