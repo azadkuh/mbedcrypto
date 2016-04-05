@@ -46,7 +46,8 @@ following algorithms are included in `mbedcrypto` in *default build* (see [sampl
   - `cbc` cipher block chaining
   - `cfb` cipher feedback
   - `ctr` counter mode
-  - optional block modes: `gcm` Galois/counter mode, `stream` (for `arc4`) and `ccm` (counter cbc-mac)
+  - optional block modes: `stream` (for `arc4`)
+  - optional [AEAD](https://en.wikipedia.org/wiki/Authenticated_encryption) block modes: `gcm` Galois/counter mode and `ccm` (counter cbc-mac)
 
 - **paddings**:
   - `pkcs7`
@@ -278,7 +279,36 @@ auto decrypted_buffer = cipher::decrypt(
 REQUIRE( source_plain_data == decrypted_buffer );
 ```
 
-or
+to use [authenticated encryption with associated data (aka aead)](https://en.wikipedia.org/wiki/Authenticated_encryption):
+```cpp
+std::string the_additional_data = ...;
+
+auto encr = cipher::encrypt_aead(
+    cipher_t::aes_256_ccm,
+    iv_data,
+    key_data,
+    the_additional_data,
+    source_plain_data
+    );  ///< returns a std::tuple< computed_tag, encrypted_data >
+
+
+auto decr = cipher::decrypt_aead(
+    cipher_t::aes_256_ccm,
+    iv_data,
+    key_data,
+    the_additional_data,
+    std::get<1>(encr), // encrypted input
+    std::get<0>(encr)  // authentication tag
+    );  ///< returns a std::tuple< authentication_status, decrypted_data >
+
+
+  REQUIRE( std::get<0>(decr) == true );
+  REQUIRE( std::get<1>(decr) == source_plain_data );
+
+```
+
+
+or by reusable object:
 ```cpp
 // construct and setup properties
 cipher cipdec(cipher_t::aes_256_cbc);
