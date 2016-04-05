@@ -311,12 +311,10 @@ cipher::encrypt_aead(cipher_t type,
         const buffer_t& iv, const buffer_t& key,
         const buffer_t& ad,
         const buffer_t& input) {
+#if defined(MBEDTLS_CIPHER_MODE_AEAD)
+
     cipher::impl cip;
     cip.setup(type);
-    auto bm = cip.block_mode();
-    if ( bm != cipher_bm::ccm   &&   bm != cipher_bm::gcm )
-        throw aead_exception();
-
     cip.key(key, cipher::encrypt_mode);
 
     size_t olen = input.size() + cip.block_size();
@@ -334,6 +332,10 @@ cipher::encrypt_aead(cipher_t type,
 
     output.resize(olen);
     return std::make_tuple(tag, output);
+
+#else // MBEDTLS_CIPHER_MODE_AEAD
+    throw aead_exception();
+#endif
 }
 
 std::tuple<bool, buffer_t>
@@ -342,12 +344,10 @@ cipher::decrypt_aead(cipher_t type,
         const buffer_t& ad,
         const buffer_t& input,
         const buffer_t& tag) {
+#if defined(MBEDTLS_CIPHER_MODE_AEAD)
+
     cipher::impl cip;
     cip.setup(type);
-    auto bm = cip.block_mode();
-    if ( bm != cipher_bm::ccm   &&   bm != cipher_bm::gcm )
-        throw aead_exception();
-
     cip.key(key, cipher::decrypt_mode);
 
     size_t olen = input.size() + cip.block_size();
@@ -371,6 +371,10 @@ cipher::decrypt_aead(cipher_t type,
 
     // ret is non zero
     throw exception(ret, __FUNCTION__);
+
+#else // MBEDTLS_CIPHER_MODE_AEAD
+    throw aead_exception();
+#endif
 }
 
 cipher&
