@@ -25,6 +25,11 @@ native_info(cipher_t type) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+struct aead_exception : public exception {
+    explicit aead_exception()
+        : exception("needs CCM or GCM module, check build options"){}
+}; // gcm_exception
+
 struct gcm_exception : public exception {
     explicit gcm_exception()
         : exception("needs GCM module, check build options"){}
@@ -299,6 +304,73 @@ cipher::decrypt(cipher_t type, padding_t pad,
         const buffer_t& iv, const buffer_t& key,
         const buffer_t& input) {
     return crypt_engine::run(type, pad, iv, key, decrypt_mode, input);
+}
+
+std::tuple<buffer_t, buffer_t>
+cipher::encrypt_aead(cipher_t type,
+        const buffer_t& iv, const buffer_t& key,
+        const buffer_t& ad,
+        const buffer_t& input) {
+    cipher::impl cip;
+    cip.setup(type);
+    auto bm = cip.block_mode();
+    if ( bm != cipher_bm::ccm   &&   bm != cipher_bm::gcm )
+        throw aead_exception();
+
+    cip.key(key, cipher::encrypt_mode);
+
+    size_t olen = input.size() + cip.block_size();
+    buffer_t output(olen, '\0');
+    buffer_t tag(16, '\0');
+
+    mbedcrypto_c_call(mbedtls_cipher_auth_encrypt,
+            &cip.ctx_,
+            to_const_ptr(iv),    iv.size(),
+            to_const_ptr(ad),    ad.size(),
+            to_const_ptr(input), input.size(),
+            to_ptr(output),      &olen,
+            to_ptr(tag),         16
+            );
+
+    output.resize(olen);
+    return std::make_tuple(tag, output);
+}
+
+std::tuple<bool, buffer_t>
+cipher::decrypt_aead(cipher_t type,
+        const buffer_t& iv, const buffer_t& key,
+        const buffer_t& ad,
+        const buffer_t& input,
+        const buffer_t& tag) {
+    cipher::impl cip;
+    cip.setup(type);
+    auto bm = cip.block_mode();
+    if ( bm != cipher_bm::ccm   &&   bm != cipher_bm::gcm )
+        throw aead_exception();
+
+    cip.key(key, cipher::decrypt_mode);
+
+    size_t olen = input.size() + cip.block_size();
+    buffer_t output(olen, '\0');
+
+    int ret = mbedtls_cipher_auth_decrypt(
+            &cip.ctx_,
+            to_const_ptr(iv), iv.size(),
+            to_const_ptr(ad), ad.size(),
+            to_const_ptr(input), input.size(),
+            to_ptr(output), &olen,
+            to_const_ptr(tag), tag.size()
+            );
+
+    output.resize(olen);
+
+    if ( ret == MBEDTLS_ERR_CIPHER_AUTH_FAILED )
+        return std::make_tuple(false, output);
+    else if ( ret == 0 )
+        return std::make_tuple(true, output);
+
+    // ret is non zero
+    throw exception(ret, __FUNCTION__);
 }
 
 cipher&

@@ -24,8 +24,13 @@ namespace mbedcrypto {
 /// cfb needs iv, no padding
 /// ctr is fast and strong only with ciphers that have block_size() >= 128bits
 ///  needs iv, does not require padding, transforms a block to stream
+/// @warning in ctr and all other counter based modes,
+///   the iv should be used only once per operation to be secure
 /// gcm is fast and strong if tag size is not smaller than 96bits
-///  used in aead (authenticated encryption with additional data)
+///  also used in aead (authenticated encryption with additional data)
+///  needs iv, does not require padding
+/// ccm is fast, strong if the iv never be used more than once for a given key
+///  only used in aead (authenticated encryption with additional data)
 ///  needs iv, does not require padding
 enum class cipher_bm {
     none,       ///< none or unknown
@@ -35,7 +40,7 @@ enum class cipher_bm {
     ctr,        ///< counter, custom input size
     gcm,        ///< Galois/counter mode
     stream,     ///< as in arc4_128 or null ciphers (unsecure)
-    ccm,        ///< counter with cbc-mac (not yet supported)
+    ccm,        ///< counter with cbc-mac
 };
 
 class cipher
@@ -78,6 +83,27 @@ public:
     static auto decrypt(cipher_t, padding_t,
             const buffer_t& iv, const buffer_t& key,
             const buffer_t& input) -> buffer_t;
+
+    /// encrypts (AEAD cipher) the input and authenticate by additional data.
+    /// only cipher_t::gcm and cipher_t::ccm support aead.
+    /// input and additional_data could be in any size.
+    /// returns the computed tag (16bytes) as the first member of tuple,
+    ///  the second one is the encrypted buffer.
+    static auto encrypt_aead(cipher_t,
+            const buffer_t& iv, const buffer_t& key,
+            const buffer_t& additional_data,
+            const buffer_t& input) -> std::tuple<buffer_t, buffer_t>;
+
+    /// decrypts (AEAD cipher) the input and authenticate by additional data and the tag.
+    /// only cipher_t::gcm and cipher_t::ccm support aead.
+    /// additional_data could be in any size, input and tag are computed by encrypt_aead().
+    /// returns the authentication status as the first member of tuple,
+    ///  the second one is the decrypted buffer.
+    static auto decrypt_aead(cipher_t,
+            const buffer_t& iv, const buffer_t& key,
+            const buffer_t& additional_data,
+            const buffer_t& input,
+            const buffer_t& tag) -> std::tuple<bool, buffer_t>;
 
 
 public:
