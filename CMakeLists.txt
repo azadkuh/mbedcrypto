@@ -23,7 +23,7 @@ option(BUILD_CCM "enable ccm (counter cbc-mac cipher mode)" OFF)
 option(BUILD_DES      "enable des and triple-des cipher" ON)
 option(BUILD_BLOWFISH "enable blowfish cipher" OFF)
 option(BUILD_CAMELLIA "enable camellia cipher" OFF)
-option(BUILD_ARC4     "enable arc4 cipher" OFF)
+option(BUILD_ARC4     "enable arc4 cipher (unsecure)" OFF)
 
 # compiler checks and flags
 include(CheckCXXCompilerFlag)

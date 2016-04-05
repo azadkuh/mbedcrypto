@@ -13,14 +13,14 @@
 namespace {
 using namespace mbedcrypto;
 ///////////////////////////////////////////////////////////////////////////////
-class finder
+class sub_finder
 {
     const char* pstr = nullptr;
 
 public:
-    explicit finder(const char* name) : pstr(name) {}
-    finder()  = delete;
-    ~finder() = default;
+    explicit sub_finder(const char* name) : pstr(name) {}
+    sub_finder()  = delete;
+    ~sub_finder() = default;
 
     bool contains(const char* part) const {
         if ( part == nullptr  ||  pstr == nullptr )
@@ -29,7 +29,7 @@ public:
         return strstr(pstr, part) != nullptr;
     }
 
-}; // finder
+}; // sub_finder
 
 padding_t
 padding_of(cipher_bm bm) {
@@ -89,7 +89,7 @@ make_input(cipher_bm bm, size_t bs, mbedcrypto::random& drbg) {
 }
 
 buffer_t
-chunker(size_t chunk_size, const buffer_t& input, cipher& cip) {
+chunker_impl(size_t chunk_size, const buffer_t& input, cipher& cip) {
     cip.start();
 
     size_t isize = input.size();
@@ -119,6 +119,122 @@ chunker(size_t chunk_size, const buffer_t& input, cipher& cip) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+
+class cipher_tester {
+    cipher_t  ctype        = cipher_t::none;
+    padding_t padding_mode = padding_t::none;
+    cipher_bm block_mode   = cipher_bm::none;
+    size_t    block_size   = 0;
+    size_t    key_size     = 0;
+    size_t    iv_size      = 0;
+    size_t    chunk_size   = 0;
+
+    buffer_t  iv;
+    buffer_t  key;
+    buffer_t  input;
+
+    cipher    cipenc;
+    cipher    cipdec;
+
+public:
+    explicit cipher_tester(cipher_t ct)
+        : ctype(ct), cipenc(ct), cipdec(ct) {}
+
+    bool setup(mbedcrypto::random& drbg) {
+        // properties
+        block_mode   = cipher::block_mode(ctype);
+        block_size   = cipher::block_size(ctype);
+        key_size     = cipher::key_bitlen(ctype) / 8; // bits to bytes
+        iv_size      = cipher::iv_size(ctype);
+        chunk_size   = chunk_size_of(ctype);
+        padding_mode = padding_of(block_mode);
+
+        // input parameters
+        iv           = drbg.make(iv_size);
+        key          = drbg.make(key_size);
+        input        = make_input(block_mode, block_size, drbg);
+
+        if ( input.empty() ) // not supported yet
+            return false;
+
+        // children
+        cipenc
+            .padding(padding_mode)
+            .iv(iv)
+            .key(key, cipher::encrypt_mode);
+
+        cipdec
+            .padding(padding_mode)
+            .iv(iv)
+            .key(key, cipher::decrypt_mode);
+
+        return true;
+    }
+
+    void one_shot() {
+        auto encr = cipher::encrypt(
+                ctype, padding_mode,
+                iv, key,
+                input
+                );
+
+        auto decr = cipher::decrypt(
+                ctype, padding_mode,
+                iv, key,
+                encr
+                );
+
+        INFO( to_string(ctype) );
+        REQUIRE( (decr == input) );
+    }
+
+    void by_object() {
+        cipenc.start();
+        auto encr = cipenc.update(input);
+        encr.append(cipenc.finish());
+
+        cipdec.start();
+        auto decr = cipdec.update(encr);
+        decr.append(cipdec.finish());
+
+        REQUIRE( (decr == input) );
+    }
+
+    void by_object_chunked() {
+        auto encr = chunker_impl(chunk_size, input, cipenc);
+
+        auto decr = chunker_impl(chunk_size, encr, cipdec);
+
+        REQUIRE( (decr == input) );
+    }
+
+    void check_if_gcm() {
+        if ( block_mode != cipher_bm::gcm )
+            return; // non gcm block mode does not require this test
+
+        const char* AdditionalData = "some additional data!\n"
+            "may be transferred in plain text if you like.";
+
+        cipenc.start();
+        cipenc.gcm_additional_data(AdditionalData);
+        auto encr = cipenc.update(input);
+        encr.append(cipenc.finish());
+
+        auto tag = cipenc.gcm_encryption_tag(16);
+        REQUIRE( tag.size() == 16 );
+
+        cipdec.start();
+        cipdec.gcm_additional_data(AdditionalData);
+        auto decr = cipdec.update(encr);
+        decr.append(cipdec.finish());
+
+        REQUIRE( (decr == input) );
+        REQUIRE( cipdec.gcm_check_decryption_tag(tag) );
+    }
+
+}; // class cipher_tester
+
+///////////////////////////////////////////////////////////////////////////////
 } // namespace anon
 ///////////////////////////////////////////////////////////////////////////////
 TEST_CASE("test block mode", "[cipher][types]") {
@@ -130,7 +246,7 @@ TEST_CASE("test block mode", "[cipher][types]") {
             if ( !supports(t) )
                 continue;
 
-            finder f(to_string(t));
+            sub_finder f(to_string(t));
             if ( f.contains("ECB") ) {
                 REQUIRE( cipher::block_mode(t) == cipher_bm::ecb );
 
@@ -163,73 +279,30 @@ TEST_CASE("test ciphers against mbedtls", "[cipher]") {
     mbedcrypto::random drbg;
 
     const auto types = installed_ciphers();
-    for ( auto ct : types ) {
+    for ( auto ctype : types ) {
         try {
-            auto block_mode    = cipher::block_mode(ct);
-            auto block_size    = cipher::block_size(ct);
-            auto key_len       = cipher::key_bitlen(ct) / 8; // bits to bytes
-            auto iv_len        = cipher::iv_size(ct);
-            size_t chunk_size  = chunk_size_of(ct);
-
-            const auto iv      = drbg.make(iv_len);
-            const auto key     = drbg.make(key_len);
-            const auto padding = padding_of(block_mode);
-            const auto input   = make_input(block_mode, block_size, drbg);
-
-            if ( input.empty() ) {
-                std::cerr << "not supported yet: " << to_string(ct) << std::endl;
+            cipher_tester tester(ctype);
+            if ( !tester.setup(drbg) ) {
+                std::cerr << "not supported yet: " << to_string(ctype) << std::endl;
                 continue;
             }
 
             // single shot calls
-            auto enc1 = cipher::encrypt(
-                    ct, padding,
-                    iv, key,
-                    input
-                    );
-            auto dec1 = cipher::decrypt(
-                    ct, padding,
-                    iv, key,
-                    enc1
-                    );
-            INFO( to_string(ct) );
-            REQUIRE( (dec1 == input) );
+            tester.one_shot();
 
             // cipher object
-            cipher cipenc(ct);
-            cipenc
-                .padding(padding)
-                .iv(iv)
-                .key(key, cipher::encrypt_mode);
-            // by single update
-            cipenc.start();
-            auto enc2 = cipenc.update(input);
-            enc2.append(cipenc.finish());
-            REQUIRE( (enc2 == enc1) );
+            // single start()/update()/finish()
+            tester.by_object();
 
             // by many chunked updates
-            auto enc3 = chunker(chunk_size, input, cipenc);
-            // in arc4 the encrypted data may be different (no iv in arc4)
-            if ( block_mode != cipher_bm::stream   &&   block_mode != cipher_bm::gcm )
-                REQUIRE( (enc3 == enc1) );
+            tester.by_object_chunked();
 
-            cipher cipdec(ct);
-            cipdec
-                .padding(padding)
-                .iv(iv)
-                .key(key, cipher::decrypt_mode);
-            // by single update
-            cipdec.start();
-            auto dec2 = cipdec.update(enc2);
-            dec2.append(cipdec.finish());
-            REQUIRE( (dec2 == input) );
+            // gcm special checks
+            tester.check_if_gcm();
 
-            // by many chunked updates
-            auto dec3 = chunker(chunk_size, enc3, cipdec);
-            REQUIRE( (dec3 == input) );
 
         } catch ( mbedcrypto::exception& cerr ) {
-            std::cerr << "error(" << to_string(ct) << ") :"
+            std::cerr << "error(" << to_string(ctype) << ") :"
                 << cerr.to_string() << std::endl;
             REQUIRE_FALSE( "exception failure" );
         }
