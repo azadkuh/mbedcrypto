@@ -16,8 +16,8 @@ option(BUILD_ALL_CIPHER_PADDINGS
 # optional cipher block modes:
 option(BUILD_CFB "enable cfb (cipher feedback mode)" ON)
 option(BUILD_CTR "enable ctr (cipher counter mode)" ON)
-option(BUILD_GCM "enable gcm (Galois cipher mode)" OFF)
-option(BUILD_CCM "enable ccm (counter cbc-mac cipher mode)" OFF)
+option(BUILD_GCM "enable gcm (Galois cipher mode, for aead cryptography)" OFF)
+option(BUILD_CCM "enable ccm (counter cbc-mac cipher mode, for aead cryptography)" OFF)
 
 # optional cipher algorithms:
 option(BUILD_DES      "enable des and triple-des cipher" ON)

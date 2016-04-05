@@ -42,6 +42,7 @@ padding_of(cipher_bm bm) {
         case cipher_bm::ctr:
         case cipher_bm::stream:
         case cipher_bm::gcm:
+        case cipher_bm::ccm:
             return padding_t::none;
 
         default:
@@ -81,6 +82,7 @@ make_input(cipher_bm bm, size_t bs, mbedcrypto::random& drbg) {
         case cipher_bm::ctr:
         case cipher_bm::stream:
         case cipher_bm::gcm:
+        case cipher_bm::ccm:
             return drbg.make(3241);
 
         default: // not supported types
@@ -118,9 +120,14 @@ chunker_impl(size_t chunk_size, const buffer_t& input, cipher& cip) {
     return output;
 }
 
+const char*
+AdditionalData() {
+    return "some additional data!\n"
+        "may be transferred in plain text if you like.";
+}
 ///////////////////////////////////////////////////////////////////////////////
 
-class cipher_tester {
+struct cipher_tester {
     cipher_t  ctype        = cipher_t::none;
     padding_t padding_mode = padding_t::none;
     cipher_bm block_mode   = cipher_bm::none;
@@ -208,15 +215,30 @@ public:
         REQUIRE( (decr == input) );
     }
 
-    void check_if_gcm() {
-        if ( block_mode != cipher_bm::gcm )
-            return; // non gcm block mode does not require this test
+    void aead_one_shot() {
+        auto encr = cipher::encrypt_aead(
+                ctype,
+                iv, key,
+                AdditionalData(),
+                input
+                );
 
-        const char* AdditionalData = "some additional data!\n"
-            "may be transferred in plain text if you like.";
+        auto decr = cipher::decrypt_aead(
+                ctype,
+                iv, key,
+                AdditionalData(),
+                std::get<1>(encr), // encrypted input
+                std::get<0>(encr)  // authentication tag
+                );
 
+        INFO( to_string(ctype) );
+        REQUIRE( std::get<0>(decr) );
+        REQUIRE( (std::get<1>(decr) == input) );
+    }
+
+    void gcm_check() {
         cipenc.start();
-        cipenc.gcm_additional_data(AdditionalData);
+        cipenc.gcm_additional_data(AdditionalData());
         auto encr = cipenc.update(input);
         encr.append(cipenc.finish());
 
@@ -224,7 +246,7 @@ public:
         REQUIRE( tag.size() == 16 );
 
         cipdec.start();
-        cipdec.gcm_additional_data(AdditionalData);
+        cipdec.gcm_additional_data(AdditionalData());
         auto decr = cipdec.update(encr);
         decr.append(cipdec.finish());
 
@@ -232,7 +254,7 @@ public:
         REQUIRE( cipdec.gcm_check_decryption_tag(tag) );
     }
 
-}; // class cipher_tester
+}; // struct cipher_tester
 
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace anon
@@ -287,18 +309,29 @@ TEST_CASE("test ciphers against mbedtls", "[cipher]") {
                 continue;
             }
 
-            // single shot calls
-            tester.one_shot();
+            // ccm only works in aead mode
+            if ( tester.block_mode != cipher_bm::ccm ) {
+                // single shot calls
+                tester.one_shot();
 
-            // cipher object
-            // single start()/update()/finish()
-            tester.by_object();
+                // cipher object
+                // single start()/update()/finish()
+                tester.by_object();
 
-            // by many chunked updates
-            tester.by_object_chunked();
+                // by many chunked updates
+                tester.by_object_chunked();
+            }
+
+            // aead tests
+            if ( tester.block_mode == cipher_bm::gcm
+                    ||  tester.block_mode == cipher_bm::ccm ) {
+                tester.aead_one_shot();
+            }
 
             // gcm special checks
-            tester.check_if_gcm();
+            if ( tester.block_mode == cipher_bm::gcm ) {
+                tester.gcm_check();
+            }
 
 
         } catch ( mbedcrypto::exception& cerr ) {
