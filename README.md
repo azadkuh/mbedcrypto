@@ -1,7 +1,7 @@
 # mbedcrypto
-`mbedcypto` is a portable, small, easy to use, feature rich and fast `c++11/14` library for cryptography based on fantastic and clean [mbedtls](https://github.com/ARMmbed/mbedtls)<sup>[note](#mbedtls)</sup> <sup>[note](#cryptography)</sup>.
+`mbedcrypto` is a portable, small, easy to use, feature rich and fast `c++11/14` library for cryptography based on fantastic and clean [mbedtls](https://github.com/ARMmbed/mbedtls)<sup>[note](#mbedtls)</sup> <sup>[note](#cryptography)</sup>.
 
-a sister project for `Qt5` developers is available as [qpolarssl](https://github.com/azadkuh/qpolarssl), `mbedcrypto` is newer and has more feature, cleaner api with smaller footprint.
+a sister project for `Qt5` developers is available as [qpolarssl](https://github.com/azadkuh/qpolarssl), also `mbedcrypto` is newer and has more features with smaller footprint.
 
 
 
