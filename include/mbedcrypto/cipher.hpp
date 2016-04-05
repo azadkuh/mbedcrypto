@@ -99,6 +99,7 @@ public:
     /// set padding mode for ciphers that use padding
     auto padding(padding_t) -> cipher&;
 
+public: // general encryption / decryption
     /// resets and makes cipher ready for update() iterations
     void start();
 
@@ -131,6 +132,22 @@ public:
 
     /// helper function, runs start()/update()/finish() in a single call, single allocation
     auto crypt(const buffer_t& input) -> buffer_t;
+
+public: // gcm features: only valid in gcm block modes
+    /// set the additional data for a gcm encryption/decryption or throws non gcm modes.
+    /// ad could be in any size, can be transmitted in plain text.
+    /// @warning must be called exactly after start() and before any update().
+    void gcm_additional_data(const buffer_t& ad);
+
+    /// returns the tag computed by gcm encryption, or throws for non gcm encryption.
+    /// length <= 16bytes.
+    /// @warning must be called exactly after finish() of encryption.
+    auto gcm_encryption_tag(size_t length) -> buffer_t;
+
+    /// checks (authenticate) a gcm decryption tag, or throws for non gcm decryption.
+    /// tag previously computed by gcm encryption, <= 16bytes.
+    /// @warning must be called exactly after finish() of decryption.
+    bool gcm_check_decryption_tag(const buffer_t& tag);
 
 public: // properties
     size_t block_size() const noexcept;

@@ -25,6 +25,13 @@ native_info(cipher_t type) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+struct gcm_exception : public exception {
+    explicit gcm_exception()
+        : exception("needs GCM module, check build options"){}
+}; // gcm_exception
+
+///////////////////////////////////////////////////////////////////////////////
+
 struct cipher_impl
 {
     mbedtls_cipher_context_t ctx_;
@@ -458,6 +465,58 @@ cipher::crypt(const buffer_t& input) {
     return output;
 }
 
+void
+cipher::gcm_additional_data(const buffer_t& ad) {
+#if defined(MBEDTLS_GCM_C)
+    mbedcrypto_c_call(mbedtls_cipher_update_ad,
+            &pimpl->ctx_,
+            to_const_ptr(ad),
+            ad.size()
+            );
+
+#else // MBEDTLS_
+    throw gcm_exception();
+#endif // MBEDTLS_
+}
+
+buffer_t
+cipher::gcm_encryption_tag(size_t length) {
+#if defined(MBEDTLS_GCM_C)
+    buffer_t tag(length, '\0');
+    mbedcrypto_c_call(mbedtls_cipher_write_tag,
+            &pimpl->ctx_,
+            to_ptr(tag),
+            length
+            );
+
+    return tag;
+#else // MBEDTLS_
+    throw gcm_exception();
+#endif // MBEDTLS_
+}
+
+bool
+cipher::gcm_check_decryption_tag(const buffer_t& tag) {
+#if defined(MBEDTLS_GCM_C)
+    int ret = mbedtls_cipher_check_tag(&pimpl->ctx_,
+            to_const_ptr(tag),
+            tag.size()
+            );
+
+    switch ( ret ) {
+        case 0:
+            return true;  // authneticated
+        case MBEDTLS_ERR_CIPHER_AUTH_FAILED:
+            return false; // authentication failed
+
+        default: // other ret codes means error in data or context
+            throw exception(ret, __FUNCTION__);
+            break;
+    }
+#else // MBEDTLS_GCM_C
+    throw gcm_exception();
+#endif // MBEDTLS_GCM_C
+}
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
 ///////////////////////////////////////////////////////////////////////////////
