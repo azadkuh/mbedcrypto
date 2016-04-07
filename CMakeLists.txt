@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.0)
+project("mbedcrypto" CXX)
 
 option(BUILD_SHARED_LIBS "build mbedcrypto as a unix shared (so/dylib) library" OFF)
-option(BUILD_TESTS "build test units and apps" ON)
+option(BUILD_TESTS       "build test units and apps" ON)
 
 # optional hash algorithms:
 option(BUILD_MD2       "enable md2 hash (unsecure and deprecated)" OFF)
@@ -25,14 +26,34 @@ option(BUILD_BLOWFISH "enable blowfish cipher" OFF)
 option(BUILD_CAMELLIA "enable camellia cipher" OFF)
 option(BUILD_ARC4     "enable arc4 cipher (unsecure)" OFF)
 
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING
+        "Choose the type of build: None Release ASan MemSan Debug"
+        FORCE)
+endif()
+
 # compiler checks and flags
 include(CheckCXXCompilerFlag)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_STANDARD_REQUIRED ON)
+string(REGEX MATCH "Clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_CXX_COMPILER_ID}")
+string(REGEX MATCH "GNU"   CMAKE_COMPILER_IS_GNUXX "${CMAKE_CXX_COMPILER_ID}")
 
-if(CMAKE_C_COMPILER_ID MATCHES ".*Clang" OR CMAKE_C_COMPILER_ID MATCHES "GNU")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g0 -Wall -Wextra -pedantic -Wcast-align -Wunused -Wno-unused-parameter")
-    set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_CXX_FLAGS} -std=c++1y -Wnon-virtual-dtor -Woverloaded-virtual")
-elseif(CMAKE_C_COMPILER_ID MATCHES "MSVC")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -nologo -Zm200 -Zc:wchar_t -FS -O2 -MD -Zc:strictStrings -W3")
+if(CMAKE_COMPILER_IS_CLANG OR CMAKE_COMPILER_IS_GNUXX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -W -Wwrite-strings -Wshadow -pedantic -Wcast-align -Wunused -Wno-unused-parameter -Wpointer-arith")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+    set(CMAKE_CXX_FLAGS_DEBUG   "-O0 -g3")
+
+    if(CMAKE_COMPILER_IS_GNUXX)
+        set(CMAKE_CXX_FLAGS_ASAN   "-Werror -fsanitize=address -fno-common -O3")
+    elseif(CMAKE_COMPILER_IS_CLANG)
+        set(CMAKE_CXX_FLAGS_ASAN   "-Werror -fsanitize=address -fno-common -fno-sanitize-recover -O3")
+        set(CMAKE_CXX_FLAGS_MEMSAN "-Werror -fsanitize=memory -O3")
+    endif()
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wnon-virtual-dtor -Woverloaded-virtual")
+
+elseif(MSVC)
     if(BUILD_SHARED_LIBS)
         add_definitions(-DMBEDCRYPTO_DYNAMIC -DMBEDCRYPTO_EXPORT)
         message(SEND_ERROR
@@ -41,6 +62,9 @@ elseif(CMAKE_C_COMPILER_ID MATCHES "MSVC")
            " please compile as a static library until someone resolves this problem."
            )
     endif()
+
+    set(CMAKE_CXX_FLAGS_RELEASE "-nologo -Zm200 -Zc:wchar_t -FS -O2 -MD -Zc:strictStrings -W3")
+
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
