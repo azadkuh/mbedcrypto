@@ -60,7 +60,9 @@ following algorithms are included in `mbedcrypto` in *default build* (see [sampl
 
 - **pki (asymmetric)**: public key infrastructure, see [samples](#pks)
   - `rsa`
+  - `pem` and `der` key formats (ASN.1)
   - optional pks: `eckey` elliptic curve, `eckey_dh` elliptic key Diffie–Hellman, `ecdsa` elliptic key digital signature algorithm, `rsa_alt` and `rsassa_pss` RSA standard signature algorithm, probabilistic signature scheme
+  - optional `rsa` key generator
 
 total number of supported algorithms:
 
@@ -103,7 +105,8 @@ $build/> make
 ### build options
 to add or remove algorithms, change [CMakeLists.txt](./CMakeLists.txt) options or set them via command line:
 ```bash
-$build/> cmake .. -DBUILD_MD4=ON -DBUILD_ARC4=ON -DBUILD_DES=OFF
+# cmake, ccmake or cmake-gui
+$build/> cmake .. -DBUILD_CAMELLIA=ON -DBUILD_PK_EXPORT=ON -DBUILD_RSA_KEYGEN=ON
 
 # to disable making of the test app:
 $build/> cmake .. -DBUILD_TESTS=OFF
@@ -363,7 +366,6 @@ pri.load_key("private_key.pem");
 
 auto signature = pri.sign(message, hash_t::sha1);
 
-
 pki pub;
 pub.parse_public_key(public_key_data);
 REQUIRE( pub.verify(signature, message, hash_t::sha1);
@@ -383,6 +385,15 @@ pki pkd;
 pkd.parse_key(private_key_data);
 auto decv = pkd.decrypt(encv);
 REQUIRE( decv == hvalue );
+```
+
+`rsa` key generation and exporting current key:
+```cpp
+pki pk_g(pk_t::rsa);
+pk_g.rsa_generate_key(2048);  // key bit length
+
+const auto pub_pem = pk_g.export_public_key(pki::pem_format);
+const auto pri_der = pk_g.export_key(pki::der_format);
 ```
 
 see [pki.hpp](./include/mbedcrypto/pki.hpp)
