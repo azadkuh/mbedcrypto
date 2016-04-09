@@ -161,6 +161,7 @@ using namespace mbedcrypto;
 auto hashes = installed_hashes(); // returns std::vector<mbedcrypto::hasht_t>
 // similarly
 auto paddings = installed_paddings();
+auto bmodes   = installed_block_modes();
 auto ciphers  = installed_ciphers();
 auto pks      = installed_pks();
 
@@ -183,6 +184,13 @@ if ( cipher::supports_aes_ni() ) {
   std::cout << "this system supports AESNI (hardware accelerated AES)" << std::endl;
 }
 
+if ( cipher::supports_aead() ) {
+  // do authenticated encryption
+}
+if ( supports(cipher_bm::gcm) ) {
+  // do GCM (tag, additional data) stuff
+}
+
 // check by enum class
 if ( supports(cipher_t::aes_256_cbc)   &&   supports(padding_t::pkcs7) ) {
   // do stuff
@@ -194,6 +202,7 @@ if ( supports_hash("sha1")    &&    supports_pk("rsa") ) {
 // both upper and lower case are supported
 if ( supports_cipher("CAMELLIA_128_CBC") ) {
 }
+
 ```
 
 see [types.hpp](./include/mbedcrypto/types.hpp)

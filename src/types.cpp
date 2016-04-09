@@ -1,17 +1,11 @@
 #include "mbedcrypto/types.hpp"
+#include "enumerator.hxx"
 #include "conversions.hpp"
 
-#include <algorithm>
-#include <cctype>
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
 namespace {
 ///////////////////////////////////////////////////////////////////////////////
-template<typename Enum>
-struct name_map {
-    Enum        e;
-    const char* n;
-};
 
 const name_map<padding_t> gPaddings[] = {
     {padding_t::none,          "NONE"},
@@ -31,35 +25,16 @@ const name_map<pk_t> gPks[] = {
     {pk_t::rsassa_pss, "RSASSA_PSS"},
 };
 
-std::string
-to_upper(const char* p) {
-    std::string s(p);
-    std::transform(s.cbegin(), s.cend(), s.begin(),
-            [](char c) {return std::toupper(c);}
-            );
-    return s;
-}
-
-template<typename Enum, class Array>
-auto to_string(Enum e, const Array& items) {
-    for ( const auto& i : items ) {
-        if ( i.e == e )
-            return i.n;
-    }
-
-    throw std::logic_error("invalid type");
-}
-
-template<typename Enum, class Array>
-Enum from_string(const char* name, const Array& items) {
-    auto uname = to_upper(name);
-    for ( const auto& i : items ) {
-        if ( uname == i.n )
-            return i.e;
-    }
-
-    return Enum::none;
-}
+const name_map<cipher_bm> gBlockModes[] = {
+    {cipher_bm::none,   "NONE"},
+    {cipher_bm::ecb,    "ECB"},
+    {cipher_bm::cbc,    "CBC"},
+    {cipher_bm::cfb,    "CFB"},
+    {cipher_bm::ctr,    "CTR"},
+    {cipher_bm::gcm,    "GCM"},
+    {cipher_bm::ccm,    "CCM"},
+    {cipher_bm::stream, "STREAM"},
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace anon
@@ -68,11 +43,6 @@ Enum from_string(const char* name, const Array& items) {
 bool
 supports(hash_t e) {
     return mbedtls_md_info_from_type(to_native(e)) != nullptr;
-}
-
-bool
-supports(cipher_t e) {
-    return mbedtls_cipher_info_from_type(to_native(e)) != nullptr;
 }
 
 bool
@@ -100,8 +70,81 @@ supports(padding_t e) {
 }
 
 bool
+supports(cipher_bm bm) {
+    switch ( bm ) {
+        case cipher_bm::none:
+        case cipher_bm::ecb:
+            return true;    // always supported
+
+        case cipher_bm::cbc:
+            #if defined(MBEDTLS_CIPHER_MODE_CBC)
+            return true;
+            #else
+            return false;
+            #endif
+
+        case cipher_bm::cfb:
+            #if defined(MBEDTLS_CIPHER_MODE_CFB)
+            return true;
+            #else
+            return false;
+            #endif
+
+        case cipher_bm::ctr:
+            #if defined(MBEDTLS_CIPHER_MODE_CTR)
+            return true;
+            #else
+            return false;
+            #endif
+
+        case cipher_bm::gcm:
+            #if defined(MBEDTLS_GCM_C)
+            return true;
+            #else
+            return false;
+            #endif
+
+        case cipher_bm::ccm:
+            #if defined(MBEDTLS_CCM_C)
+            return true;
+            #else
+            return false;
+            #endif
+
+        case cipher_bm::stream:
+            #if defined(MBEDTLS_ARC4_C)
+            return true;
+            #else
+            return false;
+            #endif
+
+        default:
+            break;
+    }
+
+    return false;
+}
+
+bool
+supports(cipher_t e) {
+    return mbedtls_cipher_info_from_type(to_native(e)) != nullptr;
+}
+
+bool
 supports(pk_t e) {
     return mbedtls_pk_info_from_type(to_native(e)) != nullptr;
+}
+
+// other installed_xx() are implemented in conversion.cpp
+std::vector<cipher_bm>
+installed_block_modes() {
+    std::vector<cipher_bm> my;
+    for ( auto bm : gBlockModes ) {
+        if ( supports(bm.e) )
+            my.push_back(bm.e);
+    }
+
+    return my;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -113,15 +156,21 @@ supports_hash(const char* name) {
 }
 
 bool
-supports_cipher(const char* name) {
-    auto e = cipher_from_string(name);
-    return (e == cipher_t::none) ? false : supports(e);
-}
-
-bool
 supports_padding(const char* name) {
     // padding_t::none is an acceptable padding
     return supports( padding_from_string(name) );
+}
+
+bool
+supports_block_mode(const char* name) {
+    auto bm = block_mode_from_string(name);
+    return (bm == cipher_bm::none) ? false : supports(bm);
+}
+
+bool
+supports_cipher(const char* name) {
+    auto e = cipher_from_string(name);
+    return (e == cipher_t::none) ? false : supports(e);
 }
 
 bool
@@ -142,18 +191,25 @@ to_string(hash_t e) {
 }
 
 const char*
+to_string(padding_t e) {
+    if ( !supports(e) )
+        return nullptr;
+    return to_string<padding_t>(e, gPaddings);
+}
+
+const char*
+to_string(cipher_bm bm) {
+    if ( !supports(bm) )
+        return nullptr;
+    return to_string<cipher_bm>(bm, gBlockModes);
+}
+
+const char*
 to_string(cipher_t e) {
     const auto* p = mbedtls_cipher_info_from_type(to_native(e));
     if ( p == nullptr )
         return nullptr;
     return p->name;
-}
-
-const char*
-to_string(padding_t e) {
-    if ( !supports(e) )
-        return nullptr;
-    return to_string<padding_t>(e, gPaddings);
 }
 
 const char*
@@ -173,17 +229,22 @@ hash_from_string(const char* name) {
     return from_native(t);
 }
 
+padding_t
+padding_from_string(const char* name) {
+    return from_string<padding_t>(name, gPaddings);
+}
+
+cipher_bm
+block_mode_from_string(const char* name) {
+    return from_string<cipher_bm>(name, gBlockModes);
+}
+
 cipher_t
 cipher_from_string(const char* name) {
     const auto* p = mbedtls_cipher_info_from_string(to_upper(name).c_str());
     if ( p == nullptr )
         return cipher_t::none;
     return from_native(p->type);
-}
-
-padding_t
-padding_from_string(const char* name) {
-    return from_string<padding_t>(name, gPaddings);
 }
 
 pk_t

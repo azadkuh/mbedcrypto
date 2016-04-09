@@ -41,6 +41,13 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
             std::cout << to_string(p) << " , ";
         }
 
+        auto block_modes = installed_block_modes();
+        REQUIRE( block_modes.size() > 0 );
+        std::cout << "\nsupports " << block_modes.size() << " block modes: ";
+        for ( auto bm : block_modes ) {
+            std::cout << to_string(bm) << " , ";
+        }
+
         auto ciphers = installed_ciphers();
         REQUIRE( ciphers.size() > 0 );
         std::cout << "\nsupports " << ciphers.size() << " cipher algorithms: ";
@@ -50,6 +57,9 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
         std::cout << "\nthis system "
             << (cipher::supports_aes_ni() ? "supports" : "does not support")
             << " AESNI (hardware accelerated AES)";
+        std::cout << "\nthis system "
+            << (cipher::supports_aead() ? "supports" : "does not support")
+            << " AEAD (authenticated encryption with additional data)";
 
         auto pks = installed_pks();
         std::cout << "\nsupports " << pks.size() << " pk (public key) algorithms: ";
@@ -191,6 +201,28 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
                 continue;
 
             auto v = from_string<padding_t>(name);
+            REQUIRE( v == i );
+        }
+    }
+
+    SECTION("block modes") {
+        const std::initializer_list<cipher_bm> Items = {
+            cipher_bm::none,
+            cipher_bm::ecb,
+            cipher_bm::cbc,
+            cipher_bm::cfb,
+            cipher_bm::ctr,
+            cipher_bm::gcm,
+            cipher_bm::ccm,
+            cipher_bm::stream,
+        };
+
+        for ( auto i : Items) {
+            cchars name = to_string(i);
+            if ( name == nullptr )
+                continue;
+
+            auto v = from_string<cipher_bm>(name);
             REQUIRE( v == i );
         }
     }

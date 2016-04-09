@@ -1,36 +1,11 @@
 #include "conversions.hpp"
+#include "enumerator.hxx"
 #include "mbedcrypto/cipher.hpp"
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
 namespace {
 ///////////////////////////////////////////////////////////////////////////////
-template<typename Enum, typename Native>
-struct enum_map {
-    Enum    e;
-    Native  n;
-};
 
-template<typename Enum, class Array>
-auto to_native(Enum e, const Array& items) {
-    for ( const auto& i : items ) {
-        if ( i.e == e )
-            return i.n;
-    }
-
-    throw std::logic_error("invalid conversion type");
-}
-
-template<typename Native, class Array>
-auto from_native(Native n, const Array& items) {
-    for ( const auto& i : items ) {
-        if ( i.n == n )
-            return i.e;
-    }
-
-    throw std::logic_error("invalid conversion type");
-}
-
-///////////////////////////////////////////////////////////////////////////////
 const enum_map<hash_t, mbedtls_md_type_t> gHashes[] = {
     {hash_t::none,      MBEDTLS_MD_NONE},
     {hash_t::md2,       MBEDTLS_MD_MD2},

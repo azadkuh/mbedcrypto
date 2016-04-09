@@ -306,6 +306,14 @@ cipher::decrypt(cipher_t type, padding_t pad,
     return crypt_engine::run(type, pad, iv, key, decrypt_mode, input);
 }
 
+bool
+cipher::supports_aead() {
+#if defined(MBEDTLS_CIPHER_MODE_AEAD)
+    return true;
+#endif
+    return false;
+}
+
 std::tuple<buffer_t, buffer_t>
 cipher::encrypt_aead(cipher_t type,
         const buffer_t& iv, const buffer_t& key,

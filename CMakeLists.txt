@@ -15,10 +15,10 @@ option(BUILD_ALL_CIPHER_PADDINGS
     ON)
 
 # optional cipher block modes:
-option(BUILD_CFB "enable cfb (cipher feedback mode)" ON)
+option(BUILD_CFB "enable cfb (cipher feedback mode)" OFF)
 option(BUILD_CTR "enable ctr (cipher counter mode)" ON)
-option(BUILD_GCM "enable gcm (Galois cipher mode, for aead cryptography)" OFF)
-option(BUILD_CCM "enable ccm (counter cbc-mac cipher mode, for aead cryptography)" OFF)
+option(BUILD_GCM "enable gcm (Galois cipher mode, for aead cryptography)" ON)
+option(BUILD_CCM "enable ccm (counter cbc-mac cipher mode, for aead cryptography)" ON)
 
 # optional cipher algorithms:
 option(BUILD_DES      "enable des and triple-des cipher" ON)
@@ -27,8 +27,8 @@ option(BUILD_CAMELLIA "enable camellia cipher" OFF)
 option(BUILD_ARC4     "enable arc4 cipher (unsecure)" OFF)
 
 # optional pk algorithm
-option(BUILD_PK_EXPORT  "enable export keys in pem or der format" OFF)
-option(BUILD_RSA_KEYGEN "enable rsa key generator" OFF)
+option(BUILD_PK_EXPORT  "enable export keys in pem or der format" ON)
+option(BUILD_RSA_KEYGEN "enable rsa key generator" ON)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING

@@ -32,34 +32,6 @@
 namespace mbedcrypto {
 ///////////////////////////////////////////////////////////////////////////////
 
-/// block mode: https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation
-/// hints:
-/// ebc so fast, not cryptographically strong
-///  input size must be = N * block_size, so no padding is required
-/// cbc is slow and cryptographically strong
-///  needs iv and padding
-/// cfb needs iv, no padding
-/// ctr is fast and strong only with ciphers that have block_size() >= 128bits
-///  needs iv, does not require padding, transforms a block to stream
-/// @warning in ctr and all other counter based modes,
-///   the iv should be used only once per operation to be secure
-/// gcm is fast and strong if tag size is not smaller than 96bits
-///  also used in aead (authenticated encryption with additional data)
-///  needs iv, does not require padding
-/// ccm is fast, strong if the iv never be used more than once for a given key
-///  only used in aead (authenticated encryption with additional data)
-///  needs iv, does not require padding
-enum class cipher_bm {
-    none,       ///< none or unknown
-    ecb,        ///< electronic codebook, input size = N * block_size
-    cbc,        ///< cipher block chaining, custom input size
-    cfb,        ///< cipher feedback, custom input size
-    ctr,        ///< counter, custom input size
-    gcm,        ///< Galois/counter mode
-    stream,     ///< as in arc4_128 or null ciphers (unsecure)
-    ccm,        ///< counter with cbc-mac
-};
-
 class cipher
 {
 public:
@@ -102,6 +74,9 @@ public:
             const buffer_t& input) -> buffer_t;
 
 public: // aead methods require BUILD_CCM or BUILD_GCM
+    /// returns true if any of BUILD_GCM or BUILD_CCM has been activated
+    static bool supports_aead();
+
     /// encrypts (AEAD cipher) the input and authenticate by additional data.
     /// only cipher_t::gcm and cipher_t::ccm support aead.
     /// input and additional_data could be in any size.

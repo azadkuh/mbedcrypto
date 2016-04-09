@@ -40,6 +40,43 @@ enum class hash_t {
     ripemd160,   ///< no publicly known attack, but old and outdated bit size (160)
 };
 
+/// all possible paddings, pkcs7 is included in default build.
+enum class padding_t {
+    none,             ///< never pad (full blocks only)
+    pkcs7,            ///< PKCS7 padding (default)
+    one_and_zeros,    ///< ISO/IEC 7816-4 padding
+    zeros_and_len,    ///< ANSI X.923 padding
+    zeros,            ///< zero padding (not reversible!)
+};
+
+/// block mode: https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation
+/// hints:
+/// ebc so fast, not cryptographically strong
+///  input size must be = N * block_size, so no padding is required
+/// cbc is slow and cryptographically strong
+///  needs iv and padding
+/// cfb needs iv, no padding
+/// ctr is fast and strong only with ciphers that have block_size() >= 128bits
+///  needs iv, does not require padding, transforms a block to stream
+/// @warning in ctr and all other counter based modes,
+///   the iv should be used only once per operation to be secure
+/// gcm is fast and strong if tag size is not smaller than 96bits
+///  also used in aead (authenticated encryption with additional data)
+///  needs iv, does not require padding
+/// ccm is fast, strong if the iv never be used more than once for a given key
+///  only used in aead (authenticated encryption with additional data)
+///  needs iv, does not require padding
+enum class cipher_bm {
+    none,       ///< none or unknown
+    ecb,        ///< electronic codebook, input size = N * block_size
+    cbc,        ///< cipher block chaining, custom input size
+    cfb,        ///< cipher feedback, custom input size
+    ctr,        ///< counter, custom input size
+    gcm,        ///< Galois/counter mode
+    ccm,        ///< counter with cbc-mac
+    stream,     ///< as in arc4_128 or null ciphers (unsecure)
+};
+
 /// all possible supported cipher types in mbedcrypto.
 /// hints:
 /// @warning blowfish is known to be susceptible to attacks when using weak keys,
@@ -98,15 +135,6 @@ enum class cipher_t {
     camellia_256_ccm,
 };
 
-/// all possible paddings, pkcs7 is included in default build.
-enum class padding_t {
-    none,             ///< never pad (full blocks only)
-    pkcs7,            ///< PKCS7 padding (default)
-    one_and_zeros,    ///< ISO/IEC 7816-4 padding
-    zeros_and_len,    ///< ANSI X.923 padding
-    zeros,            ///< zero padding (not reversible!)
-};
-
 /// all possible public key algorithms (PKI types), RSA is included in default build.
 enum class pk_t {
     none,           ///< unknown or invalid
@@ -122,34 +150,39 @@ enum class pk_t {
 
 // returns true if an algorithm or a type is present at runtime.
 bool supports(hash_t);
-bool supports(cipher_t);
 bool supports(padding_t);
+bool supports(cipher_bm);
+bool supports(cipher_t);
 bool supports(pk_t);
 
 // list all installed algorithms, built into library
-auto installed_hashes()   -> std::vector<hash_t>;
-auto installed_ciphers()  -> std::vector<cipher_t>;
-auto installed_paddings() -> std::vector<padding_t>;
-auto installed_pks()      -> std::vector<pk_t>;
+auto installed_hashes()      -> std::vector<hash_t>;
+auto installed_paddings()    -> std::vector<padding_t>;
+auto installed_block_modes() -> std::vector<cipher_bm>;
+auto installed_ciphers()     -> std::vector<cipher_t>;
+auto installed_pks()         -> std::vector<pk_t>;
 
 
 // returns true if an algorithm or a type is present at runtime (by name string).
 // both lower or upper case names are supported.
 
 bool supports_hash(const char*);
-bool supports_cipher(const char*);
 bool supports_padding(const char*);
+bool supports_block_mode(const char*);
+bool supports_cipher(const char*);
 bool supports_pk(const char*);
 
 auto to_string(hash_t)    -> const char*;
-auto to_string(cipher_t)  -> const char*;
 auto to_string(padding_t) -> const char*;
+auto to_string(cipher_bm) -> const char*;
+auto to_string(cipher_t)  -> const char*;
 auto to_string(pk_t)      -> const char*;
 
-auto hash_from_string(const char*)    -> hash_t;
-auto cipher_from_string(const char*)  -> cipher_t;
-auto padding_from_string(const char*) -> padding_t;
-auto pk_from_string(const char*)      -> pk_t;
+auto hash_from_string(const char*)       -> hash_t;
+auto padding_from_string(const char*)    -> padding_t;
+auto block_mode_from_string(const char*) -> cipher_bm;
+auto cipher_from_string(const char*)     -> cipher_t;
+auto pk_from_string(const char*)         -> pk_t;
 
 template<typename T>
 T from_string(const char* name, T* = nullptr);
@@ -160,13 +193,18 @@ auto from_string(const char* name, hash_t*) -> hash_t {
 }
 
 template<> inline
-auto from_string(const char* name, cipher_t*) -> cipher_t {
-    return cipher_from_string(name);
+auto from_string(const char* name, padding_t*) -> padding_t {
+    return padding_from_string(name);
 }
 
 template<> inline
-auto from_string(const char* name, padding_t*) -> padding_t {
-    return padding_from_string(name);
+auto from_string(const char* name, cipher_bm*) -> cipher_bm {
+    return block_mode_from_string(name);
+}
+
+template<> inline
+auto from_string(const char* name, cipher_t*) -> cipher_t {
+    return cipher_from_string(name);
 }
 
 template<> inline
