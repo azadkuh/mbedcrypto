@@ -353,37 +353,41 @@ see [random.hpp](./include/mbedcrypto/random.hpp)
 
 
 ### pks
-sign and verify:
+loading keys, sign and verify:
 ```cpp
 using namespace mbedcrypto;
-
-std::string message = read_message_from_somewhere();
 
 pki pri;
 pri.parse_key(private_key_data, optional_password);
 // or load from a file
-pri.load_key("private_key.pem");
-
-auto signature = pri.sign(message, hash_t::sha1);
+// pri.load_key("private_key.pem");
 
 pki pub;
 pub.parse_public_key(public_key_data);
+
+// [optional] check matching public/private pair
+REQUIRE( pki::check_pair(pub, pri) == true );
+
+// signature & verification
+std::string message = read_message_from_somewhere();
+auto signature      = pri.sign(message, hash_t::sha1);
 REQUIRE( pub.verify(signature, message, hash_t::sha1);
 ```
+
 to encrypt and decrypt by pki:
 ```cpp
 const auto hvalue = hash::make(hash_t::sha256, message);
 
-pki pke;
-pke.parse_public_key(public_key_data);
+pki pub;
+pub.parse_public_key(public_key_data);
 
-auto encv = pke.encrypt(message, hash_t::sha256);
+auto encv = pub.encrypt(message, hash_t::sha256);
 // or
-auto encv = pke.encrypt(hvalue);
+// auto encv = pub.encrypt(hvalue);
 
-pki pkd;
-pkd.parse_key(private_key_data);
-auto decv = pkd.decrypt(encv);
+pki pri;
+pri.parse_key(private_key_data);
+auto decv = pri.decrypt(encv);
 REQUIRE( decv == hvalue );
 ```
 

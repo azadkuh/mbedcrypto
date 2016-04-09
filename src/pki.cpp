@@ -114,6 +114,25 @@ pki::pki(pk_t type) : pimpl(std::make_unique<impl>()) {
 pki::~pki() {
 }
 
+bool
+pki::check_pair(const pki& pub, const pki& priv) {
+    int ret = mbedtls_pk_check_pair(&pub.pimpl->ctx_, &priv.pimpl->ctx_);
+
+    switch ( ret ) {
+        case 0:
+            return true;
+
+        case MBEDTLS_ERR_PK_BAD_INPUT_DATA:
+        case MBEDTLS_ERR_PK_TYPE_MISMATCH:
+            throw exception(ret, __FUNCTION__);
+            break;
+
+        default:
+            return false;
+            break;
+    }
+}
+
 pk_t
 pki::type()const noexcept {
     return from_native(

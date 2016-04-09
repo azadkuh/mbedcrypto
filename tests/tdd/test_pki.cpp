@@ -40,13 +40,18 @@ TEST_CASE("pk type checks", "[pki][types]") {
         REQUIRE_FALSE(pk3.can_do(pk_t::rsa_alt));
         REQUIRE(pk3.bitlen() == 2048);
 
-        // reuse of pk3
-        REQUIRE_NOTHROW(pk3.parse_public_key(test::sample_public_key()));
-        REQUIRE(icompare(pk3.name(), "RSA"));
-        REQUIRE(pk3.can_do(pk_t::rsa));
-        REQUIRE_FALSE(pk3.can_do(pk_t::rsa_alt));
-        REQUIRE(pk3.bitlen() == 2048);
+        pki pk4;
+        REQUIRE_NOTHROW(pk4.parse_public_key(test::sample_public_key()));
+        REQUIRE(icompare(pk4.name(), "RSA"));
+        REQUIRE(pk4.can_do(pk_t::rsa));
+        REQUIRE_FALSE(pk4.can_do(pk_t::rsa_alt));
+        REQUIRE(pk4.bitlen() == 2048);
 
+        // check key pair
+        REQUIRE_THROWS( pki::check_pair(pk1, pk3) ); // pk1 is uninitialized
+        REQUIRE( pki::check_pair(pk4, pk3) == true );
+
+        // reuse of pk3
         REQUIRE_NOTHROW(pk3.parse_key(
                     test::sample_private_key_password(),
                     "mbedcrypto1234" // password
@@ -54,6 +59,10 @@ TEST_CASE("pk type checks", "[pki][types]") {
         REQUIRE(icompare(pk3.name(), "RSA"));
         REQUIRE(pk3.can_do(pk_t::rsa));
         REQUIRE(pk3.bitlen() == 2048);
+
+        // pk3 is still the same key (with or without password)
+        REQUIRE( pki::check_pair(pk4, pk3) == true );
+
     }
 }
 
@@ -128,19 +137,27 @@ TEST_CASE("rsa tests", "[pki]") {
         pki pk_pub;
         pk_pub.parse_public_key(pk_g.export_public_key(pki::pem_format));
         REQUIRE( pk_pub.verify(signature, message, hash_t::sha256) );
+        REQUIRE( pki::check_pair(pk_pub, pk_g) == true );
 
         // test pem private
         pki pk_pri;
         pk_pri.parse_key(pk_g.export_key(pki::pem_format));
         REQUIRE(( signature == pk_pri.sign(message, hash_t::sha256) ));
+        REQUIRE( pki::check_pair(pk_pub, pk_pri) == true );
 
         // test der public
         pk_pub.parse_public_key(pk_g.export_public_key(pki::der_format));
         REQUIRE( pk_pub.verify(signature, message, hash_t::sha256) );
+        REQUIRE( pki::check_pair(pk_pub, pk_g) == true );
 
         // test der private
         pk_pri.parse_key(pk_g.export_key(pki::der_format));
         REQUIRE(( signature == pk_pri.sign(message, hash_t::sha256) ));
+        REQUIRE( pki::check_pair(pk_pub, pk_pri) == true );
+
+        // recreate key
+        REQUIRE_NOTHROW( pk_pri.rsa_generate_key(1024, 3) );
+        REQUIRE( pki::check_pair(pk_pub, pk_pri) == false );
 
 
     } catch ( mbedcrypto::exception& cerr ) {

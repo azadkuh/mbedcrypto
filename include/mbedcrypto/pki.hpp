@@ -20,8 +20,15 @@ namespace mbedcrypto {
 
 class pki
 {
+public: // static helper functions
+
+    /// checks if a public-private pair of keys matches.
+    /// @warning both pki instances must be of a same type (ex pk_t::rsa)
+    static bool check_pair(const pki& pub, const pki& pri);
+
 public:
     explicit pki(pk_t type);
+    /// type will be set by key funcs: parse_xxx() or load_xxx()
     pki();
     ~pki();
 
