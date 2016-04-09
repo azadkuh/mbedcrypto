@@ -4,6 +4,7 @@
 #include "conversions.hpp"
 
 #include "mbedtls/pk.h"
+#include <cstring>
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
 namespace {
