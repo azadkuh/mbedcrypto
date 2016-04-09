@@ -5,6 +5,11 @@
  * @version 1.0.0
  * @author amir zamani <azadkuh@live.com>
  *
+ * related cmake build options:
+ *   BUILD_MD2
+ *   BUILD_MD4
+ *   BUILD_RIPEMD160
+ *
  */
 
 #ifndef MBEDCRYPTO_HASH_HPP

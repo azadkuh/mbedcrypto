@@ -5,6 +5,22 @@
  * @version 1.0.0
  * @author amir zamani <azadkuh@live.com>
  *
+ * related cmake build options:
+ * paddings:
+ *   BUILD_ALL_CIPHER_PADDINGS
+ *
+ * block mdoes:
+ *   BUILD_CFB
+ *   BUILD_CTR
+ *   BUILD_GCM
+ *   BUILD_CCM
+ *
+ * cipher types:
+ *   BUILD_DES
+ *   BUILD_BLOWFISH
+ *   BUILD_CAMELLIA
+ *   BUILD_ARC4
+ *
  */
 
 #ifndef MBEDTLSCRYPTO_CIPHER_HPP
@@ -85,6 +101,7 @@ public:
             const buffer_t& iv, const buffer_t& key,
             const buffer_t& input) -> buffer_t;
 
+public: // aead methods require BUILD_CCM or BUILD_GCM
     /// encrypts (AEAD cipher) the input and authenticate by additional data.
     /// only cipher_t::gcm and cipher_t::ccm support aead.
     /// input and additional_data could be in any size.
@@ -126,6 +143,13 @@ public:
     /// set padding mode for ciphers that use padding
     auto padding(padding_t) -> cipher&;
 
+public: // properties
+    size_t block_size() const noexcept;
+    size_t iv_size()    const noexcept;
+    size_t key_bitlen() const noexcept;
+    auto   block_mode() const noexcept -> cipher_bm;
+
+
 public: // general encryption / decryption
     /// resets and makes cipher ready for update() iterations
     void start();
@@ -160,7 +184,7 @@ public: // general encryption / decryption
     /// helper function, runs start()/update()/finish() in a single call, single allocation
     auto crypt(const buffer_t& input) -> buffer_t;
 
-public: // gcm features: only valid in gcm block modes
+public: // gcm features: requires BUILD_GCM
     /// set the additional data for a gcm encryption/decryption or throws non gcm modes.
     /// ad could be in any size, can be transmitted in plain text.
     /// @warning must be called exactly after start() and before any update().
@@ -176,13 +200,7 @@ public: // gcm features: only valid in gcm block modes
     /// @warning must be called exactly after finish() of decryption.
     bool gcm_check_decryption_tag(const buffer_t& tag);
 
-public: // properties
-    size_t block_size() const noexcept;
-    size_t iv_size()    const noexcept;
-    size_t key_bitlen() const noexcept;
-    auto   block_mode() const noexcept -> cipher_bm;
-
-
+public:
     // move only
     cipher(const cipher&)            = delete;
     cipher(cipher&&)                 = default;

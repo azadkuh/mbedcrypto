@@ -73,6 +73,7 @@ const unsigned char SignatureSha1[] = {
     0x1a, 0x62, 0xec, 0x3f, 0xf5, 0x15, 0x30, 0x31,
     0xae, 0x41, 0xea, 0x15, 0xab, 0xaf, 0x3f, 0x44,
 };
+
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace anon
 ///////////////////////////////////////////////////////////////////////////////
@@ -147,7 +148,7 @@ wyeaiI5gpvmQb/KVreVvagVNR7TJHO6ybG/rc2ssfVIAXmKHtOI=
 
 buffer_t
 sample_private_key_password() {
-    buffer_t k(R"xx( -----BEGIN RSA PRIVATE KEY-----
+    buffer_t k(R"xx(-----BEGIN RSA PRIVATE KEY-----
 Proc-Type: 4,ENCRYPTED
 DEK-Info: AES-256-CBC,142902F647920CE4B7AE3C2913FDFA10
 
