@@ -98,5 +98,18 @@ if(BUILD_ARC4)
     target_sources(mbedcrypto PRIVATE ${MBEDTLS_PATH}/arc4.c)
 endif()
 
+if(BUILD_PK_EXPORT)
+    set(MBEDTLS_ASN1_WRITE_C ON)
+    set(MBEDTLS_PK_WRITE_C ON)
+    set(MBEDTLS_PEM_WRITE_C ON)
+    target_sources(mbedcrypto PRIVATE
+        ${MBEDTLS_PATH}/asn1write.c
+        ${MBEDTLS_PATH}/pkwrite.c
+        )
+endif()
+if(BUILD_RSA_KEYGEN)
+    set(MBEDTLS_GENPRIME ON)
+endif()
+
 
 configure_file(mbedcrypto_mbedtls_config.h.in ${CMAKE_BINARY_DIR}/mbedcrypto_mbedtls_config.h)

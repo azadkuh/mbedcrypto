@@ -81,6 +81,12 @@
 #cmakedefine MBEDTLS_GCM_C
 #cmakedefine MBEDTLS_CCM_C
 
+// pk
+#cmakedefine MBEDTLS_ASN1_WRITE_C
+#cmakedefine MBEDTLS_PK_WRITE_C
+#cmakedefine MBEDTLS_PEM_WRITE_C
+#cmakedefine MBEDTLS_GENPRIME
+
 ///////////////////////////////////////////////////////////////////////////////
 #include "mbedtls/check_config.h"
 ///////////////////////////////////////////////////////////////////////////////

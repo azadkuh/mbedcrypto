@@ -26,6 +26,10 @@ option(BUILD_BLOWFISH "enable blowfish cipher" OFF)
 option(BUILD_CAMELLIA "enable camellia cipher" OFF)
 option(BUILD_ARC4     "enable arc4 cipher (unsecure)" OFF)
 
+# optional pk algorithm
+option(BUILD_PK_EXPORT  "enable export keys in pem or der format" OFF)
+option(BUILD_RSA_KEYGEN "enable rsa key generator" OFF)
+
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING
         "Choose the type of build: None Release ASan MemSan Debug"
