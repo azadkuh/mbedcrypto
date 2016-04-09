@@ -1,5 +1,6 @@
 #include <catch.hpp>
 
+#include "mbedcrypto_mbedtls_config.h"
 #include "mbedtls/pk.h"
 #include "mbedcrypto/pki.hpp"
 #include "mbedcrypto/random.hpp"
@@ -9,7 +10,6 @@
 #include "generator.hpp"
 #include <cstring>
 #include <iostream>
-#include <fstream>
 ///////////////////////////////////////////////////////////////////////////////
 namespace {
 using namespace mbedcrypto;
@@ -97,4 +97,57 @@ TEST_CASE("pki cryptography", "[pki]") {
     }
 }
 
+
+#if defined(MBEDTLS_GENPRIME)
+TEST_CASE("rsa key gen", "[pki]") {
+    using namespace mbedcrypto;
+
+    SECTION("key generation") {
+        pki pk1;
+        // pk1 is not defined as rsa
+        REQUIRE_THROWS( pk1.rsa_generate_key(1024) );
+
+        pki pk2(pk_t::rsa);
+        REQUIRE_NOTHROW( pk2.rsa_generate_key(1024) );
+    }
+}
+#endif
+
+#if defined(MBEDTLS_GENPRIME)  &&  defined(MBEDTLS_PEM_WRITE_C)
+TEST_CASE("rsa tests", "[pki]") {
+    using namespace mbedcrypto;
+
+    const auto message = test::long_text();
+
+    try {
+        pki pk_g(pk_t::rsa);
+        pk_g.rsa_generate_key(2048);
+        const auto signature = pk_g.sign(message, hash_t::sha256);
+
+        // test pem public
+        pki pk_pub;
+        pk_pub.parse_public_key(pk_g.export_public_key(pki::pem_format));
+        REQUIRE( pk_pub.verify(signature, message, hash_t::sha256) );
+
+        // test pem private
+        pki pk_pri;
+        pk_pri.parse_key(pk_g.export_key(pki::pem_format));
+        REQUIRE(( signature == pk_pri.sign(message, hash_t::sha256) ));
+
+        // test der public
+        pk_pub.parse_public_key(pk_g.export_public_key(pki::der_format));
+        REQUIRE( pk_pub.verify(signature, message, hash_t::sha256) );
+
+        // test der private
+        pk_pri.parse_key(pk_g.export_key(pki::der_format));
+        REQUIRE(( signature == pk_pri.sign(message, hash_t::sha256) ));
+
+
+    } catch ( mbedcrypto::exception& cerr ) {
+        std::cerr << "rsa test failed. " << cerr.to_string() << std::endl;
+        REQUIRE_FALSE("exception thrown!");
+    }
+
+}
+#endif // MBEDTLS_GENPRIME && MBEDTLS_PEM_WRITE_C
 ///////////////////////////////////////////////////////////////////////////////
