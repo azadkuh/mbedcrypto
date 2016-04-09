@@ -11,6 +11,21 @@ namespace {
 static_assert(std::is_copy_constructible<pki>::value == false, "");
 static_assert(std::is_move_constructible<pki>::value == true, "");
 
+enum K {
+    DefaultExportBufferSize = 16000,
+};
+
+struct rsa_keygen_exception : public exception {
+    explicit rsa_keygen_exception() :
+        exception("needs RSA_KEYGEN, check build options"){}
+}; // struct rsa_keygen_exception
+
+struct pk_export_exception : public exception {
+    explicit pk_export_exception() :
+        exception("needs PK_EXPORT, check build options"){}
+}; // struct pk_export_exception
+
+
 const mbedtls_pk_info_t*
 native_info(pk_t type) {
     auto ntype         = to_native(type);
@@ -27,6 +42,11 @@ native_info(pk_t type) {
 bool
 ends_with(const buffer_t& str, char c) {
     return str.rfind(c) == str.size()-1;
+}
+
+void
+finalize_pem(buffer_t& pem) {
+    pem.push_back('\0');
 }
 
 int
@@ -107,9 +127,6 @@ pki::name()const noexcept {
 
 void
 pki::parse_key(const buffer_t& private_key, const buffer_t& password) {
-    if ( !ends_with(private_key, '\0') )
-        throw exception("private key data must be ended by null byte");
-
     // resets
     mbedtls_pk_free(&pimpl->ctx_);
 
@@ -126,9 +143,6 @@ pki::parse_key(const buffer_t& private_key, const buffer_t& password) {
 
 void
 pki::parse_public_key(const buffer_t& public_key) {
-    if ( !ends_with(public_key, '\0') )
-        throw exception("private key data must be ended by null byte");
-
     // resets
     mbedtls_pk_free(&pimpl->ctx_);
 
@@ -170,6 +184,78 @@ pki::load_public_key(const char* file_path) {
             &pimpl->ctx_,
             file_path
           );
+}
+
+buffer_t
+pki::export_key(pki::key_format fmt) {
+#if defined(MBEDTLS_PK_WRITE_C)
+    buffer_t output(K::DefaultExportBufferSize, '\0');
+
+    if ( fmt == pem_format ) {
+        mbedcrypto_c_call(mbedtls_pk_write_key_pem,
+                &pimpl->ctx_,
+                to_ptr(output),
+                K::DefaultExportBufferSize
+                );
+
+        output.resize(std::strlen(output.c_str()));
+        finalize_pem(output);
+
+    } else if ( fmt == der_format ) {
+        int ret = mbedtls_pk_write_key_der(
+                &pimpl->ctx_,
+                to_ptr(output),
+                K::DefaultExportBufferSize
+                );
+        if ( ret < 0 )
+            throw exception(ret, __FUNCTION__);
+
+        size_t length = ret;
+        output.erase(0, K::DefaultExportBufferSize - length);
+        output.resize(length);
+    }
+
+    return output;
+
+#else // MBEDTLS_PK_WRITE_C
+    throw pk_export_exception();
+#endif // MBEDTLS_PK_WRITE_C
+}
+
+buffer_t
+pki::export_public_key(pki::key_format fmt) {
+#if defined(MBEDTLS_PK_WRITE_C)
+    buffer_t output(K::DefaultExportBufferSize, '\0');
+
+    if ( fmt == pem_format ) {
+        mbedcrypto_c_call(mbedtls_pk_write_pubkey_pem,
+                &pimpl->ctx_,
+                to_ptr(output),
+                K::DefaultExportBufferSize
+                );
+
+        output.resize(std::strlen(output.c_str()));
+        finalize_pem(output);
+
+    } else if ( fmt == der_format ) {
+        int ret = mbedtls_pk_write_pubkey_der(
+                &pimpl->ctx_,
+                to_ptr(output),
+                K::DefaultExportBufferSize
+                );
+        if ( ret < 0 )
+            throw exception(ret, __FUNCTION__);
+
+        size_t length = ret;
+        output.erase(0, K::DefaultExportBufferSize - length);
+        output.resize(length);
+    }
+
+    return output;
+
+#else // MBEDTLS_PK_WRITE_C
+    throw pk_export_exception();
+#endif // MBEDTLS_PK_WRITE_C
 }
 
 bool
@@ -290,6 +376,25 @@ pki::decrypt(const buffer_t& encrypted_value) {
 
     output.resize(olen);
     return output;
+}
+
+void
+pki::rsa_generate_key(size_t key_bitlen, size_t exponent) {
+#if defined(MBEDTLS_GENPRIME)
+    if ( !can_do(pk_t::rsa) )
+        throw exception("the instance is not initialized as rsa");
+
+    mbedcrypto_c_call(mbedtls_rsa_gen_key,
+            mbedtls_pk_rsa(pimpl->ctx_),
+            random_func,
+            &pimpl->rnd_,
+            key_bitlen,
+            exponent
+            );
+
+#else // MBEDTLS_GENPRIME
+    throw rsa_keygen_exception();
+#endif // MBEDTLS_GENPRIME
 }
 
 ///////////////////////////////////////////////////////////////////////////////

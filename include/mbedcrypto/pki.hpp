@@ -5,6 +5,10 @@
  * @version 1.0.0
  * @author amir zamani <azadkuh@live.com>
  *
+ * related cmake build options:
+ *   BUILD_PK_EXPORT
+ *   BUILD_RSA_KEYGEN
+ *
  */
 
 #ifndef MBEDCRYPTO_PKI_HPP
@@ -21,14 +25,21 @@ public:
     pki();
     ~pki();
 
-public: // parse or load public or private keys
+public: // key i/o
+    /// ASN.1 key formats supported by this class to import(initialize) and export from.
+    /// @warning with pem keys:
+    ///  - parse_xxx() / load_xxx(): the pem data must include a null ('\0') terminating byte.
+    ///  - export_xxx(): returns the pem data as a null terminating buffer_t.
+    enum key_format {
+        pem_format,     ///< plain text
+        der_format,     ///< binary data
+    };
+
     /// (re)initializes by private key data.
-    /// @warning key data must end with a null byte
     void parse_key(const buffer_t& private_key,
             const buffer_t& password = buffer_t{});
 
     /// (re)initializes by public key data.
-    /// @warning key data must end with a null byte
     void parse_public_key(const buffer_t& public_key);
 
     /// loads the private key from a file.
@@ -37,6 +48,13 @@ public: // parse or load public or private keys
 
     /// loads public key from a file.
     void load_public_key(const char* file_path);
+
+    // export_xxx() require the activation of BUILD_PK_EXPORT option (see cmake file)
+
+    /// export private key
+    auto export_key(key_format)        -> buffer_t;
+    /// export public key
+    auto export_public_key(key_format) -> buffer_t;
 
 public: // properties
     /// returns the type fed by constructor or key
@@ -77,7 +95,15 @@ public:
     /// decrypt an encrypted buffer by public key
     auto decrypt(const buffer_t& encrypted_value) -> buffer_t;
 
+public: // rsa key generation
+    // rsa_generate_key() requires the activation of BUILD_KEYGEN option (see cmake file)
 
+    /// generates a key only if the type() is pk_t::rsa.
+    /// exponent rsa public exponent.
+    /// only change the default exponent value if you know exactly what you're doing.
+    void rsa_generate_key(size_t key_bitlen, size_t exponent = 65537);
+
+public:
     // move only
     pki(const pki&)            = delete;
     pki(pki&&)                 = default;
