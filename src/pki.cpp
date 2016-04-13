@@ -65,8 +65,8 @@ public:
             hash_t halgo, const buffer_t& hmvalue) -> const buffer_t& {
 
         if ( halgo == hash_t::none ) {
-            if ( (hmvalue.size() << 3) > pk->bitlen() )
-                throw exception("the message is larger than the key size");
+            if ( hmvalue.size() > pk->max_crypt_size() )
+                throw exception("the message is larger than max_crypt_size()");
 
             return hmvalue;
         }
@@ -138,6 +138,16 @@ pki::type()const noexcept {
     return from_native(
             mbedtls_pk_get_type(&pimpl->ctx_)
             );
+}
+
+size_t
+pki::max_crypt_size()const {
+    // padding / header data (11 bytes for PKCS#1 v1.5 padding).
+    if ( type() == pk_t::rsa )
+        return length() - 11;
+
+    // other pk types are note yet supported
+    throw exception("unsupported pk type");
 }
 
 const char*
@@ -306,7 +316,7 @@ pki::sign(const buffer_t& hmvalue, hash_t halgo) {
     hm_prepare hm;
     const auto& hvalue = hm(this, halgo, hmvalue);
 
-    size_t olen = 32 + (bitlen() >> 3);
+    size_t olen = 32 + max_crypt_size();
     buffer_t output(olen, '\0');
     mbedcrypto_c_call(mbedtls_pk_sign,
             &pimpl->ctx_,
@@ -358,7 +368,7 @@ pki::encrypt(const buffer_t& hmvalue, hash_t hash_type) {
     hm_prepare hm;
     const auto& hvalue = hm(this, hash_type, hmvalue);
 
-    size_t olen = 32 + (bitlen() >> 3);
+    size_t olen = 32 + max_crypt_size();
     buffer_t output(olen, '\0');
     mbedcrypto_c_call(mbedtls_pk_encrypt,
             &pimpl->ctx_,
@@ -380,7 +390,7 @@ pki::decrypt(const buffer_t& encrypted_value) {
     if ( (encrypted_value.size() << 3) > bitlen() )
         throw exception("the encrypted value is larger than the key size");
 
-    size_t olen = 32 + (bitlen() >> 3);
+    size_t olen = 32 + max_crypt_size();
     buffer_t output(olen, '\0');
 
     mbedcrypto_c_call(mbedtls_pk_decrypt,
