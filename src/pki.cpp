@@ -82,7 +82,7 @@ public:
 
 struct pki::impl
 {
-    mbedtls_pk_context ctx_;
+    mbedtls_pk_context ctx_{nullptr, nullptr};
     mbedcrypto::random rnd_;
 
     explicit impl() {
@@ -99,6 +99,11 @@ struct pki::impl
                 &ctx_,
                 pinfot
               );
+    }
+
+    void reset_as(pk_t type) {
+        mbedtls_pk_free(&ctx_);
+        setup(type);
     }
 
 }; // pki::impl
@@ -413,6 +418,9 @@ pki::rsa_generate_key(size_t key_bitlen, size_t exponent) {
 #if defined(MBEDTLS_GENPRIME)
     if ( !can_do(pk_t::rsa) )
         throw exception("the instance is not initialized as rsa");
+
+    // resets
+    pimpl->reset_as(pk_t::rsa);
 
     mbedcrypto_c_call(mbedtls_rsa_gen_key,
             mbedtls_pk_rsa(pimpl->ctx_),

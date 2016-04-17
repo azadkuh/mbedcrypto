@@ -118,6 +118,7 @@ TEST_CASE("rsa key gen", "[pki]") {
 
         pki pk2(pk_t::rsa);
         REQUIRE_NOTHROW( pk2.rsa_generate_key(1024) );
+        REQUIRE_NOTHROW( pk2.rsa_generate_key(2048, 3) );
     }
 }
 #endif
