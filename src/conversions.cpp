@@ -99,6 +99,23 @@ const enum_map<pk_t, mbedtls_pk_type_t> gPks[] = {
     {pk_t::rsa_alt,    MBEDTLS_PK_RSA_ALT},
     {pk_t::rsassa_pss, MBEDTLS_PK_RSASSA_PSS},
 };
+
+const enum_map<curve_t, mbedtls_ecp_group_id> gCurves[] = {
+    {curve_t::none,       MBEDTLS_ECP_DP_NONE},
+    {curve_t::secp192r1,  MBEDTLS_ECP_DP_SECP192R1},
+    {curve_t::secp224r1,  MBEDTLS_ECP_DP_SECP224R1},
+    {curve_t::secp256r1,  MBEDTLS_ECP_DP_SECP256R1},
+    {curve_t::secp384r1,  MBEDTLS_ECP_DP_SECP384R1},
+    {curve_t::secp521r1,  MBEDTLS_ECP_DP_SECP521R1},
+    {curve_t::secp192k1,  MBEDTLS_ECP_DP_SECP192K1},
+    {curve_t::secp224k1,  MBEDTLS_ECP_DP_SECP224K1},
+    {curve_t::secp256k1,  MBEDTLS_ECP_DP_SECP256K1},
+    {curve_t::bp256r1,    MBEDTLS_ECP_DP_BP256R1},
+    {curve_t::bp384r1,    MBEDTLS_ECP_DP_BP384R1},
+    {curve_t::bp512r1,    MBEDTLS_ECP_DP_BP512R1},
+    {curve_t::curve25519, MBEDTLS_ECP_DP_CURVE25519},
+};
+
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace anon
 ///////////////////////////////////////////////////////////////////////////////
@@ -106,11 +123,6 @@ const enum_map<pk_t, mbedtls_pk_type_t> gPks[] = {
 mbedtls_md_type_t
 to_native(hash_t e) {
     return to_native(e, gHashes);
-}
-
-hash_t
-from_native(mbedtls_md_type_t n) {
-    return from_native(n, gHashes);
 }
 
 mbedtls_cipher_type_t
@@ -123,6 +135,26 @@ to_native(cipher_bm e) {
     return to_native(e, gCipherModes);
 }
 
+mbedtls_cipher_padding_t
+to_native(padding_t e) {
+    return to_native(e, gPaddings);
+}
+
+mbedtls_pk_type_t
+to_native(pk_t e) {
+    return to_native(e, gPks);
+}
+
+mbedtls_ecp_group_id
+to_native(curve_t e) {
+    return to_native(e, gCurves);
+}
+
+hash_t
+from_native(mbedtls_md_type_t n) {
+    return from_native(n, gHashes);
+}
+
 cipher_t
 from_native(mbedtls_cipher_type_t n) {
     return from_native(n, gCiphers);
@@ -133,25 +165,22 @@ from_native(mbedtls_cipher_mode_t n) {
     return from_native(n, gCipherModes);
 }
 
-mbedtls_cipher_padding_t
-to_native(padding_t e) {
-    return to_native(e, gPaddings);
-}
-
 padding_t
 from_native(mbedtls_cipher_padding_t n) {
     return from_native(n, gPaddings);
-}
-
-mbedtls_pk_type_t
-to_native(pk_t e) {
-    return to_native(e, gPks);
 }
 
 pk_t
 from_native(mbedtls_pk_type_t n) {
     return from_native(n, gPks);
 }
+
+curve_t
+from_native(mbedtls_ecp_group_id n) {
+    return from_native(n, gCurves);
+}
+
+///////////////////////////////////////////////////////////////////////////////
 
 std::vector<hash_t>
 installed_hashes() {
@@ -196,6 +225,18 @@ installed_pks() {
     for ( const auto& i : gPks ) {
        if ( supports(i.e) )
            my.push_back(i.e);
+    }
+
+    return my;
+}
+
+std::vector<curve_t>
+installed_curves() {
+    std::vector<curve_t> my;
+
+    for ( const auto& i : gCurves ) {
+        if ( supports(i.e) )
+            my.push_back(i.e);
     }
 
     return my;

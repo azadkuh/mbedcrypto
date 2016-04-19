@@ -15,16 +15,6 @@ const name_map<padding_t> gPaddings[] = {
     {padding_t::zeros,         "ZEROS"}
 };
 
-const name_map<pk_t> gPks[] = {
-    {pk_t::none,       "NONE"},
-    {pk_t::rsa,        "RSA"},
-    {pk_t::eckey,      "EC"},
-    {pk_t::eckey_dh,   "EC_DH"},
-    {pk_t::ecdsa,      "ECDSA"},
-    {pk_t::rsa_alt,    "RSA_ALT"},
-    {pk_t::rsassa_pss, "RSASSA_PSS"},
-};
-
 const name_map<cipher_bm> gBlockModes[] = {
     {cipher_bm::none,   "NONE"},
     {cipher_bm::ecb,    "ECB"},
@@ -36,6 +26,31 @@ const name_map<cipher_bm> gBlockModes[] = {
     {cipher_bm::stream, "STREAM"},
 };
 
+const name_map<pk_t> gPks[] = {
+    {pk_t::none,       "NONE"},
+    {pk_t::rsa,        "RSA"},
+    {pk_t::eckey,      "EC"},
+    {pk_t::eckey_dh,   "EC_DH"},
+    {pk_t::ecdsa,      "ECDSA"},
+    {pk_t::rsa_alt,    "RSA_ALT"},
+    {pk_t::rsassa_pss, "RSASSA_PSS"},
+};
+
+const name_map<curve_t> gCurves[] = {
+    {curve_t::none,       "NONE"},
+    {curve_t::secp192r1,  "SECP192R1"},
+    {curve_t::secp224r1,  "SECP224R1"},
+    {curve_t::secp256r1,  "SECP256R1"},
+    {curve_t::secp384r1,  "SECP384R1"},
+    {curve_t::secp521r1,  "SECP521R1"},
+    {curve_t::secp192k1,  "SECP192K1"},
+    {curve_t::secp224k1,  "SECP224K1"},
+    {curve_t::secp256k1,  "SECP256K1"},
+    {curve_t::bp256r1,    "BP256R1"},
+    {curve_t::bp384r1,    "BP384R1"},
+    {curve_t::bp512r1,    "BP512R1"},
+    {curve_t::curve25519, "CURVE25519"},
+};
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace anon
 ///////////////////////////////////////////////////////////////////////////////
@@ -147,6 +162,102 @@ installed_block_modes() {
     return my;
 }
 
+bool
+supports(curve_t e) {
+    switch ( e ) {
+        case curve_t::none:
+            return false;
+
+        case curve_t::secp192r1:
+            #if defined(MBEDTLS_ECP_DP_SECP192R1_ENABLED)
+            return true;
+            #else
+            return false;
+            #endif
+
+        case curve_t::secp224r1:
+            #if defined(MBEDTLS_ECP_DP_SECP224R1_ENABLED)
+            return true;
+            #else
+            return false;
+            #endif
+
+        case curve_t::secp256r1:
+            #if defined(MBEDTLS_ECP_DP_SECP256R1_ENABLED)
+            return true;
+            #else
+            return false;
+            #endif
+
+        case curve_t::secp384r1:
+            #if defined(MBEDTLS_ECP_DP_SECP384R1_ENABLED)
+            return true;
+            #else
+            return false;
+            #endif
+
+        case curve_t::secp521r1:
+            #if defined(MBEDTLS_ECP_DP_SECP521R1_ENABLED)
+            return true;
+            #else
+            return false;
+            #endif
+
+        case curve_t::secp192k1:
+            #if defined(MBEDTLS_ECP_DP_SECP192K1_ENABLED)
+            return true;
+            #else
+            return false;
+            #endif
+
+        case curve_t::secp224k1:
+            #if defined(MBEDTLS_ECP_DP_SECP224K1_ENABLED)
+            return true;
+            #else
+            return false;
+            #endif
+
+        case curve_t::secp256k1:
+            #if defined(MBEDTLS_ECP_DP_SECP256K1_ENABLED)
+            return true;
+            #else
+            return false;
+            #endif
+
+        case curve_t::bp256r1:
+            #if defined(MBEDTLS_ECP_DP_BP256R1_ENABLED)
+            return true;
+            #else
+            return false;
+            #endif
+
+        case curve_t::bp384r1:
+            #if defined(MBEDTLS_ECP_DP_BP384R1_ENABLED)
+            return true;
+            #else
+            return false;
+            #endif
+
+        case curve_t::bp512r1:
+            #if defined(MBEDTLS_ECP_DP_BP512R1_ENABLED)
+            return true;
+            #else
+            return false;
+            #endif
+
+        case curve_t::curve25519:
+            #if defined(MBEDTLS_ECP_DP_CURVE25519_ENABLED)
+            return true;
+            #else
+            return false;
+            #endif
+
+        default:
+            return false;
+            break;
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 bool
@@ -177,6 +288,12 @@ bool
 supports_pk(const char* name) {
     auto e = pk_from_string(name);
     return (e == pk_t::none ) ? false : supports(e);
+}
+
+bool
+supports_curve(const char* name) {
+    auto e = curve_from_string(name);
+    return (e == curve_t::none) ? false : supports(e);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -219,6 +336,13 @@ to_string(pk_t e) {
     return to_string<pk_t>(e, gPks);
 }
 
+const char*
+to_string(curve_t e) {
+    if ( !supports(e) )
+        return nullptr;
+    return to_string<curve_t>(e, gCurves);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 hash_t
@@ -252,6 +376,10 @@ pk_from_string(const char* name) {
     return from_string<pk_t>(name, gPks);
 }
 
+curve_t
+curve_from_string(const char* name) {
+    return from_string<curve_t>(name, gCurves);
+}
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
 ///////////////////////////////////////////////////////////////////////////////

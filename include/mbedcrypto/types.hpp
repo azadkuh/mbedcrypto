@@ -146,6 +146,28 @@ enum class pk_t {
     rsassa_pss,     ///< RSA standard signature algorithm, probabilistic signature scheme
 };
 
+/** all supported EC curves.
+ * Only curves over prime fields are supported.
+ *
+ * @warning This library does not support validation of arbitrary domain
+ *  parameters. Therefore, only well-known domain parameters from trusted
+ *  sources should be used.
+ */
+enum class curve_t {
+    none,
+    secp192r1,  ///< 192-bits NIST curve
+    secp224r1,  ///< 224-bits NIST curve
+    secp256r1,  ///< 256-bits NIST curve
+    secp384r1,  ///< 384-bits NIST curve
+    secp521r1,  ///< 521-bits NIST curve
+    secp192k1,  ///< 192-bits "Koblitz" curve
+    secp224k1,  ///< 224-bits "Koblitz" curve
+    secp256k1,  ///< 256-bits "Koblitz" curve
+    bp256r1,    ///< 256-bits Brainpool curve
+    bp384r1,    ///< 384-bits Brainpool curve
+    bp512r1,    ///< 512-bits Brainpool curve
+    curve25519, ///< Curve25519
+};
 ///////////////////////////////////////////////////////////////////////////////
 
 // returns true if an algorithm or a type is present at runtime.
@@ -154,6 +176,7 @@ bool supports(padding_t);
 bool supports(cipher_bm);
 bool supports(cipher_t);
 bool supports(pk_t);
+bool supports(curve_t);
 
 // list all installed algorithms, built into library
 auto installed_hashes()      -> std::vector<hash_t>;
@@ -161,6 +184,7 @@ auto installed_paddings()    -> std::vector<padding_t>;
 auto installed_block_modes() -> std::vector<cipher_bm>;
 auto installed_ciphers()     -> std::vector<cipher_t>;
 auto installed_pks()         -> std::vector<pk_t>;
+auto installed_curves()      -> std::vector<curve_t>;
 
 
 // returns true if an algorithm or a type is present at runtime (by name string).
@@ -171,18 +195,21 @@ bool supports_padding(const char*);
 bool supports_block_mode(const char*);
 bool supports_cipher(const char*);
 bool supports_pk(const char*);
+bool supports_curve(const char*);
 
 auto to_string(hash_t)    -> const char*;
 auto to_string(padding_t) -> const char*;
 auto to_string(cipher_bm) -> const char*;
 auto to_string(cipher_t)  -> const char*;
 auto to_string(pk_t)      -> const char*;
+auto to_string(curve_t)   -> const char*;
 
 auto hash_from_string(const char*)       -> hash_t;
 auto padding_from_string(const char*)    -> padding_t;
 auto block_mode_from_string(const char*) -> cipher_bm;
 auto cipher_from_string(const char*)     -> cipher_t;
 auto pk_from_string(const char*)         -> pk_t;
+auto curve_from_string(const char*)      -> curve_t;
 
 template<typename T>
 T from_string(const char* name, T* = nullptr);
@@ -210,6 +237,11 @@ auto from_string(const char* name, cipher_t*) -> cipher_t {
 template<> inline
 auto from_string(const char* name, pk_t*) -> pk_t {
     return pk_from_string(name);
+}
+
+template<> inline
+auto from_string(const char* name, curve_t*) -> curve_t {
+    return curve_from_string(name);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
