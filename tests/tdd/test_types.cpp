@@ -67,6 +67,12 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
             std::cout << to_string(p) << " , ";
         }
 
+        auto curves = installed_curves();
+        std::cout << "\nsupports " << curves.size() << " elliptic curves: ";
+        for ( auto c : curves ) {
+            std::cout << to_string(c) << " , ";
+        }
+
         std::cout << std::endl;
     }
 
@@ -223,6 +229,33 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
                 continue;
 
             auto v = from_string<cipher_bm>(name);
+            REQUIRE( v == i );
+        }
+    }
+
+    SECTION("curve names") {
+        const std::initializer_list<curve_t> Items = {
+            curve_t::none,
+            curve_t::secp192r1,
+            curve_t::secp224r1,
+            curve_t::secp256r1,
+            curve_t::secp384r1,
+            curve_t::secp521r1,
+            curve_t::secp192k1,
+            curve_t::secp224k1,
+            curve_t::secp256k1,
+            curve_t::bp256r1,
+            curve_t::bp384r1,
+            curve_t::bp512r1,
+            curve_t::curve25519,
+        };
+
+        for ( auto i : Items ) {
+            cchars name = to_string(i);
+            if ( name == nullptr )
+                continue;
+
+            auto v = from_string<curve_t>(name);
             REQUIRE( v == i );
         }
     }
