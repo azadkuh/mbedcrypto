@@ -86,6 +86,22 @@
 #cmakedefine MBEDTLS_PK_WRITE_C
 #cmakedefine MBEDTLS_PEM_WRITE_C
 #cmakedefine MBEDTLS_GENPRIME
+// ecp
+#cmakedefine MBEDTLS_ECP_C
+#cmakedefine MBEDTLS_ECP_DP_SECP192R1_ENABLED
+#cmakedefine MBEDTLS_ECP_DP_SECP224R1_ENABLED
+#cmakedefine MBEDTLS_ECP_DP_SECP256R1_ENABLED
+#cmakedefine MBEDTLS_ECP_DP_SECP384R1_ENABLED
+#cmakedefine MBEDTLS_ECP_DP_SECP521R1_ENABLED
+#cmakedefine MBEDTLS_ECP_DP_SECP192K1_ENABLED
+#cmakedefine MBEDTLS_ECP_DP_SECP224K1_ENABLED
+#cmakedefine MBEDTLS_ECP_DP_SECP256K1_ENABLED
+#cmakedefine MBEDTLS_ECP_DP_BP256R1_ENABLED
+#cmakedefine MBEDTLS_ECP_DP_BP384R1_ENABLED
+#cmakedefine MBEDTLS_ECP_DP_BP512R1_ENABLED
+#cmakedefine MBEDTLS_ECP_DP_CURVE25519_ENABLED
+
+#cmakedefine MBEDTLS_ECDSA_C
 
 ///////////////////////////////////////////////////////////////////////////////
 #include "mbedtls/check_config.h"
