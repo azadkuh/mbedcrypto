@@ -23,7 +23,7 @@ icompare(const char* a, const char* b) {
 ///////////////////////////////////////////////////////////////////////////////
 TEST_CASE("pk type checks", "[pki][types]") {
     using namespace mbedcrypto;
-    SECTION("creation tests") {
+    SECTION("rsa creation tests") {
         pki pk1;
         REQUIRE_FALSE(pk1.can_do(pk_t::rsa));
 
@@ -64,7 +64,44 @@ TEST_CASE("pk type checks", "[pki][types]") {
         REQUIRE( pki::check_pair(pk4, pk3) == true );
 
     }
+
+#if defined(MBEDTLS_ECP_C)
+    SECTION("ec creation tests") {
+        pki pk1;
+        REQUIRE_FALSE(pk1.can_do(pk_t::eckey));
+
+        pk1.reset_as(pk_t::eckey);
+        REQUIRE( icompare(pk1.name(), "EC") );
+        REQUIRE( pk1.can_do(pk_t::eckey) );
+        REQUIRE( pk1.can_do(pk_t::eckey_dh) );
+        REQUIRE( pk1.can_do(pk_t::ecdsa) );
+
+        pk1.reset_as(pk_t::eckey_dh);
+        REQUIRE( icompare(pk1.name(), "EC_DH") );
+        REQUIRE( pk1.can_do(pk_t::eckey_dh) );
+        REQUIRE( pk1.can_do(pk_t::eckey) );
+        REQUIRE_FALSE( pk1.can_do(pk_t::ecdsa) );
+
+
+    }
+#endif // MBEDTLS_ECP_C
+
+#if defined(MBEDTLS_ECDSA_C)
+    SECTION("ecdsa creation tests") {
+        pki pk1;
+        REQUIRE_FALSE(pk1.can_do(pk_t::eckey));
+
+        pk1.reset_as(pk_t::ecdsa);
+        REQUIRE( icompare(pk1.name(), "ECDSA") );
+        REQUIRE( pk1.can_do(pk_t::ecdsa) );
+        REQUIRE_FALSE( pk1.can_do(pk_t::eckey) );
+        REQUIRE_FALSE( pk1.can_do(pk_t::eckey_dh) );
+    }
+
+#endif // MBEDTLS_ECDSA_C
 }
+
+///////////////////////////////////////////////////////////////////////////////
 
 TEST_CASE("pki cryptography", "[pki]") {
     using namespace mbedcrypto;
@@ -106,12 +143,13 @@ TEST_CASE("pki cryptography", "[pki]") {
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////
 
-#if defined(MBEDTLS_GENPRIME)
-TEST_CASE("rsa key gen", "[pki]") {
+TEST_CASE("key gen", "[pki]") {
     using namespace mbedcrypto;
 
-    SECTION("key generation") {
+#if defined(MBEDTLS_GENPRIME)
+    SECTION("rsa key generation") {
         pki pk1;
         // pk1 is not defined as rsa
         REQUIRE_THROWS( pk1.rsa_generate_key(1024) );
@@ -120,15 +158,47 @@ TEST_CASE("rsa key gen", "[pki]") {
         REQUIRE_NOTHROW( pk2.rsa_generate_key(1024) );
         REQUIRE_NOTHROW( pk2.rsa_generate_key(2048, 3) );
     }
-}
 #endif
 
-#if defined(MBEDTLS_GENPRIME)  &&  defined(MBEDTLS_PEM_WRITE_C)
+#if defined(MBEDTLS_ECP_C)
+    SECTION("ec key generation") {
+        pki pk1;
+        REQUIRE_THROWS( pk1.ec_generate_key(curve_t::secp256k1) );
+
+        pki pk2(pk_t::eckey);
+        REQUIRE_THROWS( pk2.ec_generate_key(curve_t::none) );
+
+        const std::initializer_list<curve_t> Items = {
+            curve_t::secp192r1,
+            curve_t::secp224r1,
+            curve_t::secp256r1,
+            curve_t::secp384r1,
+            curve_t::secp521r1,
+            curve_t::secp192k1,
+            curve_t::secp224k1,
+            curve_t::secp256k1,
+            curve_t::bp256r1,
+            curve_t::bp384r1,
+            curve_t::bp512r1,
+            curve_t::curve25519,
+        };
+
+        for ( auto i : Items ) {
+            REQUIRE_NOTHROW( pk2.ec_generate_key(i) );
+        }
+    }
+#endif // MBEDTLS_ECP_C
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+#if defined(MBEDTLS_PEM_WRITE_C)
 TEST_CASE("rsa tests", "[pki]") {
     using namespace mbedcrypto;
 
     const auto message = test::long_text();
 
+#if defined(MBEDTLS_GENPRIME)
     try {
         pki pk_g(pk_t::rsa);
         pk_g.rsa_generate_key(2048);
@@ -165,7 +235,18 @@ TEST_CASE("rsa tests", "[pki]") {
         std::cerr << "rsa test failed. " << cerr.to_string() << std::endl;
         REQUIRE_FALSE("exception thrown!");
     }
+#endif // MBEDTLS_GENPRIME
 
+#if defined(MBEDTLS_ECP_C)
+    try {
+
+    } catch ( mbedcrypto::exception& cerr ) {
+        std::cerr << "ec test faild. " << cerr.to_string() << std::endl;
+        REQUIRE_FALSE("exception thrown!");
+    }
+
+#endif // MBEDTLS_ECP_C
 }
 #endif // MBEDTLS_GENPRIME && MBEDTLS_PEM_WRITE_C
 ///////////////////////////////////////////////////////////////////////////////
+
