@@ -11,23 +11,20 @@ static_assert(std::is_copy_constructible<random>::value == false, "");
 static_assert(std::is_move_constructible<random>::value == true , "");
 
 int
-make_chunked(
-        mbedtls_ctr_drbg_context& ctx,
+make_chunked(mbedtls_ctr_drbg_context* ctx,
         unsigned char* buffer, size_t length) {
 
     constexpr size_t MaxChunkSize = MBEDTLS_CTR_DRBG_MAX_REQUEST;
 
     // length is smaller than
     if ( length <= MaxChunkSize ) {
-        return mbedtls_ctr_drbg_random(
-                &ctx, buffer, length
-                );
+        return mbedtls_ctr_drbg_random(ctx, buffer, length);
     }
 
     // needs to make in chunks
 
     for ( size_t i = 0;   (i+MaxChunkSize) <= length;   i += MaxChunkSize ) {
-        int ret = mbedtls_ctr_drbg_random(&ctx, buffer + i, MaxChunkSize);
+        int ret = mbedtls_ctr_drbg_random(ctx, buffer + i, MaxChunkSize);
         if ( ret != 0 )
             return ret;
     }
@@ -35,8 +32,9 @@ make_chunked(
     // last chunk
     size_t residue = length % MaxChunkSize;
     if ( residue ) {
-        int ret = mbedtls_ctr_drbg_random(
-                &ctx, buffer + length - residue, residue
+        int ret = mbedtls_ctr_drbg_random(ctx,
+                buffer + length - residue,
+                residue
                 );
         if ( ret != 0 )
             return ret;
@@ -64,6 +62,7 @@ struct random::impl
 
     void setup(const unsigned char* custom, size_t length) {
         mbedtls_entropy_init(&entropy_);
+
         mbedtls_ctr_drbg_init(&ctx_);
         mbedtls_ctr_drbg_seed(
                 &ctx_,
@@ -110,15 +109,15 @@ random::prediction_resistance(bool p) noexcept {
 }
 
 int
-random::make(unsigned char* buffer, size_t length) noexcept {
-    return make_chunked(pimpl->ctx_, buffer, length);
+random::make(unsigned char* buffer, size_t olen) noexcept {
+    return make_chunked(&pimpl->ctx_, buffer, olen);
 }
 
 buffer_t
 random::make(size_t length) {
     buffer_t buf(length, '\0');
     mbedcrypto_c_call(make_chunked,
-            pimpl->ctx_,
+            &pimpl->ctx_,
             to_ptr(buf),
             length
           );
