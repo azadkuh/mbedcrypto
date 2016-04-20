@@ -32,6 +32,9 @@ public:
     pki();
     ~pki();
 
+    /// clears previous internal states, and setup to new type
+    void reset_as(pk_t new_type);
+
 public: // key i/o
     /// ASN.1 key formats supported by this class to import(initialize) and export from.
     /// @warning with pem keys:
@@ -116,6 +119,13 @@ public: // rsa key generation
     /// exponent rsa public exponent.
     /// only change the default exponent value if you know exactly what you're doing.
     void rsa_generate_key(size_t key_bitlen, size_t exponent = 65537);
+
+public: // ec key generation
+    // ec_generate_key() requires the activation of BUILD_EC option
+    // (see cmake file)
+
+    /// generates a key only if the type is pk_t::ec
+    void ec_generate_key(curve_t);
 
 public:
     // move only

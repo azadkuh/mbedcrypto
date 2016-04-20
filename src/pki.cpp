@@ -4,6 +4,7 @@
 #include "conversions.hpp"
 
 #include "mbedtls/pk.h"
+#include "mbedtls/ecp.h"
 #include <cstring>
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
@@ -25,6 +26,11 @@ struct pk_export_exception : public exception {
     explicit pk_export_exception() :
         exception("needs PK_EXPORT, check build options"){}
 }; // struct pk_export_exception
+
+struct ecp_exception : public exception {
+    explicit ecp_exception() :
+        exception("needs EC (elliptic curves), check build options"){}
+}; // struct ecp_exception
 
 
 const mbedtls_pk_info_t*
@@ -82,8 +88,8 @@ public:
 
 struct pki::impl
 {
-    mbedtls_pk_context ctx_{nullptr, nullptr};
-    mbedcrypto::random rnd_;
+    mbedcrypto::random rnd_{"mbedcrypto pki implementation"};
+    mbedtls_pk_context ctx_;
 
     explicit impl() {
         mbedtls_pk_init(&ctx_);
@@ -94,11 +100,10 @@ struct pki::impl
     }
 
     void setup(pk_t type) {
-        const auto* pinfot = native_info(type);
         mbedcrypto_c_call(mbedtls_pk_setup,
                 &ctx_,
-                pinfot
-              );
+                native_info(type)
+                );
     }
 
     void reset_as(pk_t type) {
@@ -117,6 +122,11 @@ pki::pki(pk_t type) : pimpl(std::make_unique<impl>()) {
 }
 
 pki::~pki() {
+}
+
+void
+pki::reset_as(pk_t ntype) {
+    pimpl->reset_as(ntype);
 }
 
 bool
@@ -419,7 +429,7 @@ pki::rsa_generate_key(size_t key_bitlen, size_t exponent) {
     if ( !can_do(pk_t::rsa) )
         throw exception("the instance is not initialized as rsa");
 
-    // resets
+    // resets previous states
     pimpl->reset_as(pk_t::rsa);
 
     mbedcrypto_c_call(mbedtls_rsa_gen_key,
@@ -433,6 +443,27 @@ pki::rsa_generate_key(size_t key_bitlen, size_t exponent) {
 #else // MBEDTLS_GENPRIME
     throw rsa_keygen_exception();
 #endif // MBEDTLS_GENPRIME
+}
+
+void
+pki::ec_generate_key(curve_t ctype) {
+#if defined(MBEDTLS_ECP_C)
+    if ( !can_do(pk_t::eckey) )
+        throw exception("the instance is not initialized as ecp");
+
+    // resets previous states
+    pimpl->reset_as(pk_t::eckey);
+
+    mbedcrypto_c_call(mbedtls_ecp_gen_key,
+            to_native(ctype),
+            mbedtls_pk_ec(pimpl->ctx_),
+            random_func,
+            &pimpl->rnd_
+            );
+
+#else // MBEDTLS_ECP_C
+    throw ecp_exception();
+#endif // MBEDTLS_ECP_C
 }
 
 ///////////////////////////////////////////////////////////////////////////////
