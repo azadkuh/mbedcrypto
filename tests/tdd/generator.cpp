@@ -113,7 +113,7 @@ long_binary() {
 }
 
 buffer_t
-sample_private_key() {
+rsa_private_key() {
     buffer_t k(R"xx(-----BEGIN RSA PRIVATE KEY-----
 MIIEogIBAAKCAQEA4EjipWXxJPtz0KYDz5+fYWkGly7ieRJ2Zql9BkaIOjz3By/K
 L+jkYbUIwOQ+jM+FComsII9Y6309Db74sfwtykJoyUGTvMfHsZ/0VmgWOwPcUZ6v
@@ -147,7 +147,7 @@ wyeaiI5gpvmQb/KVreVvagVNR7TJHO6ybG/rc2ssfVIAXmKHtOI=
 }
 
 buffer_t
-sample_private_key_password() {
+rsa_private_key_password() {
     buffer_t k(R"xx(-----BEGIN RSA PRIVATE KEY-----
 Proc-Type: 4,ENCRYPTED
 DEK-Info: AES-256-CBC,142902F647920CE4B7AE3C2913FDFA10
@@ -184,7 +184,7 @@ RAQ8ivI/WxzhB6YT3yG4jf/oPAMiC8WZEYhIqQd/yfZRRCGaGvjMnw4jYG+vVy+D
 }
 
 buffer_t
-sample_public_key() {
+rsa_public_key() {
     buffer_t k(R"xx(-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4EjipWXxJPtz0KYDz5+f
 YWkGly7ieRJ2Zql9BkaIOjz3By/KL+jkYbUIwOQ+jM+FComsII9Y6309Db74sfwt
