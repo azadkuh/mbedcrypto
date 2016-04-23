@@ -42,6 +42,9 @@ protected:
     int     code_ = 0; ///< mbedtls c-api error code
 }; // struct exception
 
+inline auto to_string(const exception& cerr) {
+    return cerr.to_string();
+}
 ///////////////////////////////////////////////////////////////////////////////
 /// returns as: (code): error string
 auto mbedtls_error_string(int err) -> std::string;
