@@ -245,19 +245,6 @@ auto from_string(const char* name, curve_t*) -> curve_t {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// helper function used internally
-inline auto
-to_const_ptr(const buffer_t& b) {
-    return reinterpret_cast<const unsigned char*>(b.data());
-}
-
-inline auto
-to_ptr(buffer_t& b) {
-    return reinterpret_cast<unsigned char*>(&b.front());
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
 ///////////////////////////////////////////////////////////////////////////////
 #endif // MBEDCRYPTO_TYPES_HPP

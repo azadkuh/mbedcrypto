@@ -46,11 +46,6 @@ native_info(pk_t type) {
     return pinfot;
 }
 
-bool
-ends_with(const buffer_t& str, char c) {
-    return str.rfind(c) == str.size()-1;
-}
-
 void
 finalize_pem(buffer_t& pem) {
     pem.push_back('\0');
