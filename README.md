@@ -1,28 +1,42 @@
 # mbedcrypto
-`mbedcrypto` is a portable, small, easy to use, feature rich and fast `c++11/14` library for cryptography based on fantastic and clean [mbedtls](https://github.com/ARMmbed/mbedtls)<sup>[note](#mbedtls)</sup> <sup>[note](#cryptography)</sup>.
+`mbedcrypto` is a portable, small, easy to use, feature rich and fast
+`c++11/14` library for cryptography based on fantastic and clean
+[mbedtls](https://github.com/ARMmbed/mbedtls)<sup>[note](#mbedtls)</sup>
+<sup>[note](#cryptography)</sup>.
 
-a sister project for `Qt5` developers is available as [qpolarssl](https://github.com/azadkuh/qpolarssl), also `mbedcrypto` is newer and has more features with smaller footprint.
+a sister project for `Qt5` developers is available as
+[qpolarssl](https://github.com/azadkuh/qpolarssl), also `mbedcrypto` is newer
+and has more features with smaller footprint.
 
 
 
 ## features and highlights
 
-- *small size*: the `mbedcrypto` is less than `250KB` in size (under Linux and OS X) with all *predefined* algorithms. it can be easily embedded into your service or application.
-- *easy to use*: although cryptography<sup>[note](#cryptography)</sup> is complex and complicated, `mbedcrypto` hides most of the complexities, tries to be easy to use and hard to misuse. see [samples](#usage)
-- *portable*: needs an standard `c++11/14` compiler and compliant `stl`, compiled and tested by:
+- *small size*: the `mbedcrypto` is less than `250KB` in size (under Linux and
+ OS X) with all *predefined* algorithms. it can be easily embedded into
+ your service or application.
+- *easy to use*: although cryptography<sup>[note](#cryptography)</sup> is
+ complex and complicated, `mbedcrypto` hides most of the complexities, tries to
+ be easy to use and hard to misuse. see [samples](#usage)
+- *portable*: needs an standard `c++11/14` compiler and compliant `stl`,
+ compiled and tested by:
   - `gcc 5.x` under `linux`
   - `clang` under `os x`
   - `msvc 2015` community edition under `windows 7`
 - *low dependency*:
-  - the `mbedtls`<sup>[note](#mbedtls)</sup> as underlying cryptography engine, is the only mandatory dependency.
+  - the `mbedtls`<sup>[note](#mbedtls)</sup> as underlying cryptography engine,
+   is the only mandatory dependency.
   - [catch](https://github.com/philsquared/Catch): only for unit testing.
   - `cmake` for building the library and the unit test app.
-- *high+low level*: both high level (c++ objects / exception) and low level (c pointer / error code) functions are available. see [samples](#usage)
-- *highly configurable*: to add or remove the algorithms, simply change `cmake` build options. see [build options](#build-options)
+- *high+low level*: both high level (c++ objects / exception) and low level (c
+ pointer / error code) functions are available. see [samples](#usage)
+- *highly configurable*: to add or remove the algorithms, simply change `cmake`
+ build options. see [build options](#build-options)
 
 
 ## supported algorithms
-following algorithms are included in `mbedcrypto` in *default build* (see [samples](#usage)):
+following algorithms are included in `mbedcrypto` in *default build* (see
+ [samples](#usage)):
 
 - **binary/text conversions**: see [samples](#text-binary-conversion)
   - `hex`
@@ -47,7 +61,8 @@ following algorithms are included in `mbedcrypto` in *default build* (see [sampl
   - `cfb` cipher feedback
   - `ctr` counter mode
   - optional block modes: `stream` (for `arc4`)
-  - optional [AEAD](https://en.wikipedia.org/wiki/Authenticated_encryption) block modes: `gcm` Galois/counter mode and `ccm` (counter cbc-mac)
+  - optional [AEAD](https://en.wikipedia.org/wiki/Authenticated_encryption)
+   block modes: `gcm` Galois/counter mode and `ccm` (counter cbc-mac)
 
 - **paddings**:
   - `pkcs7`
@@ -56,12 +71,16 @@ following algorithms are included in `mbedcrypto` in *default build* (see [sampl
   - *zeros*
 
 - **random byte generator**: see [samples](#random-byte-generator)
-  - `ctr_drbg` counter mode deterministic random byte generator based on `aes-256` [NIST SP 800-90](https://en.wikipedia.org/wiki/NIST_SP_800-90A)
+  - `ctr_drbg` counter mode deterministic random byte generator based on
+   `aes-256` [NIST SP 800-90](https://en.wikipedia.org/wiki/NIST_SP_800-90A)
 
 - **pki (asymmetric)**: public key infrastructure, see [samples](#pks)
   - `rsa`
   - `pem` and `der` key formats (ASN.1)
-  - optional pks: `eckey` elliptic curve, `eckey_dh` elliptic key Diffie–Hellman, `ecdsa` elliptic key digital signature algorithm, `rsa_alt` and `rsassa_pss` RSA standard signature algorithm, probabilistic signature scheme
+  - optional pks: `eckey` elliptic curve, `eckey_dh` elliptic key
+   Diffie–Hellman, `ecdsa` elliptic key digital signature algorithm, `rsa_alt`
+   and `rsassa_pss` RSA standard signature algorithm, probabilistic signature
+   scheme
   - optional `rsa` key generator
 
 total number of supported algorithms:
@@ -80,7 +99,8 @@ after cloning this repository, first update the dependencies:
 # on mbedcrypto directory
 $medcrypto/> ./update-dependencies.sh
 ```
-this script automatically setups `3rdparty` directory, then tries to pull or update dependencies from github.
+this script automatically setups `3rdparty` directory, then tries to pull or
+update dependencies from github.
 
 then:
 ```bash
@@ -96,14 +116,16 @@ $build/> cmake ..
 $build/> cmake --build . --config Release
 ```
 
-optionally if you use `gcc` or `clang`, you can also build `mbedcrypto` as a shared library as:
+optionally if you use `gcc` or `clang`, you can also build `mbedcrypto` as a
+shared library as:
 ```bash
 $build/> cmake .. -DBUILD_SHARED_LIBS=ON
 $build/> make
 ```
 
 ### build options
-to add or remove algorithms, change [CMakeLists.txt](./CMakeLists.txt) options or set them via command line:
+to add or remove algorithms, change [CMakeLists.txt](./CMakeLists.txt) options
+or set them via command line:
 ```bash
 # cmake, ccmake or cmake-gui
 $build/> cmake .. -DBUILD_CAMELLIA=ON -DBUILD_PK_EXPORT=ON -DBUILD_RSA_KEYGEN=ON
@@ -112,7 +134,8 @@ $build/> cmake .. -DBUILD_CAMELLIA=ON -DBUILD_PK_EXPORT=ON -DBUILD_RSA_KEYGEN=ON
 $build/> cmake .. -DBUILD_TESTS=OFF
 ```
 
-> the `mbedcrypto` library and the companion unit test app would be built on `xbin` directory.
+> the `mbedcrypto` library and the companion unit test app would be built on
+> `xbin` directory.
 
 ---
 
@@ -125,31 +148,51 @@ namespace mbedcrypto {
   using buffer_t = std::string;
 }
 ```
-is widely used in `mbedcrypto` api as main data container for input / output methods.
+is widely used in `mbedcrypto` api as main data container for input / output
+methods.
 
-current `std::string` implementations are known to be contiguous, so I prefer `std::string` over `std::vector<unsigned char>` because it helps users to easily feed both text and binary buffers into `mbedtls` api without any cast or conversion.
+current `std::string` implementations are known to be contiguous, so I prefer
+`std::string` over `std::vector<unsigned char>` because it helps users to
+easily feed both text and binary buffers into `mbedtls` api without any cast or
+conversion.
 
 see [configs.hpp](./include/mbedcrypto/configs.hpp)
 
 
 ### error handling
-`mbedcrypto` objects and functions throw [`mbedcrypro::exception`](./include/mbedcrypto/exception.hpp) unless they're tagged by `noexcept` keyword.
+`mbedcrypto` objects and functions throw
+[`mbedcrypro::exception`](./include/mbedcrypto/exception.hpp) unless they're
+tagged by `noexcept` keyword.
 ```cpp
 try {
   //
   // mbedcrypto codes ...
   //
 } catch ( mbedcrypto::exception& cerr ) {
-  std::cerr << "the expanded error message is: " << cerr.to_string() << std::endl;
+  std::cerr << "the expanded error message is: "
+      << cerr.what() << std::endl;
+  int c_error_code = cerr.code(); // the underlying error code
 }
-
 ```
 
-the low level functions returns a non-zero `int` as an error:
+the structure of `cerr.what()`:
+```text
+[message, prefix or function name][(error code in hex): [module name] error string]
+
+ex:
+mbedtls_md_starts(-0x5100): MD - Bad input parameters to function
+ - function name: mbedtls_md_starts
+ - error code: -0x5100
+ - module name: MD (message digest)
+```
+
+the low level functions returns a non-zero `int` as an error and are tagged by
+`noexcept`:
 ```cpp
 int ret = an_object.a_low_level_method(...);
 if ( ret != 0 ) {
-  std::cout << "underlying error code: " << mbedcrypto::mbedtls_error_string(ret) << std::endl;
+  std::cout << "underlying error code: "
+      << mbedcrypto::mbedtls_error_string(ret) << std::endl;
 }
 ```
 
@@ -264,7 +307,9 @@ see [hash.hpp](./include/mbedcrypto/hash.hpp)
 
 
 ### ciphers
-If a cipher block mode allows, the `cipher` class automatically breaks input data into chunks (`cipher::block_size()`) and frees the user from breaking/merging of input/output data:
+If a cipher block mode allows, the `cipher` class automatically breaks input
+data into chunks (`cipher::block_size()`) and frees the user from
+breaking/merging of input/output data:
 
 ```cpp
 using namespace mbedcrypto;
@@ -291,7 +336,8 @@ auto decrypted_buffer = cipher::decrypt(
 REQUIRE( source_plain_data == decrypted_buffer );
 ```
 
-to use [authenticated encryption with associated data (aka aead)](https://en.wikipedia.org/wiki/Authenticated_encryption):
+to use [authenticated encryption with associated data (aka
+aead)](https://en.wikipedia.org/wiki/Authenticated_encryption):
 ```cpp
 std::string the_additional_data = ...;
 
@@ -416,7 +462,8 @@ see [pki.hpp](./include/mbedcrypto/pki.hpp)
 ## tests
 samples and unit tests are available under [tests/tdd](./tests/tdd/) folder.
 
-the test application has been built by [catch](https://github.com/philsquared/Catch):
+the test application has been built by
+[catch](https://github.com/philsquared/Catch):
 ```bash
 $xbin/> ./tests -t
 All available tags:
@@ -436,25 +483,44 @@ All available tags:
 ## notes
 
 ### cryptography
-[cryptography](https://en.wikipedia.org/wiki/Outline_of_cryptography) is both complex and complicated, it requires a vast knowledge of mathematics, concepts, principles, algorithms, standards, conventions, continuous investigation of attacks, ...
-> As cryptography is mostly used to protect sensitive data, writing a library for it is a daunting task and difficult by any factor.
+[cryptography](https://en.wikipedia.org/wiki/Outline_of_cryptography) is both
+complex and complicated, it requires a vast knowledge of mathematics, concepts,
+principles, algorithms, standards, conventions, continuous investigation of
+attacks, ...
 
-So instead of writing a library from scratch, `mbedcrypto` stands on the shoulders of giants, `mbedtls` is this case.
+> As cryptography is mostly used to protect sensitive data, writing a library
+> for it is a daunting task and difficult by any factor.
+
+So instead of writing a library from scratch, `mbedcrypto` stands on the
+shoulders of giants, `mbedtls` is this case.
 
 ### mbedtls
-Although [mbedtls](https://github.com/ARMmbed/mbedtls) is mostly a `TLS/SSL` library for embedded devices, it has already implemented the most famous and widely used cryptographic algorithms and actively developed and maintained.
+Although [mbedtls](https://github.com/ARMmbed/mbedtls) is mostly a `TLS/SSL`
+library for embedded devices, it has already implemented the most famous and
+widely used cryptographic algorithms and actively developed and maintained.
 
-Arguably `mbedtls` has cleaner code than `openssl`, it's easier to read, use and maintain, and it has been designed for efficiency and portability from scratch (for embedded devices), and has many advantages over `openssl` like as readability, size, compiling and setup, … to name a few.
+Arguably `mbedtls` has cleaner code than `openssl`, it's easier to read, use
+and maintain, and it has been designed for efficiency and portability from
+scratch (for embedded devices), and has many advantages over `openssl` like as
+readability, size, compiling and setup, … to name a few.
 
 
 ## disclaimer
 
-- implementing an easy-to-use, lightweight and portable `c++` library for cryptography are the main purpose of `mbedcrypto`.
-- there are many more algorithms in cryptographic libraries, the focus of `mbedcrypto` is on the most important or widely used algorithms, tries to be simple and not to bloat your application.
-- as mentioned in [notes](#notes), the cryptography can be divided into several areas of study and best practices, I'm not a guru nor a specialist in this field.
+- implementing an easy-to-use, lightweight and portable `c++` library for
+cryptography are the main purpose of `mbedcrypto`.
+- there are many more algorithms in cryptographic libraries, the focus of
+`mbedcrypto` is on the most important or widely used algorithms, tries to be
+simple and not to bloat your application.
+- as mentioned in [notes](#notes), the cryptography can be divided into several
+areas of study and best practices, I'm not a guru nor a specialist in this
+field.
 
 
-> If you have any ideas, critiques, suggestions or whatever you want to call it, please open an issue. I'll be happy to hear from you what you'd see in this lib. I think about all suggestions, and I try to add those that make sense.
+> If you have any ideas, critiques, suggestions or whatever you want to call
+> it, please open an issue. I'll be happy to hear from you what you'd see in
+> this lib. I think about all suggestions, and I try to add those that make
+> sense.
 
 
 ## license
