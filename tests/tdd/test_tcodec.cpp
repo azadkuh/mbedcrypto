@@ -13,7 +13,7 @@ try_func(Func&& f) {
         f();
 
     } catch ( exception& err ) {
-        std::cerr << err.to_string() << "\n";
+        std::cerr << err.what() << "\n";
         FAIL("throws");
 
     } catch ( std::exception& err ) {

@@ -18,37 +18,40 @@
 namespace mbedcrypto {
 ///////////////////////////////////////////////////////////////////////////////
 
+/// returns as: message(code): error string of err
+/// if err == 0, just returns the message
+auto mbedtls_error_string(int err, const char* message = nullptr) -> std::string;
+
+///////////////////////////////////////////////////////////////////////////////
 /// the exception used in entire library
 struct exception : public std::runtime_error
 {
     using std::runtime_error::runtime_error;
 
     explicit exception(int code, const char* message = "")
-        : std::runtime_error(message), code_(code) {}
+        : std::runtime_error(mer(code, message)), code_(code) {}
 
     explicit exception(int code, const std::string& message)
-        : std::runtime_error(message), code_(code) {}
+        : std::runtime_error(mer(code, message.c_str())), code_(code) {}
 
-    int     code()const noexcept { return code_;}
+    int  code()const noexcept { return code_;}
 
     /// mbedtls error string for code_, empty if code_ is not available (0)
-    auto    error_string()const -> std::string;
+    auto error_string()const { return mbedtls_error_string(code_); }
 
-    /// returns as: what (code): error_string
-    /// remove each part if it's not specified
-    auto    to_string()const -> std::string;
+    auto to_string()const { return what(); }
 
 protected:
-    int     code_ = 0; ///< mbedtls c-api error code
+    int code_ = 0; ///< mbedtls c-api error code
+
+    static auto mer(int code, const char* message) -> std::string {
+        return mbedtls_error_string(code, message);
+    }
 }; // struct exception
 
 inline auto to_string(const exception& cerr) {
-    return cerr.to_string();
+    return cerr.what();
 }
-///////////////////////////////////////////////////////////////////////////////
-/// returns as: (code): error string
-auto mbedtls_error_string(int err) -> std::string;
-
 ///////////////////////////////////////////////////////////////////////////////
 
 /// helper function used internally for throwing an exception if a c mbedtls function fails.

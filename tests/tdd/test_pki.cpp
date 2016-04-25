@@ -19,16 +19,6 @@ icompare(const char* a, const char* b) {
     return std::strncmp(a, b, strlen(b)) == 0;
 }
 
-template<class F, class... Args>
-void run_safe(F&& f, Args&&... args) {
-    try {
-        f(std::forward<Args&&>(args)...);
-
-    } catch ( mbedcrypto::exception& cerr ) {
-        std::cerr << cerr.to_string() << std::endl;
-        throw;
-    }
-}
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace anon
 ///////////////////////////////////////////////////////////////////////////////
@@ -108,7 +98,6 @@ TEST_CASE("pk type checks", "[pki][types]") {
         REQUIRE_FALSE( pk1.can_do(pk_t::eckey) );
         REQUIRE_FALSE( pk1.can_do(pk_t::eckey_dh) );
     }
-
 #endif // MBEDTLS_ECDSA_C
 }
 
@@ -183,10 +172,10 @@ TEST_CASE("key gen", "[pki]") {
 TEST_CASE("key export tests", "[pki]") {
     using namespace mbedcrypto;
 
-    const auto message = test::long_text();
-
 #if defined(MBEDTLS_GENPRIME)
     SECTION("rsa") {
+        const auto message = test::long_text();
+
         pki pk_g(pk_t::rsa);
         pk_g.rsa_generate_key(2048);
         const auto signature = pk_g.sign(message, hash_t::sha256);
@@ -242,22 +231,29 @@ TEST_CASE("key export tests", "[pki]") {
             //curve_t::curve25519,
         };
 
-        auto key_test = [](pki& pkg, curve_t ctype) {
-            pkg.ec_generate_key(ctype);
-            auto pkey   = pkg.export_key(pki::pem_format);
-            auto pubkey = pkg.export_public_key(pki::pem_format);
+        const std::string message(test::long_text());
+        const auto hvalue = hash::make(hash_t::sha1, message);
+
+        auto key_test = [&message, &hvalue](curve_t ctype) {
+            pki gen(pk_t::eckey);
+            gen.ec_generate_key(ctype);
+            auto pkey   = gen.export_key(pki::pem_format);
+            auto pubkey = gen.export_public_key(pki::pem_format);
 
             pki pri;
             pri.parse_key(pkey);
-            REQUIRE( pri.type() == pkg.type() );
+            REQUIRE( pri.type() == gen.type() );
             REQUIRE( (pubkey == pri.export_public_key(pki::pem_format)) );
 
             pki pub;
             pub.parse_public_key(pubkey);
+            REQUIRE( pub.type() == gen.type() );
+
+            REQUIRE( pki::check_pair(pub, pri) );
         };
 
         for ( auto i : Items ) {
-            REQUIRE_NOTHROW( run_safe(key_test, pk2, i) );
+            REQUIRE_NOTHROW( key_test(i) );
         }
     }
 

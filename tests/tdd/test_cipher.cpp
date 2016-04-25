@@ -336,7 +336,7 @@ TEST_CASE("test ciphers against mbedtls", "[cipher]") {
 
         } catch ( mbedcrypto::exception& cerr ) {
             std::cerr << "error(" << to_string(ctype) << ") :"
-                << cerr.to_string() << std::endl;
+                << cerr.what() << std::endl;
             REQUIRE_FALSE( "exception failure" );
         }
 
