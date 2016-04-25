@@ -35,7 +35,7 @@ mbedtls_error_string(int err) {
     mbedtls_strerror(err, buffer, KMaxSize);
 
     std::stringstream ss;
-    ss << "(-0x" <<  std::hex << -1*err << "): " << buffer;
+    ss << "(-0x" << std::hex << -1*err << "): " << buffer;
     return ss.str();
 }
 

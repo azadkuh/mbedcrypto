@@ -47,4 +47,5 @@ node_modules
 .vimrc
 .gvimrc
 .ycm_extra_conf.*
+.color_coded*
 
