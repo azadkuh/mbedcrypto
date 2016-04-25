@@ -161,8 +161,10 @@ pki::max_crypt_size()const {
     if ( type() == pk_t::rsa )
         return length() - 11;
 
+    return length();
+
     // other pk types are note yet supported
-    throw exception("unsupported pk type");
+    //throw exception("unsupported pk type");
 }
 
 const char*
@@ -448,11 +450,13 @@ pki::rsa_generate_key(size_t key_bitlen, size_t exponent) {
 void
 pki::ec_generate_key(curve_t ctype) {
 #if defined(MBEDTLS_ECP_C)
-    if ( !can_do(pk_t::eckey) )
-        throw exception("the instance is not initialized as ecp");
+    if ( !can_do(pk_t::eckey)
+            && !can_do(pk_t::eckey_dh)
+            && !can_do(pk_t::ecdsa) )
+        throw exception("the instance is not initialized as ec");
 
     // resets previous states
-    pimpl->reset_as(pk_t::eckey);
+    pimpl->reset_as(type());
 
     mbedcrypto_c_call(mbedtls_ecp_gen_key,
             to_native(ctype),
