@@ -58,11 +58,11 @@ following algorithms are included in `mbedcrypto` in *default build* (see
 - **cipher block modes**:
   - `ecb` electronic codebook
   - `cbc` cipher block chaining
-  - `cfb` cipher feedback
   - `ctr` counter mode
-  - optional block modes: `stream` (for `arc4`)
-  - optional [AEAD](https://en.wikipedia.org/wiki/Authenticated_encryption)
-   block modes: `gcm` Galois/counter mode and `ccm` (counter cbc-mac)
+  - `gcm` Galois/counter and `ccm` (counter cbc-mac) modes.
+   see [authneticated encryption with additional data
+   (AEAD)](https://en.wikipedia.org/wiki/Authenticated_encryption)
+  - optional block modes: `cfb`, `stream` (for `arc4`)
 
 - **paddings**:
   - `pkcs7`
@@ -102,18 +102,74 @@ $medcrypto/> ./update-dependencies.sh
 this script automatically setups `3rdparty` directory, then tries to pull or
 update dependencies from github.
 
-then:
+### Unices
+under Linux, OS X:
 ```bash
 $medcrypto/> mkdir build
 $medcrypto/> cd build
 
-# under Linux or OS X
 $build/> cmake ..
 $build/> make
+```
 
-# under Windows (MSVC)
+> the `mbedcrypto` library and the companion unit test app would be built on
+> `xbin` directory.
+
+### Windows
+under Windows (MSVC) probably:
+```bash
+$medcrypto/> mkdir build
+$medcrypto/> cd build
+
 $build/> cmake ..
 $build/> cmake --build . --config Release
+```
+
+
+### doxygen
+under **Unices** if you have already installed `doxygen`:
+```bash
+# builds api documents into ./docs
+$build> make docs
+# removes ./docs
+$build> make clean_docs
+```
+
+---
+
+## build options
+these are the most important build options:
+
+| options          | default | message                                                         |
+| :---             | :---:   | :---                                                            |
+| BUILD_MD2        | OFF     | enable md2 hash (unsecure and deprecated)                       |
+| BUILD_MD4        | OFF     | enable md4 hash                                                 |
+| BUILD_RIPEMD160  | OFF     | enable ripemd160 hash                                           |
+| BUILD_CFB        | OFF     | enable cfb (cipher feedback mode)                               |
+| BUILD_CTR        | ON      | enable ctr (cipher counter mode)                                |
+| BUILD_GCM        | ON      | enable gcm (Galois cipher mode, for aead cryptography)          |
+| BUILD_CCM        | ON      | enable ccm (counter cbc-mac cipher mode, for aead cryptography) |
+| BUILD_DES        | ON      | enable des and triple-des cipher                                |
+| BUILD_BLOWFISH   | OFF     | enable blowfish cipher                                          |
+| BUILD_CAMELLIA   | OFF     | enable camellia cipher                                          |
+| BUILD_ARC4       | OFF     | enable arc4 cipher (unsecure)                                   |
+| BUILD_PK_EXPORT  | ON      | enable export keys in pem or der format                         |
+| BUILD_RSA_KEYGEN | ON      | enable rsa key generator                                        |
+| BUILD_EC         | OFF     | enable eckey and eckey_dh public key algorithms                 |
+| BUILD_ECDSA      | OFF     | enable ecdsa algorithms                                         |
+
+please see [CMakeLists.txt](./CMakeLists.txt) for the full list.
+
+to add or remove algorithms or features:
+```bash
+# cmake, ccmake or cmake-gui
+$build/> cmake .. -DBUILD_CAMELLIA=ON -DBUILD_PK_EXPORT=ON -DBUILD_RSA_KEYGEN=ON
+
+# or optionally
+$build/> ccmake .
+
+# to disable making of the test app:
+$build/> cmake .. -DBUILD_TESTS=OFF
 ```
 
 optionally if you use `gcc` or `clang`, you can also build `mbedcrypto` as a
@@ -122,20 +178,6 @@ shared library as:
 $build/> cmake .. -DBUILD_SHARED_LIBS=ON
 $build/> make
 ```
-
-### build options
-to add or remove algorithms, change [CMakeLists.txt](./CMakeLists.txt) options
-or set them via command line:
-```bash
-# cmake, ccmake or cmake-gui
-$build/> cmake .. -DBUILD_CAMELLIA=ON -DBUILD_PK_EXPORT=ON -DBUILD_RSA_KEYGEN=ON
-
-# to disable making of the test app:
-$build/> cmake .. -DBUILD_TESTS=OFF
-```
-
-> the `mbedcrypto` library and the companion unit test app would be built on
-> `xbin` directory.
 
 ---
 
@@ -202,40 +244,29 @@ to list all available (included in build) algorithms:
 using namespace mbedcrypto;
 
 auto hashes = installed_hashes(); // returns std::vector<mbedcrypto::hasht_t>
+std::cout << "supports " << hashes.size() << " hash algorithms: ";
+for ( auto h : hashes ) { // print all installed hashes
+  // convert type to string
+  std::cout << to_string(h) << " , ";
+}
+
 // similarly
 auto paddings = installed_paddings();
 auto bmodes   = installed_block_modes();
 auto ciphers  = installed_ciphers();
 auto pks      = installed_pks();
-
-std::cout << "supports " << hashes.size() << " hash algorithms: ";
-for ( auto h : hashes ) {
-  // convert type to string
-  std::cout << to_string(h) << " , ";
-}
+auto curves   = installed_curves();
 
 // convert from string to a type
-auto htype = from_string<hash_t>("sha384");
+auto htype = from_string<hash_t>("sha256");
 if ( htype != hash_t::none ) {
 }
 ```
 
 to check for availability of a feature:
 ```cpp
-// to check a single feature
-if ( cipher::supports_aes_ni() ) {
-  std::cout << "this system supports AESNI (hardware accelerated AES)" << std::endl;
-}
-
-if ( cipher::supports_aead() ) {
-  // do authenticated encryption
-}
-if ( supports(cipher_bm::gcm) ) {
-  // do GCM (tag, additional data) stuff
-}
-
-// check by enum class
-if ( supports(cipher_t::aes_256_cbc)   &&   supports(padding_t::pkcs7) ) {
+// check by type (enum class)
+if ( supports(cipher_t::aes_256_cbc)   &&   supports(pk_t::rsa) ) {
   // do stuff
 }
 // check by algorithm name
@@ -246,29 +277,38 @@ if ( supports_hash("sha1")    &&    supports_pk("rsa") ) {
 if ( supports_cipher("CAMELLIA_128_CBC") ) {
 }
 
+// to check a single feature
+if ( suppurts(features::aes_ni) ) {
+  std::cout << "this system supports AESNI (hardware accelerated AES)" << std::endl;
+}
+
+if ( supports(features::aead)    &&    supports(cipher_bm::gcm) ) {
+  // do GCM authenticated encryption with additional data
+}
 ```
 
 see [types.hpp](./include/mbedcrypto/types.hpp)
 
 
 ### text-binary conversion
+handy utility to convert binary into (from) text:
 ```cpp
 using namespace mbedcrypto;
 
 std::fstream fpng = open_a_png_file(...);
-std::string png_data; // binary data
-fpng >> png_data;
+std::string bin_data; // binary data
+fpng >> bin_data;
 
-auto png_hex = to_hex(png_data);
-auto png_b64 = to_base64(png_data);
+auto png_hex = to_hex(bin_data);
+auto png_b64 = to_base64(bin_data);
 
 REQUIRE( from_hex(png_hex) == from_base64(png_b64) );
 
 // to get the required base64 size
-size_t encode_size = base64::encode_size(png_data);
-png_b64 = base64::encode(png_data);
+size_t encode_size = base64::encode_size(bin_data);
+png_b64 = base64::encode(bin_data);
 
-REQUIRE( base64::decode_size(png_b64) == png_data.size() );
+REQUIRE( base64::decode_size(png_b64) == bin_data.size() );
 
 REQUIRE_THROWS( base64::decode("invalid base64 string @#$%#^$") );
 ```
@@ -299,8 +339,8 @@ auto hvalue = h1.finish();
 
 // re-use
 h1.start();
-h1.update();
-h1.finish();
+h1.update(...);
+hvalue = h1.finish();
 ```
 
 see [hash.hpp](./include/mbedcrypto/hash.hpp)
@@ -308,7 +348,7 @@ see [hash.hpp](./include/mbedcrypto/hash.hpp)
 
 ### ciphers
 If a cipher block mode allows, the `cipher` class automatically breaks input
-data into chunks (`cipher::block_size()`) and frees the user from
+data into **chunks** (`cipher::block_size()`) and frees the user from
 breaking/merging of input/output data:
 
 ```cpp
@@ -360,9 +400,8 @@ auto decr = cipher::decrypt_aead(
     );  ///< returns a std::tuple< authentication_status, decrypted_data >
 
 
-  REQUIRE( std::get<0>(decr) == true );
+  REQUIRE( std::get<0>(decr) == true ); // authenticated?
   REQUIRE( std::get<1>(decr) == source_plain_data );
-
 ```
 
 
@@ -390,7 +429,7 @@ cipdec.update(...); // or multiple updates
 cipdec.finish();
 
 // single shot re-use
-auto other_decrypted = cipdec.crypt(other_encrypted_data);
+decrypted_data = cipdec.crypt(encrypted_data);
 ```
 
 see [cipher.hpp](./include/mbedcrypto/cipher.hpp)
@@ -408,13 +447,13 @@ see [random.hpp](./include/mbedcrypto/random.hpp)
 
 
 ### pks
-loading keys, sign and verify:
+loading or exporting keys:
 ```cpp
 using namespace mbedcrypto;
 
 pki pri;
 pri.parse_key(private_key_data, optional_password);
-// or load from a file
+// or load from by a file name
 // pri.load_key("private_key.pem");
 
 pki pub;
@@ -423,10 +462,26 @@ pub.parse_public_key(public_key_data);
 // [optional] check matching public/private pair
 REQUIRE( pki::check_pair(pub, pri) == true );
 
+// export keys
+if ( supports(features::pk_export) ) {
+    auto der_data = pri.export_key(pki::der_format);
+    // write or send
+}
+
+// key generation
+if ( supports(features::rsa_keygen) ) {
+    pki rg(pk_t::rsa);
+    rg.rsa_generate_key(2048);
+    // do stuff
+}
+```
+
+sign and verify:
+```cpp
 // signature & verification
 std::string message = read_message_from_somewhere();
-auto signature      = pri.sign(message, hash_t::sha1);
-REQUIRE( pub.verify(signature, message, hash_t::sha1);
+auto signature      = pri.sign(message, hash_t::sha256);
+REQUIRE( pub.verify(signature, message, hash_t::sha256);
 ```
 
 to encrypt and decrypt by pki:
@@ -444,15 +499,6 @@ pki pri;
 pri.parse_key(private_key_data);
 auto decv = pri.decrypt(encv);
 REQUIRE( decv == hvalue );
-```
-
-`rsa` key generation and exporting current key:
-```cpp
-pki pk_g(pk_t::rsa);
-pk_g.rsa_generate_key(2048);  // key bit length
-
-const auto pub_pem = pk_g.export_public_key(pki::pem_format);
-const auto pri_der = pk_g.export_key(pki::der_format);
 ```
 
 see [pki.hpp](./include/mbedcrypto/pki.hpp)
