@@ -36,6 +36,7 @@ class cipher
 {
 public:
     /** checks if current build and the CPU/OS supports AESNI.
+     * @sa features::aes_ni
      * AESNI is an extension to the x86 instruction set architecture
      *  for microprocessors from Intel and AMD proposed by Intel in March 2008.
      *  The purpose of the instruction set is to improve
@@ -75,6 +76,7 @@ public:
 
 public: // aead methods require BUILD_CCM or BUILD_GCM
     /// returns true if any of BUILD_GCM or BUILD_CCM has been activated
+    /// @sa features::aead
     static bool supports_aead();
 
     /// encrypts (AEAD cipher) the input and authenticate by additional data.

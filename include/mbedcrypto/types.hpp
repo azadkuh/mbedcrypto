@@ -168,17 +168,26 @@ enum class curve_t {
     bp512r1,    ///< 512-bits Brainpool curve
     curve25519, ///< Curve25519
 };
+
+/** additional features compiles in library.
+ *
+ */
+enum class features {
+    aes_ni,     ///< hardware accelerated AES. @sa cipher::supports_aes_ni()
+    aead,       ///< authenticated encryption by additional data. @sa cipher::supports_aead()
+};
 ///////////////////////////////////////////////////////////////////////////////
 
-// returns true if an algorithm or a type is present at runtime.
+/// returns true if an algorithm or a type is present at runtime.
 bool supports(hash_t);
 bool supports(padding_t);
 bool supports(cipher_bm);
 bool supports(cipher_t);
 bool supports(pk_t);
 bool supports(curve_t);
+bool supports(features);
 
-// list all installed algorithms, built into library
+/// list all installed algorithms, built into library
 auto installed_hashes()      -> std::vector<hash_t>;
 auto installed_paddings()    -> std::vector<padding_t>;
 auto installed_block_modes() -> std::vector<cipher_bm>;
@@ -187,8 +196,8 @@ auto installed_pks()         -> std::vector<pk_t>;
 auto installed_curves()      -> std::vector<curve_t>;
 
 
-// returns true if an algorithm or a type is present at runtime (by name string).
-// both lower or upper case names are supported.
+/// returns true if an algorithm or a type is present at runtime (by name string).
+/// both lower or upper case names are supported.
 
 bool supports_hash(const char*);
 bool supports_padding(const char*);

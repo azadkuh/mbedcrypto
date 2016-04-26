@@ -130,6 +130,9 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
     }
 
     SECTION("ciphers") {
+        REQUIRE( supports(features::aes_ni) == cipher::supports_aes_ni() );
+        REQUIRE( supports(features::aead) == cipher::supports_aead() );
+
         const std::initializer_list<cipher_t> Items = {
             cipher_t::none,
             cipher_t::null,

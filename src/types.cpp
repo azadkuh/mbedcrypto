@@ -1,4 +1,5 @@
 #include "mbedcrypto/types.hpp"
+#include "mbedcrypto/cipher.hpp"
 #include "enumerator.hxx"
 #include "conversions.hpp"
 
@@ -54,6 +55,16 @@ const name_map<curve_t> gCurves[] = {
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace anon
 ///////////////////////////////////////////////////////////////////////////////
+
+bool
+supports(features f) {
+    switch ( f ) {
+        case features::aes_ni: return cipher::supports_aes_ni();
+        case features::aead:   return cipher::supports_aead();
+
+        default: return false;
+    }
+}
 
 bool
 supports(hash_t e) {
