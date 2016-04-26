@@ -97,3 +97,15 @@ add_subdirectory(src)
 if(BUILD_TESTS)
     add_subdirectory(tests)
 endif()
+
+
+if(UNIX)
+    ADD_CUSTOM_TARGET(docs
+        COMMAND doxygen ./mbedcrypto.doxyfile
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        )
+    ADD_CUSTOM_TARGET(clean_docs
+        COMMAND rm -rf ./docs
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        )
+endif()
