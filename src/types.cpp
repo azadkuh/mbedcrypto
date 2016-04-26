@@ -1,5 +1,6 @@
 #include "mbedcrypto/types.hpp"
 #include "mbedcrypto/cipher.hpp"
+#include "mbedcrypto/pki.hpp"
 #include "enumerator.hxx"
 #include "conversions.hpp"
 
@@ -59,10 +60,23 @@ const name_map<curve_t> gCurves[] = {
 bool
 supports(features f) {
     switch ( f ) {
-        case features::aes_ni: return cipher::supports_aes_ni();
-        case features::aead:   return cipher::supports_aead();
+        case features::aes_ni:
+            return cipher::supports_aes_ni();
 
-        default: return false;
+        case features::aead:
+            return cipher::supports_aead();
+
+        case features::pk_export:
+            return pki::supports_pk_export();
+
+        case features::rsa_keygen:
+            return pki::supports_rsa_keygen();
+
+        case features::ec_keygen:
+            return pki::supports_ec_keygen();
+
+        default:
+            return false;
     }
 }
 

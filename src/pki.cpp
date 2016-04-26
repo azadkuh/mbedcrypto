@@ -228,6 +228,15 @@ pki::load_public_key(const char* file_path) {
           );
 }
 
+bool
+pki::supports_pk_export() {
+#if defined(MBEDTLS_PK_WRITE_C)
+    return true;
+#else // MBEDTLS_PK_WRITE_C
+    return false;
+#endif // MBEDTLS_PK_WRITE_C
+}
+
 buffer_t
 pki::export_key(pki::key_format fmt) {
 #if defined(MBEDTLS_PK_WRITE_C)
@@ -420,6 +429,15 @@ pki::decrypt(const buffer_t& encrypted_value) {
     return output;
 }
 
+bool
+pki::supports_rsa_keygen() {
+#if defined(MBEDTLS_GENPRIME)
+    return true;
+#else
+    return false;
+#endif
+}
+
 void
 pki::rsa_generate_key(size_t key_bitlen, size_t exponent) {
 #if defined(MBEDTLS_GENPRIME)
@@ -440,6 +458,15 @@ pki::rsa_generate_key(size_t key_bitlen, size_t exponent) {
 #else // MBEDTLS_GENPRIME
     throw rsa_keygen_exception();
 #endif // MBEDTLS_GENPRIME
+}
+
+bool
+pki::supports_ec_keygen() {
+#if defined(MBEDTLS_ECP_C)
+    return true;
+#else
+    return false;
+#endif
 }
 
 void

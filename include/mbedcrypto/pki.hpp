@@ -5,10 +5,6 @@
  * @version 1.0.0
  * @author amir zamani <azadkuh@live.com>
  *
- * related cmake build options:
- *   BUILD_PK_EXPORT
- *   BUILD_RSA_KEYGEN
- *
  */
 
 #ifndef MBEDCRYPTO_PKI_HPP
@@ -18,6 +14,15 @@
 namespace mbedcrypto {
 ///////////////////////////////////////////////////////////////////////////////
 
+/** asymmetric, public key infrastructure.
+ *
+ * related cmake build options:
+ *   BUILD_PK_EXPORT
+ *   BUILD_RSA_KEYGEN
+ *   BUILD_EC
+ *   BUILD_ECDSA
+ *
+ */
 class pki
 {
 public: // static helper functions
@@ -25,6 +30,18 @@ public: // static helper functions
     /// checks if a public-private pair of keys matches.
     /// @warning both pki instances must be of a same type (ex pk_t::rsa)
     static bool check_pair(const pki& pub, const pki& pri);
+
+    /// returns true only by enabled BUILD_PK_EXPORT builds.
+    /// @sa pki::export_public_key() and pki::export_key()
+    static bool supports_pk_export();
+
+    /// returns true only by enabled BUILD_RSA_KEYGEN builds.
+    /// @sa pki::rsa_generate_key()
+    static bool supports_rsa_keygen();
+
+    /// returns true only by enabled BUILD_EC builds.
+    /// @sa pki::ec_generate_key();
+    static bool supports_ec_keygen();
 
 public:
     explicit pki(pk_t type);
@@ -59,11 +76,13 @@ public: // key i/o
     /// loads public key from a file.
     void load_public_key(const char* file_path);
 
-    // export_xxx() require the activation of BUILD_PK_EXPORT option (see cmake file)
-
     /// export private key
+    /// @warning requires the activation of BUILD_PK_EXPORT option
+    ///  (see cmake file)
     auto export_key(key_format)        -> buffer_t;
     /// export public key
+    /// @warning requires the activation of BUILD_PK_EXPORT option
+    ///  (see cmake file)
     auto export_public_key(key_format) -> buffer_t;
 
 public: // properties
@@ -113,18 +132,19 @@ public:
     auto decrypt(const buffer_t& encrypted_value) -> buffer_t;
 
 public: // rsa key generation
-    // rsa_generate_key() requires the activation of BUILD_KEYGEN option (see cmake file)
 
     /// generates a key only if the type() is pk_t::rsa.
+    /// @sa pki::supports_rsa_keygen()
     /// exponent rsa public exponent.
     /// only change the default exponent value if you know exactly what you're doing.
+    /// @warning rsa_generate_key() requires the activation
+    ///  of BUILD_RSA_KEYGEN option (see cmake file)
     void rsa_generate_key(size_t key_bitlen, size_t exponent = 65537);
 
 public: // ec key generation
-    // ec_generate_key() requires the activation of BUILD_EC option
-    // (see cmake file)
-
-    /// generates a key only if the type is pk_t::ec
+    /// generates a key only if the type is pk_t::eckey, eckey_dh or ecdsa.
+    /// @sa pki::supports_ec_keygen()
+    /// @warning requires the activation of BUILD_EC option (see cmake file)
     void ec_generate_key(curve_t);
 
 public:

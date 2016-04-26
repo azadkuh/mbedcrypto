@@ -139,9 +139,9 @@ enum class cipher_t {
 enum class pk_t {
     none,           ///< unknown or invalid
     rsa,            ///< RSA (default)
-    eckey,          ///< elliptic key
-    eckey_dh,       ///< elliptic key Diffie–Hellman
-    ecdsa,          ///< elliptic key digital signature algorithm
+    eckey,          ///< elliptic curve key
+    eckey_dh,       ///< elliptic curve key for Diffie–Hellman key exchange
+    ecdsa,          ///< elliptic curve key for digital signature algorithm
     rsa_alt,
     rsassa_pss,     ///< RSA standard signature algorithm, probabilistic signature scheme
 };
@@ -169,12 +169,17 @@ enum class curve_t {
     curve25519, ///< Curve25519
 };
 
-/** additional features compiles in library.
- *
+/** additional features which the mbedcrypto provieds.
+ * availability of these features depend on build options
+ *  defined by cmake.
+ * @sa supports()
  */
 enum class features {
     aes_ni,     ///< hardware accelerated AES. @sa cipher::supports_aes_ni()
     aead,       ///< authenticated encryption by additional data. @sa cipher::supports_aead()
+    pk_export,  ///< pem/der export of pri/pub keys. @sa pki::supports_pk_export()
+    rsa_keygen, ///< RSA key generator. @sa pki::supports_rsa_keygen()
+    ec_keygen,  ///< EC key generator. @sa pki::supports_ec_keygen()
 };
 ///////////////////////////////////////////////////////////////////////////////
 

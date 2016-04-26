@@ -4,6 +4,7 @@
 
 #include "mbedcrypto_mbedtls_config.h"
 #include "mbedcrypto/cipher.hpp"
+#include "mbedcrypto/pki.hpp"
 #include "generator.hpp"
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -19,6 +20,16 @@ auto hasHash = [](hash_t h) {
     auto v = from_string<hash_t>(name);
     REQUIRE( v == h );
 };
+
+std::ostream&
+operator<<(std::ostream& s, features f) {
+    if ( supports(f) )
+        s << "supports";
+    else
+        s << "does not support";
+
+    return s;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace anon
@@ -54,11 +65,11 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
         for ( auto c : ciphers ) {
             std::cout << to_string(c) << " , ";
         }
-        std::cout << "\nthis system "
-            << (cipher::supports_aes_ni() ? "supports" : "does not support")
+        std::cout << "\n this system "
+            << features::aes_ni
             << " AESNI (hardware accelerated AES)";
-        std::cout << "\nthis system "
-            << (cipher::supports_aead() ? "supports" : "does not support")
+        std::cout << "\n this system "
+            << features::aead
             << " AEAD (authenticated encryption with additional data)";
 
         auto pks = installed_pks();
@@ -66,6 +77,15 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
         for ( auto p : pks ) {
             std::cout << to_string(p) << " , ";
         }
+        std::cout << "\n this system "
+            << features::pk_export
+            << " PK export (*.pem, *.der) facility";
+        std::cout << "\n this system "
+            << features::rsa_keygen
+            << " RSA key generation";
+        std::cout << "\n this system "
+            << features::ec_keygen
+            << " EC (elliptic curve) key generation";
 
         auto curves = installed_curves();
         std::cout << "\nsupports " << curves.size() << " elliptic curves: ";
@@ -234,6 +254,12 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
             auto v = from_string<cipher_bm>(name);
             REQUIRE( v == i );
         }
+    }
+
+    SECTION("pki") {
+        REQUIRE( supports(features::pk_export) == pki::supports_pk_export() );
+        REQUIRE( supports(features::rsa_keygen) == pki::supports_rsa_keygen() );
+        REQUIRE( supports(features::ec_keygen) == pki::supports_ec_keygen() );
     }
 
     SECTION("curve names") {
