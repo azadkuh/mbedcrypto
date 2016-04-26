@@ -5,6 +5,19 @@
  * @version 1.0.0
  * @author amir zamani <azadkuh@live.com>
  *
+ */
+
+#ifndef MBEDTLSCRYPTO_CIPHER_HPP
+#define MBEDTLSCRYPTO_CIPHER_HPP
+
+#include "mbedcrypto/types.hpp"
+#include <tuple>
+///////////////////////////////////////////////////////////////////////////////
+namespace mbedcrypto {
+///////////////////////////////////////////////////////////////////////////////
+
+/** symmetric cryptography.
+ *
  * related cmake build options:
  * paddings:
  *   BUILD_ALL_CIPHER_PADDINGS
@@ -22,16 +35,6 @@
  *   BUILD_ARC4
  *
  */
-
-#ifndef MBEDTLSCRYPTO_CIPHER_HPP
-#define MBEDTLSCRYPTO_CIPHER_HPP
-
-#include "mbedcrypto/types.hpp"
-#include <tuple>
-///////////////////////////////////////////////////////////////////////////////
-namespace mbedcrypto {
-///////////////////////////////////////////////////////////////////////////////
-
 class cipher
 {
 public:

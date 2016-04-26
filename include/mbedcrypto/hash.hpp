@@ -5,11 +5,6 @@
  * @version 1.0.0
  * @author amir zamani <azadkuh@live.com>
  *
- * related cmake build options:
- *   BUILD_MD2
- *   BUILD_MD4
- *   BUILD_RIPEMD160
- *
  */
 
 #ifndef MBEDCRYPTO_HASH_HPP
@@ -20,7 +15,27 @@
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
 ///////////////////////////////////////////////////////////////////////////////
-/// a class for computing hash (message digest) values for buffer or files.
+/** a class for computing hash (message digest) values for buffer or files.
+ *
+ * related cmake build options:
+ *   BUILD_MD2
+ *   BUILD_MD4
+ *   BUILD_RIPEMD160
+ *
+ * sample:
+ * @code
+ *  hash sha1(hash_t::sha1);
+ *  ...
+ *  sha1.start();
+ *  sha1.update(...);
+ *  sha1.update(...);
+ *  auto h1 = sha1.finish();
+ *  sha1.start(); //start again
+ *  sha1.update(...); // any updates ...
+ *  auto h2 = sha1.finish();
+ * @endcode
+ *
+ */
 class hash
 {
 public: // single-shot hash computation
@@ -42,18 +57,6 @@ public: // single-shot hash computation
     static buffer_t of_file(hash_t type, const char* filePath);
 
 public: // iterative usage, reusing the instance
-    // hash sha1(hash_t::sha1);
-    // ...
-    // sha1.start();
-    // sha1.update(...);
-    // sha1.update(...);
-    // auto h1 = sha1.finish();
-    // sha1.start(); //start again
-    // sha1.update(...); // any updates ...
-    // auto h2 = sha1.finish();
-    //
-
-
     explicit hash(hash_t type);
     ~hash();
 
@@ -84,7 +87,24 @@ protected:
 
 ///////////////////////////////////////////////////////////////////////////////
 
-/// HMAC (hash-based message authentication code) implementation
+/** HMAC (hash-based message authentication code) implementation.
+ * use the available hash algorithms to compute hmac value.
+ *
+ * sample:
+ * @code
+ *  hmac hms(hash_t::sha256);
+ *  ...
+ *  hms.start("an string or binary key"); // a key is mandatory for first time
+ *  hms.update(...);
+ *  hms.update(...);
+ *  auto h1 = hms.finish();
+ *  hms.start(); // do not change the previous key
+ *  hms.update(...); // multiple updates ...
+ *  hms.update(...);
+ *  auto h2 = hms.finish();
+ * @endcode
+ *
+ */
 class hmac
 {
 public: // single-shot hamc computation
@@ -99,16 +119,6 @@ public: // single-shot hamc computation
     }
 
 public: // iterative or reuse
-    // hmac hms(hash_t::sha256);
-    // ...
-    // hms.start("an string or binary key"); // a key is mandatory for first time
-    // hms.update(...);
-    // hms.update(...);
-    // auto h1 = hms.finish();
-    // hms.start(); // do not change the previous key
-    // hms.update(...); // multiple updates ...
-    // hms.update(...);
-    // auto h2 = hms.finish();
 
     explicit hmac(hash_t type);
     ~hmac();
