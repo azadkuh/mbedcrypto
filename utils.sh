@@ -30,7 +30,7 @@ if [[ $# -eq 0 ]]; then
     fn_ctags
 
 else
-    while [[ $# > 0 ]]; do
+    while [[ $# -gt 0 ]]; do
         arg="$1"
 
         case $arg in
