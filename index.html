@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>mbedcrypto by azadkuh</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">mbedcrypto</h1>
+      <h2 class="project-tagline">a portable, small, easy to use and fast c++11/14 library for cryptography.</h2>
+      <a href="https://github.com/azadkuh/mbedcrypto" class="btn">View on GitHub</a>
+      <a href="https://github.com/azadkuh/mbedcrypto/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/azadkuh/mbedcrypto/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h1>
+<a id="mbedcrypto" class="anchor" href="#mbedcrypto" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>mbedcrypto</h1>
+
+<p><code>mbedcrypto</code> is a portable, small, easy to use, feature rich and fast
+<code>c++11/14</code> library for cryptography based on fantastic and clean
+<a href="https://github.com/ARMmbed/mbedtls">mbedtls</a><sup><a href="#mbedtls">note</a></sup>
+<sup><a href="#cryptography">note</a></sup>.</p>
+
+<p>a sister project for <code>Qt5</code> developers is available as
+<a href="https://github.com/azadkuh/qpolarssl">qpolarssl</a>, also <code>mbedcrypto</code> is newer
+and has more features with smaller footprint.</p>
+
+<h2>
+<a id="features-and-highlights" class="anchor" href="#features-and-highlights" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>features and highlights</h2>
+
+<ul>
+<li>
+<em>small size</em>: the <code>mbedcrypto</code> is less than <code>250KB</code> in size (under Linux and
+OS X) with all <em>predefined</em> algorithms. it can be easily embedded into
+your service or application.</li>
+<li>
+<em>easy to use</em>: although cryptography<sup><a href="#cryptography">note</a></sup> is
+complex and complicated, <code>mbedcrypto</code> hides most of the complexities, tries to
+be easy to use and hard to misuse. see <a href="#usage">samples</a>
+</li>
+<li>
+<em>portable</em>: needs an standard <code>c++11/14</code> compiler and compliant <code>stl</code>,
+compiled and tested by:
+
+<ul>
+<li>
+<code>gcc 5.x</code> under <code>linux</code>
+</li>
+<li>
+<code>clang</code> under <code>os x</code>
+</li>
+<li>
+<code>msvc 2015</code> community edition under <code>windows 7</code>
+</li>
+</ul>
+</li>
+<li>
+<em>low dependency</em>:
+
+<ul>
+<li>the <code>mbedtls</code><sup><a href="#mbedtls">note</a></sup> as underlying cryptography engine,
+is the only mandatory dependency.</li>
+<li>
+<a href="https://github.com/philsquared/Catch">catch</a>: only for unit testing.</li>
+<li>
+<code>cmake</code> for building the library and the unit test app.</li>
+</ul>
+</li>
+<li>
+<em>high+low level</em>: both high level (c++ objects / exception) and low level (c
+pointer / error code) functions are available. see <a href="#usage">samples</a>
+</li>
+<li>
+<em>highly configurable</em>: to add or remove the algorithms, simply change <code>cmake</code>
+build options. see <a href="#build-options">build options</a>
+</li>
+</ul>
+
+<h2>
+<a id="supported-algorithms" class="anchor" href="#supported-algorithms" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>supported algorithms</h2>
+
+<p>following algorithms are included in <code>mbedcrypto</code> in <em>default build</em> (see
+ <a href="#usage">samples</a>):</p>
+
+<ul>
+<li>
+<p><strong>binary/text conversions</strong>: see <a href="#text-binary-conversion">samples</a></p>
+
+<ul>
+<li><code>hex</code></li>
+<li><code>base64</code></li>
+</ul>
+</li>
+<li>
+<p><strong>hashes (message digest)</strong>: see <a href="#hashes">samples</a></p>
+
+<ul>
+<li><code>md5</code></li>
+<li><code>sha1</code></li>
+<li>
+<code>sha224</code> / <code>sha256</code>
+</li>
+<li>
+<code>sha384</code> / <code>sha512</code>
+</li>
+<li><code>hmac</code></li>
+<li>optional hashes: <code>ripemd160</code>, <code>md4</code>, <code>md2</code> (deprecated)</li>
+</ul>
+</li>
+<li>
+<p><strong>ciphers (symmetric)</strong>: see <a href="#ciphers">samples</a></p>
+
+<ul>
+<li>
+<code>aes</code> (128, 192, 256 bits) and <code>aes-ni</code> (hardware accelerated)</li>
+<li>
+<code>des</code> and <code>3des</code> (triple-des)</li>
+<li>optional ciphers: <code>blowfish</code>, <code>camellia</code> and <code>arc4</code>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>cipher block modes</strong>:</p>
+
+<ul>
+<li>
+<code>ecb</code> electronic codebook</li>
+<li>
+<code>cbc</code> cipher block chaining</li>
+<li>
+<code>ctr</code> counter mode</li>
+<li>
+<code>gcm</code> Galois/counter and <code>ccm</code> (counter cbc-mac) modes.
+see <a href="https://en.wikipedia.org/wiki/Authenticated_encryption">authneticated encryption with additional data
+(AEAD)</a>
+</li>
+<li>optional block modes: <code>cfb</code>, <code>stream</code> (for <code>arc4</code>)</li>
+</ul>
+</li>
+<li>
+<p><strong>paddings</strong>:</p>
+
+<ul>
+<li><code>pkcs7</code></li>
+<li><em>one and zeros</em></li>
+<li><em>zeros and length</em></li>
+<li><em>zeros</em></li>
+</ul>
+</li>
+<li>
+<p><strong>random byte generator</strong>: see <a href="#random-byte-generator">samples</a></p>
+
+<ul>
+<li>
+<code>ctr_drbg</code> counter mode deterministic random byte generator based on
+<code>aes-256</code> <a href="https://en.wikipedia.org/wiki/NIST_SP_800-90A">NIST SP 800-90</a>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>pki (asymmetric)</strong>: public key infrastructure, see <a href="#pks">samples</a></p>
+
+<ul>
+<li><code>rsa</code></li>
+<li>
+<code>pem</code> and <code>der</code> key formats (ASN.1)</li>
+<li>optional pks: <code>eckey</code> elliptic curve, <code>eckey_dh</code> elliptic key
+Diffie–Hellman, <code>ecdsa</code> elliptic key digital signature algorithm, <code>rsa_alt</code>
+and <code>rsassa_pss</code> RSA standard signature algorithm, probabilistic signature
+scheme</li>
+<li>optional <code>rsa</code> key generator</li>
+</ul>
+</li>
+</ul>
+
+<p>total number of supported algorithms:</p>
+
+<ul>
+<li>hashes: 9</li>
+<li>paddings: 5</li>
+<li>ciphers: 47</li>
+<li>pki: 6</li>
+</ul>
+
+<p>see <a href="./include/mbedcrypto/types.hpp">types.hpp</a></p>
+
+<h2>
+<a id="setup" class="anchor" href="#setup" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>setup</h2>
+
+<p>after cloning this repository, first update the dependencies:</p>
+
+<div class="highlight highlight-source-shell"><pre><span class="pl-c"># on mbedcrypto directory</span>
+<span class="pl-smi">$medcrypto</span>/<span class="pl-k">&gt;</span> ./update-dependencies.sh</pre></div>
+
+<p>this script automatically setups <code>3rdparty</code> directory, then tries to pull or
+update dependencies from github.</p>
+
+<h3>
+<a id="unices" class="anchor" href="#unices" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Unices</h3>
+
+<p>under Linux, OS X:</p>
+
+<div class="highlight highlight-source-shell"><pre><span class="pl-smi">$medcrypto</span>/<span class="pl-k">&gt;</span> mkdir build
+<span class="pl-smi">$medcrypto</span>/<span class="pl-k">&gt;</span> <span class="pl-c1">cd</span> build
+
+<span class="pl-smi">$build</span>/<span class="pl-k">&gt;</span> cmake ..
+<span class="pl-smi">$build</span>/<span class="pl-k">&gt;</span> make</pre></div>
+
+<blockquote>
+<p>the <code>mbedcrypto</code> library and the companion unit test app would be built on
+<code>xbin</code> directory.</p>
+</blockquote>
+
+<h3>
+<a id="windows" class="anchor" href="#windows" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Windows</h3>
+
+<p>under Windows (MSVC) probably:</p>
+
+<div class="highlight highlight-source-shell"><pre><span class="pl-smi">$medcrypto</span>/<span class="pl-k">&gt;</span> mkdir build
+<span class="pl-smi">$medcrypto</span>/<span class="pl-k">&gt;</span> <span class="pl-c1">cd</span> build
+
+<span class="pl-smi">$build</span>/<span class="pl-k">&gt;</span> cmake ..
+<span class="pl-smi">$build</span>/<span class="pl-k">&gt;</span> cmake --build <span class="pl-c1">.</span> --config Release</pre></div>
+
+<h3>
+<a id="doxygen" class="anchor" href="#doxygen" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>doxygen</h3>
+
+<p>under <strong>Unices</strong> if you have already installed <code>doxygen</code>:</p>
+
+<div class="highlight highlight-source-shell"><pre><span class="pl-c"># builds api documents into ./docs</span>
+<span class="pl-smi">$build</span><span class="pl-k">&gt;</span> make docs
+<span class="pl-c"># removes ./docs</span>
+<span class="pl-smi">$build</span><span class="pl-k">&gt;</span> make clean_docs</pre></div>
+
+<hr>
+
+<h2>
+<a id="build-options" class="anchor" href="#build-options" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>build options</h2>
+
+<p>these are the most important build options:</p>
+
+<table>
+<thead>
+<tr>
+<th align="left">options</th>
+<th align="center">default</th>
+<th align="left">message</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">BUILD_MD2</td>
+<td align="center">OFF</td>
+<td align="left">enable md2 hash (unsecure and deprecated)</td>
+</tr>
+<tr>
+<td align="left">BUILD_MD4</td>
+<td align="center">OFF</td>
+<td align="left">enable md4 hash</td>
+</tr>
+<tr>
+<td align="left">BUILD_RIPEMD160</td>
+<td align="center">OFF</td>
+<td align="left">enable ripemd160 hash</td>
+</tr>
+<tr>
+<td align="left">BUILD_CFB</td>
+<td align="center">OFF</td>
+<td align="left">enable cfb (cipher feedback mode)</td>
+</tr>
+<tr>
+<td align="left">BUILD_CTR</td>
+<td align="center">ON</td>
+<td align="left">enable ctr (cipher counter mode)</td>
+</tr>
+<tr>
+<td align="left">BUILD_GCM</td>
+<td align="center">ON</td>
+<td align="left">enable gcm (Galois cipher mode, for aead cryptography)</td>
+</tr>
+<tr>
+<td align="left">BUILD_CCM</td>
+<td align="center">ON</td>
+<td align="left">enable ccm (counter cbc-mac cipher mode, for aead cryptography)</td>
+</tr>
+<tr>
+<td align="left">BUILD_DES</td>
+<td align="center">ON</td>
+<td align="left">enable des and triple-des cipher</td>
+</tr>
+<tr>
+<td align="left">BUILD_BLOWFISH</td>
+<td align="center">OFF</td>
+<td align="left">enable blowfish cipher</td>
+</tr>
+<tr>
+<td align="left">BUILD_CAMELLIA</td>
+<td align="center">OFF</td>
+<td align="left">enable camellia cipher</td>
+</tr>
+<tr>
+<td align="left">BUILD_ARC4</td>
+<td align="center">OFF</td>
+<td align="left">enable arc4 cipher (unsecure)</td>
+</tr>
+<tr>
+<td align="left">BUILD_PK_EXPORT</td>
+<td align="center">ON</td>
+<td align="left">enable export keys in pem or der format</td>
+</tr>
+<tr>
+<td align="left">BUILD_RSA_KEYGEN</td>
+<td align="center">ON</td>
+<td align="left">enable rsa key generator</td>
+</tr>
+<tr>
+<td align="left">BUILD_EC</td>
+<td align="center">OFF</td>
+<td align="left">enable eckey and eckey_dh public key algorithms</td>
+</tr>
+<tr>
+<td align="left">BUILD_ECDSA</td>
+<td align="center">OFF</td>
+<td align="left">enable ecdsa algorithms</td>
+</tr>
+</tbody>
+</table>
+
+<p>please see <a href="./CMakeLists.txt">CMakeLists.txt</a> for the full list.</p>
+
+<p>to add or remove algorithms or features:</p>
+
+<div class="highlight highlight-source-shell"><pre><span class="pl-c"># cmake, ccmake or cmake-gui</span>
+<span class="pl-smi">$build</span>/<span class="pl-k">&gt;</span> cmake .. -DBUILD_CAMELLIA=ON -DBUILD_PK_EXPORT=ON -DBUILD_RSA_KEYGEN=ON
+
+<span class="pl-c"># or optionally</span>
+<span class="pl-smi">$build</span>/<span class="pl-k">&gt;</span> ccmake <span class="pl-c1">.</span>
+
+<span class="pl-c"># to disable making of the test app:</span>
+<span class="pl-smi">$build</span>/<span class="pl-k">&gt;</span> cmake .. -DBUILD_TESTS=OFF</pre></div>
+
+<p>optionally if you use <code>gcc</code> or <code>clang</code>, you can also build <code>mbedcrypto</code> as a
+shared library as:</p>
+
+<div class="highlight highlight-source-shell"><pre><span class="pl-smi">$build</span>/<span class="pl-k">&gt;</span> cmake .. -DBUILD_SHARED_LIBS=ON
+<span class="pl-smi">$build</span>/<span class="pl-k">&gt;</span> make</pre></div>
+
+<hr>
+
+<h2>
+<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>usage</h2>
+
+<h3>
+<a id="buffer_t" class="anchor" href="#buffer_t" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>buffer_t</h3>
+
+<p><code>buffer_t</code> (synonym for <code>std::string</code>)</p>
+
+<div class="highlight highlight-source-c++"><pre><span class="pl-k">namespace</span> <span class="pl-en">mbedcrypto</span> {
+  <span class="pl-k">using</span> <span class="pl-c1">buffer_t</span> = std::string;
+}</pre></div>
+
+<p>is widely used in <code>mbedcrypto</code> api as main data container for input / output
+methods.</p>
+
+<p>current <code>std::string</code> implementations are known to be contiguous, so I prefer
+<code>std::string</code> over <code>std::vector&lt;unsigned char&gt;</code> because it helps users to
+easily feed both text and binary buffers into <code>mbedtls</code> api without any cast or
+conversion.</p>
+
+<p>see <a href="./include/mbedcrypto/configs.hpp">configs.hpp</a></p>
+
+<h3>
+<a id="error-handling" class="anchor" href="#error-handling" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>error handling</h3>
+
+<p><code>mbedcrypto</code> objects and functions throw
+<a href="./include/mbedcrypto/exception.hpp"><code>mbedcrypro::exception</code></a> unless they're
+tagged by <code>noexcept</code> keyword.</p>
+
+<div class="highlight highlight-source-c++"><pre><span class="pl-k">try</span> {
+  <span class="pl-c">//</span>
+  <span class="pl-c">// mbedcrypto codes ...</span>
+  <span class="pl-c">//</span>
+} <span class="pl-k">catch</span> ( mbedcrypto::exception&amp; cerr ) {
+  std::cerr &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>the expanded error message is: <span class="pl-pds">"</span></span>
+      &lt;&lt; cerr.<span class="pl-c1">what</span>() &lt;&lt; std::endl;
+  <span class="pl-k">int</span> c_error_code = cerr.<span class="pl-c1">code</span>(); <span class="pl-c">// the underlying error code</span>
+}</pre></div>
+
+<p>the structure of <code>cerr.what()</code>:</p>
+
+<pre lang="text"><code>[message, prefix or function name][(error code in hex): [module name] error string]
+
+ex:
+mbedtls_md_starts(-0x5100): MD - Bad input parameters to function
+ - function name: mbedtls_md_starts
+ - error code: -0x5100
+ - module name: MD (message digest)
+</code></pre>
+
+<p>the low level functions returns a non-zero <code>int</code> as an error and are tagged by
+<code>noexcept</code>:</p>
+
+<div class="highlight highlight-source-c++"><pre><span class="pl-k">int</span> ret = an_object.a_low_level_method(...);
+<span class="pl-k">if</span> ( ret != <span class="pl-c1">0</span> ) {
+  std::cout &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>underlying error code: <span class="pl-pds">"</span></span>
+      &lt;&lt; <span class="pl-c1">mbedcrypto::mbedtls_error_string</span>(ret) &lt;&lt; std::endl;
+}</pre></div>
+
+<h3>
+<a id="available-algorithms" class="anchor" href="#available-algorithms" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>available algorithms</h3>
+
+<p>to list all available (included in build) algorithms:</p>
+
+<div class="highlight highlight-source-c++"><pre><span class="pl-k">using</span> <span class="pl-k">namespace</span> <span class="pl-en">mbedcrypto</span><span class="pl-k">;</span>
+
+<span class="pl-k">auto</span> hashes = installed_hashes(); <span class="pl-c">// returns std::vector&lt;mbedcrypto::hasht_t&gt;</span>
+std::cout &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>supports <span class="pl-pds">"</span></span> &lt;&lt; hashes.size() &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span> hash algorithms: <span class="pl-pds">"</span></span>;
+<span class="pl-k">for</span> ( <span class="pl-k">auto</span> h : hashes ) { <span class="pl-c">// print all installed hashes</span>
+  <span class="pl-c">// convert type to string</span>
+  std::cout &lt;&lt; <span class="pl-c1">to_string</span>(h) &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span> , <span class="pl-pds">"</span></span>;
+}
+
+<span class="pl-c">// similarly</span>
+<span class="pl-k">auto</span> paddings = installed_paddings();
+<span class="pl-k">auto</span> bmodes   = installed_block_modes();
+<span class="pl-k">auto</span> ciphers  = installed_ciphers();
+<span class="pl-k">auto</span> pks      = installed_pks();
+<span class="pl-k">auto</span> curves   = installed_curves();
+
+<span class="pl-c">// convert from string to a type</span>
+<span class="pl-k">auto</span> htype = from_string&lt;<span class="pl-c1">hash_t</span>&gt;(<span class="pl-s"><span class="pl-pds">"</span>sha256<span class="pl-pds">"</span></span>);
+<span class="pl-k">if</span> ( htype != <span class="pl-c1">hash_t</span>::none ) {
+}</pre></div>
+
+<p>to check for availability of a feature:</p>
+
+<div class="highlight highlight-source-c++"><pre><span class="pl-c">// check by type (enum class)</span>
+<span class="pl-k">if</span> ( supports(<span class="pl-c1">cipher_t</span>::aes_256_cbc)   &amp;&amp;   supports(<span class="pl-c1">pk_t</span>::rsa) ) {
+  <span class="pl-c">// do stuff</span>
+}
+<span class="pl-c">// check by algorithm name</span>
+<span class="pl-k">if</span> ( supports_hash(<span class="pl-s"><span class="pl-pds">"</span>sha1<span class="pl-pds">"</span></span>)    &amp;&amp;    supports_pk(<span class="pl-s"><span class="pl-pds">"</span>rsa<span class="pl-pds">"</span></span>) ) {
+  <span class="pl-c">// sign a message ...</span>
+}
+<span class="pl-c">// both upper and lower case are supported</span>
+<span class="pl-k">if</span> ( supports_cipher(<span class="pl-s"><span class="pl-pds">"</span>CAMELLIA_128_CBC<span class="pl-pds">"</span></span>) ) {
+}
+
+<span class="pl-c">// to check a single feature</span>
+<span class="pl-k">if</span> ( suppurts(features::aes_ni) ) {
+  std::cout &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>this system supports AESNI (hardware accelerated AES)<span class="pl-pds">"</span></span> &lt;&lt; std::endl;
+}
+
+<span class="pl-k">if</span> ( supports(features::aead)    &amp;&amp;    supports(cipher_bm::gcm) ) {
+  <span class="pl-c">// do GCM authenticated encryption with additional data</span>
+}</pre></div>
+
+<p>see <a href="./include/mbedcrypto/types.hpp">types.hpp</a></p>
+
+<h3>
+<a id="text-binary-conversion" class="anchor" href="#text-binary-conversion" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>text-binary conversion</h3>
+
+<p>handy utility to convert binary into (from) text:</p>
+
+<div class="highlight highlight-source-c++"><pre><span class="pl-k">using</span> <span class="pl-k">namespace</span> <span class="pl-en">mbedcrypto</span><span class="pl-k">;</span>
+
+std::fstream fpng = open_a_png_file(...);
+std::string bin_data; <span class="pl-c">// binary data</span>
+fpng &gt;&gt; bin_data;
+
+<span class="pl-k">auto</span> png_hex = to_hex(bin_data);
+<span class="pl-k">auto</span> png_b64 = to_base64(bin_data);
+
+<span class="pl-en">REQUIRE</span>( from_hex(png_hex) == from_base64(png_b64) );
+
+<span class="pl-c">// to get the required base64 size</span>
+<span class="pl-c1">size_t</span> encode_size = base64::encode_size(bin_data);
+png_b64 = base64::encode(bin_data);
+
+<span class="pl-en">REQUIRE</span>( base64::decode_size(png_b64) == bin_data.size() );
+
+<span class="pl-en">REQUIRE_THROWS</span>( base64::decode(<span class="pl-s"><span class="pl-pds">"</span>invalid base64 string @#$<span class="pl-ii">%</span>#^$<span class="pl-pds">"</span></span>) );</pre></div>
+
+<p>see <a href="./include/mbedcrypto/tcodec.hpp">tcodec.hpp</a></p>
+
+<h3>
+<a id="hashes" class="anchor" href="#hashes" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>hashes</h3>
+
+<div class="highlight highlight-source-c++"><pre><span class="pl-k">using</span> <span class="pl-k">namespace</span> <span class="pl-en">mbedcrypto</span><span class="pl-k">;</span>
+
+<span class="pl-c">// by single shot functions</span>
+<span class="pl-k">auto</span> hvalue = make_hash(<span class="pl-c1">hash_t</span>::sha256, source_data);
+std::cout &lt;&lt; to_base64(hvalue) &lt;&lt; std::endl;
+
+<span class="pl-k">auto</span> hmac_value = hmac::make(<span class="pl-c1">hash_t</span>::md5, key_data, source_data);</pre></div>
+
+<p>or</p>
+
+<div class="highlight highlight-source-c++"><pre>hash <span class="pl-en">h0</span>(<span class="pl-c1">hash_t</span>::ripemd160);
+hash <span class="pl-en">h1</span>(from_string&lt;<span class="pl-c1">hash_t</span>&gt;(<span class="pl-s"><span class="pl-pds">"</span>sha1<span class="pl-pds">"</span></span>));
+
+h1.start();
+<span class="pl-k">while</span> ( ... ) {
+  h1.<span class="pl-c1">update</span>(<span class="pl-c1">read_some_data</span>());
+}
+<span class="pl-k">auto</span> hvalue = h1.finish();
+
+<span class="pl-c">// re-use</span>
+h1.start();
+h1.update(...);
+hvalue = h1.finish();</pre></div>
+
+<p>see <a href="./include/mbedcrypto/hash.hpp">hash.hpp</a></p>
+
+<h3>
+<a id="ciphers" class="anchor" href="#ciphers" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>ciphers</h3>
+
+<p>If a cipher block mode allows, the <code>cipher</code> class automatically breaks input
+data into <strong>chunks</strong> (<code>cipher::block_size()</code>) and frees the user from
+breaking/merging of input/output data:</p>
+
+<div class="highlight highlight-source-c++"><pre><span class="pl-k">using</span> <span class="pl-k">namespace</span> <span class="pl-en">mbedcrypto</span><span class="pl-k">;</span>
+
+std::string source_plain_data = read_from_somewhere();
+
+<span class="pl-c">// encrypt and decrypt by single-shot functions</span>
+<span class="pl-k">auto</span> ciphered_buffer = cipher::encrypt(
+    <span class="pl-c1">cipher_t</span>::aes_256_cbc,
+    <span class="pl-c1">padding_t</span>::pkcs7,
+    initial_vector_data,  <span class="pl-c">// get iv size from cipher::iv_size()</span>
+    key_data,             <span class="pl-c">// get key length in bit by cipher::key_bitlen()</span>
+    source_plain_data     <span class="pl-c">// could be in any size because of cbc block mode</span>
+    );
+
+<span class="pl-k">auto</span> decrypted_buffer = cipher::decrypt(
+    <span class="pl-c1">cipher_t</span>::aes_256_cbc,
+    <span class="pl-c1">padding_t</span>::pkcs7,
+    initial_vector_data,
+    key_data,
+    ciphered_buffer
+    );
+
+<span class="pl-en">REQUIRE</span>( source_plain_data == decrypted_buffer );</pre></div>
+
+<p>to use <a href="https://en.wikipedia.org/wiki/Authenticated_encryption">authenticated encryption with associated data (aka
+aead)</a>:</p>
+
+<div class="highlight highlight-source-c++"><pre>std::string the_additional_data = ...;
+
+<span class="pl-k">auto</span> encr = cipher::encrypt_aead(
+    <span class="pl-c1">cipher_t</span>::aes_256_ccm,
+    iv_data,
+    key_data,
+    the_additional_data,
+    source_plain_data
+    );  <span class="pl-c">///&lt; returns a std::tuple&lt; computed_tag, encrypted_data &gt;</span>
+
+
+<span class="pl-k">auto</span> decr = cipher::decrypt_aead(
+    <span class="pl-c1">cipher_t</span>::aes_256_ccm,
+    iv_data,
+    key_data,
+    the_additional_data,
+    std::get&lt;<span class="pl-c1">1</span>&gt;(encr), <span class="pl-c">// encrypted input</span>
+    std::get&lt;<span class="pl-c1">0</span>&gt;(encr)  <span class="pl-c">// authentication tag</span>
+    );  <span class="pl-c">///&lt; returns a std::tuple&lt; authentication_status, decrypted_data &gt;</span>
+
+
+  <span class="pl-en">REQUIRE</span>( std::get&lt;<span class="pl-c1">0</span>&gt;(decr) == true ); <span class="pl-c">// authenticated?</span>
+  <span class="pl-en">REQUIRE</span>( std::get&lt;<span class="pl-c1">1</span>&gt;(decr) == source_plain_data );</pre></div>
+
+<p>or by reusable object:</p>
+
+<div class="highlight highlight-source-c++"><pre><span class="pl-c">// construct and setup properties</span>
+cipher <span class="pl-en">cipdec</span>(<span class="pl-c1">cipher_t</span>::aes_256_cbc);
+cipdec
+  .padding(<span class="pl-c1">padding_t</span>::pkcs7)
+  .iv(iv_data)
+  .key(key_data, cipher::decrypt_mode);
+
+<span class="pl-c">// by start() / update()s / finish()</span>
+cipdec.start();
+std::string decrypted_data;
+<span class="pl-k">while</span> ( ... ) {
+  decrypted_data += cipdec.<span class="pl-c1">update</span>(<span class="pl-c1">read_some_encrypted_data</span>());
+}
+decrypted_data += cipdec.finish();
+<span class="pl-en">REQUIRE</span>( source_plain_data == decrypted_data );
+
+<span class="pl-c">// re-use the object</span>
+cipdec.start();
+cipdec.update(...); <span class="pl-c">// or multiple updates</span>
+cipdec.finish();
+
+<span class="pl-c">// single shot re-use</span>
+decrypted_data = cipdec.crypt(encrypted_data);</pre></div>
+
+<p>see <a href="./include/mbedcrypto/cipher.hpp">cipher.hpp</a></p>
+
+<h3>
+<a id="random-byte-generator" class="anchor" href="#random-byte-generator" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>random byte generator</h3>
+
+<div class="highlight highlight-source-c++"><pre>mbedcrypto::random rnd_generator;
+<span class="pl-k">auto</span> random_data1 = rnd_generator.make(<span class="pl-c1">256</span>); <span class="pl-c">// in bytes</span>
+<span class="pl-k">auto</span> random_data2 = rnd_generator.make(<span class="pl-c1">32</span>);  <span class="pl-c">// in bytes</span>
+<span class="pl-c">//</span></pre></div>
+
+<p>see <a href="./include/mbedcrypto/random.hpp">random.hpp</a></p>
+
+<h3>
+<a id="pks" class="anchor" href="#pks" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>pks</h3>
+
+<p>loading or exporting keys:</p>
+
+<div class="highlight highlight-source-c++"><pre><span class="pl-k">using</span> <span class="pl-k">namespace</span> <span class="pl-en">mbedcrypto</span><span class="pl-k">;</span>
+
+pki pri;
+pri.parse_key(private_key_data, optional_password);
+<span class="pl-c">// or load from by a file name</span>
+<span class="pl-c">// pri.load_key("private_key.pem");</span>
+
+pki pub;
+pub.parse_public_key(public_key_data);
+
+<span class="pl-c">// [optional] check matching public/private pair</span>
+<span class="pl-en">REQUIRE</span>( pki::check_pair(pub, pri) == true );
+
+<span class="pl-c">// export keys</span>
+<span class="pl-k">if</span> ( supports(features::pk_export) ) {
+    <span class="pl-k">auto</span> der_data = pri.<span class="pl-c1">export_key</span>(pki::der_format);
+    <span class="pl-c">// write or send</span>
+}
+
+<span class="pl-c">// key generation</span>
+<span class="pl-k">if</span> ( supports(features::rsa_keygen) ) {
+    pki <span class="pl-smi">rg</span>(<span class="pl-c1">pk_t</span>::rsa);
+    rg.<span class="pl-c1">rsa_generate_key</span>(<span class="pl-c1">2048</span>);
+    <span class="pl-c">// do stuff</span>
+}</pre></div>
+
+<p>sign and verify:</p>
+
+<div class="highlight highlight-source-c++"><pre><span class="pl-c">// signature &amp; verification</span>
+std::string message = read_message_from_somewhere();
+<span class="pl-k">auto</span> signature      = pri.sign(message, <span class="pl-c1">hash_t</span>::sha256);
+<span class="pl-en">REQUIRE</span>( pub.verify(signature, message, <span class="pl-c1">hash_t</span>::sha256);</pre></div>
+
+<p>to encrypt and decrypt by pki:</p>
+
+<div class="highlight highlight-source-c++"><pre><span class="pl-k">const</span> <span class="pl-k">auto</span> hvalue = hash::make(<span class="pl-c1">hash_t</span>::sha256, message);
+
+pki pub;
+pub.parse_public_key(public_key_data);
+
+<span class="pl-k">auto</span> encv = pub.encrypt(message, <span class="pl-c1">hash_t</span>::sha256);
+<span class="pl-c">// or</span>
+<span class="pl-c">// auto encv = pub.encrypt(hvalue);</span>
+
+pki pri;
+pri.parse_key(private_key_data);
+<span class="pl-k">auto</span> decv = pri.decrypt(encv);
+<span class="pl-en">REQUIRE</span>( decv == hvalue );</pre></div>
+
+<p>see <a href="./include/mbedcrypto/pki.hpp">pki.hpp</a></p>
+
+<hr>
+
+<h2>
+<a id="tests" class="anchor" href="#tests" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>tests</h2>
+
+<p>samples and unit tests are available under <a href="./tests/tdd/">tests/tdd</a> folder.</p>
+
+<p>the test application has been built by
+<a href="https://github.com/philsquared/Catch">catch</a>:</p>
+
+<div class="highlight highlight-source-shell"><pre><span class="pl-smi">$xbin</span>/<span class="pl-k">&gt;</span> ./tests -t
+All available tags:
+   1  [base64]
+   2  [cipher]
+   1  [exception]
+   1  [<span class="pl-c1">hash</span>]
+   1  [hex]
+   2  [pki]
+   1  [random]
+   4  [types]
+8 tags</pre></div>
+
+<hr>
+
+<h2>
+<a id="notes" class="anchor" href="#notes" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>notes</h2>
+
+<h3>
+<a id="cryptography" class="anchor" href="#cryptography" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>cryptography</h3>
+
+<p><a href="https://en.wikipedia.org/wiki/Outline_of_cryptography">cryptography</a> is both
+complex and complicated, it requires a vast knowledge of mathematics, concepts,
+principles, algorithms, standards, conventions, continuous investigation of
+attacks, ...</p>
+
+<blockquote>
+<p>As cryptography is mostly used to protect sensitive data, writing a library
+for it is a daunting task and difficult by any factor.</p>
+</blockquote>
+
+<p>So instead of writing a library from scratch, <code>mbedcrypto</code> stands on the
+shoulders of giants, <code>mbedtls</code> is this case.</p>
+
+<h3>
+<a id="mbedtls" class="anchor" href="#mbedtls" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>mbedtls</h3>
+
+<p>Although <a href="https://github.com/ARMmbed/mbedtls">mbedtls</a> is mostly a <code>TLS/SSL</code>
+library for embedded devices, it has already implemented the most famous and
+widely used cryptographic algorithms and actively developed and maintained.</p>
+
+<p>Arguably <code>mbedtls</code> has cleaner code than <code>openssl</code>, it's easier to read, use
+and maintain, and it has been designed for efficiency and portability from
+scratch (for embedded devices), and has many advantages over <code>openssl</code> like as
+readability, size, compiling and setup, … to name a few.</p>
+
+<h2>
+<a id="disclaimer" class="anchor" href="#disclaimer" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>disclaimer</h2>
+
+<ul>
+<li>implementing an easy-to-use, lightweight and portable <code>c++</code> library for
+cryptography are the main purpose of <code>mbedcrypto</code>.</li>
+<li>there are many more algorithms in cryptographic libraries, the focus of
+<code>mbedcrypto</code> is on the most important or widely used algorithms, tries to be
+simple and not to bloat your application.</li>
+<li>as mentioned in <a href="#notes">notes</a>, the cryptography can be divided into several
+areas of study and best practices, I'm not a guru nor a specialist in this
+field.</li>
+</ul>
+
+<blockquote>
+<p>If you have any ideas, critiques, suggestions or whatever you want to call
+it, please open an issue. I'll be happy to hear from you what you'd see in
+this lib. I think about all suggestions, and I try to add those that make
+sense.</p>
+</blockquote>
+
+<h2>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>license</h2>
+
+<p>Distributed under the MIT license. Copyright (c) 2016, Amir Zamani.</p>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/azadkuh/mbedcrypto">mbedcrypto</a> is maintained by <a href="https://github.com/azadkuh">azadkuh</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
