@@ -28,7 +28,8 @@ TEST_CASE("mbedcrypto error / exception checkings", "[types][exception]") {
     SECTION("throws") {
         try {
             mbedtls_md_context_t md;
-            // uninitialize context, mbedcrypto_c_call must throw:
+            mbedtls_md_init(&md); // initialize items to nullptr
+            // uninitialize (no md type): mbedcrypto_c_call must throw:
             mbedcrypto_c_call(mbedtls_md_starts, &md);
             REQUIRE_FALSE("above line must throw");
 
