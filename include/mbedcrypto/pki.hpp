@@ -9,7 +9,7 @@
 
 #ifndef MBEDCRYPTO_PKI_HPP
 #define MBEDCRYPTO_PKI_HPP
-#include "mbedcrypto/types.hpp"
+#include "mbedcrypto/pk.hpp"
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
 ///////////////////////////////////////////////////////////////////////////////
@@ -33,15 +33,21 @@ public: // static helper functions
 
     /// returns true only by enabled BUILD_PK_EXPORT builds.
     /// @sa pki::export_public_key() and pki::export_key()
-    static bool supports_pk_export();
+    static bool supports_pk_export() {
+        return pk::supports_key_export();
+    }
 
     /// returns true only by enabled BUILD_RSA_KEYGEN builds.
     /// @sa pki::rsa_generate_key()
-    static bool supports_rsa_keygen();
+    static bool supports_rsa_keygen() {
+        return pk::supports_rsa_keygen();
+    }
 
     /// returns true only by enabled BUILD_EC builds.
     /// @sa pki::ec_generate_key();
-    static bool supports_ec_keygen();
+    static bool supports_ec_keygen() {
+        return pk::supports_ec_keygen();
+    }
 
 public:
     /// set the pk type explicitly, with empty key
@@ -54,15 +60,6 @@ public:
     void reset_as(pk_t new_type);
 
 public: // key i/o
-    /// ASN.1 key formats supported by this class to import(initialize) and export from.
-    /// @warning with pem keys:
-    ///  - parse_xxx() / load_xxx(): the pem data must include a null ('\0') terminating byte.
-    ///  - export_xxx(): returns the pem data as a null terminating buffer_t.
-    enum key_format {
-        pem_format,     ///< plain text
-        der_format,     ///< binary data
-    };
-
     /// (re)initializes by private key data.
     void parse_key(const buffer_t& private_key,
             const buffer_t& password = buffer_t{});
@@ -80,11 +77,11 @@ public: // key i/o
     /// export private key
     /// @warning requires the activation of BUILD_PK_EXPORT option
     ///  (see cmake file)
-    auto export_key(key_format)        -> buffer_t;
+    auto export_key(pk::key_format)        -> buffer_t;
     /// export public key
     /// @warning requires the activation of BUILD_PK_EXPORT option
     ///  (see cmake file)
-    auto export_public_key(key_format) -> buffer_t;
+    auto export_public_key(pk::key_format) -> buffer_t;
 
 public: // properties
     /// returns the type fed by constructor or key
@@ -93,24 +90,8 @@ public: // properties
     /// returns the name of current algorithm
     auto name()const noexcept -> const char*;
 
-    /// the capability of this pki instance based on algorithms and key validity
-    struct action_flags {
-        bool encrypt = false;   ///< can do the encryption?
-        bool decrypt = false;   ///< can do the decryption?
-        bool sign    = false;   ///< can do the signing?
-        bool verify  = false;   ///< can do the verification?
-
-        explicit action_flags(bool e, bool d, bool s, bool v)
-            : encrypt(e), decrypt(d), sign(s), verify(v) {}
-
-        bool operator==(const action_flags& o)const {
-            return encrypt == o.encrypt && decrypt == o.decrypt
-                && sign == o.sign && verify == o.verify;
-        }
-    }; // struct capability_flags
-
     /// returns the capability of this pki based on algorithms, and/or pub/priv key
-    auto what_can_do()const noexcept -> action_flags;
+    auto what_can_do()const noexcept -> pk::action_flags;
 
     /// returns true if the current key can do specific operation
     bool can_do(pk_t other_type)const noexcept;
