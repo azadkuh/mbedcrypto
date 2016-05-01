@@ -68,7 +68,7 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
         std::cout << "\n this system "
             << features::aes_ni
             << " AESNI (hardware accelerated AES)";
-        std::cout << "\n this system "
+        std::cout << "\n this build "
             << features::aead
             << " AEAD (authenticated encryption with additional data)";
 
@@ -77,13 +77,13 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
         for ( auto p : pks ) {
             std::cout << to_string(p) << " , ";
         }
-        std::cout << "\n this system "
+        std::cout << "\n this build "
             << features::pk_export
             << " PK export (*.pem, *.der) facility";
-        std::cout << "\n this system "
+        std::cout << "\n this build "
             << features::rsa_keygen
             << " RSA key generation";
-        std::cout << "\n this system "
+        std::cout << "\n this build "
             << features::ec_keygen
             << " EC (elliptic curve) key generation";
 
