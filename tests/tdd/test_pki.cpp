@@ -19,6 +19,20 @@ icompare(const char* a, const char* b) {
     return std::strncmp(a, b, strlen(b)) == 0;
 }
 
+const char*
+bstring(bool b) {
+    return b ? "true" : "false";
+}
+
+std::ostream&
+operator<<(std::ostream& s, const pki::action_flags& f) {
+    s << "encrypt: " << bstring(f.encrypt) << " , "
+      << "decrypt: " << bstring(f.decrypt) << " , "
+      << "sign: " << bstring(f.sign) << " , "
+      << "verify: " << bstring(f.verify);
+    return  s;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace anon
 ///////////////////////////////////////////////////////////////////////////////
@@ -27,26 +41,45 @@ TEST_CASE("pk type checks", "[pki][types]") {
     SECTION("rsa creation tests") {
         pki pk1;
         REQUIRE_FALSE(pk1.can_do(pk_t::rsa));
+        REQUIRE_FALSE(pk1.has_private_key());
+        auto af = pk1.what_can_do();
+        // empty instance, all members must be false
+        REQUIRE_FALSE( (af.encrypt || af.decrypt || af.sign || af.verify) );
 
         pki pk2(pk_t::rsa);
         REQUIRE(pk2.can_do(pk_t::rsa));
         REQUIRE(icompare(pk2.name(), "RSA"));
+        REQUIRE_FALSE(pk2.has_private_key());
         REQUIRE_FALSE(pk2.can_do(pk_t::rsa_alt));
         REQUIRE_FALSE(pk2.can_do(pk_t::ecdsa));
+        af = pk2.what_can_do();
+        // no key, all members must be false
+        REQUIRE_FALSE( (af.encrypt || af.decrypt || af.sign || af.verify) );
+
 
         pki pk3;
         REQUIRE_NOTHROW(pk3.parse_key(test::rsa_private_key()));
         REQUIRE(icompare(pk3.name(), "RSA"));
         REQUIRE(pk3.can_do(pk_t::rsa));
         REQUIRE_FALSE(pk3.can_do(pk_t::rsa_alt));
+        REQUIRE(pk3.has_private_key());
         REQUIRE(pk3.bitlen() == 2048);
+        af = pk3.what_can_do();
+        // private key, can do all of the tasks
+        REQUIRE( (af.encrypt && af.decrypt && af.sign && af.verify) );
 
         pki pk4;
         REQUIRE_NOTHROW(pk4.parse_public_key(test::rsa_public_key()));
         REQUIRE(icompare(pk4.name(), "RSA"));
         REQUIRE(pk4.can_do(pk_t::rsa));
         REQUIRE_FALSE(pk4.can_do(pk_t::rsa_alt));
+        REQUIRE_FALSE(pk4.has_private_key());
         REQUIRE(pk4.bitlen() == 2048);
+        af = pk4.what_can_do();
+        // public key can both encrypt or verify
+        REQUIRE( (af.encrypt  &&  af.verify) );
+        // public key can not decrypt nor sign
+        REQUIRE_FALSE( (af.decrypt  |  af.sign) );
 
         // check key pair
         REQUIRE_THROWS( pki::check_pair(pk1, pk3) ); // pk1 is uninitialized
@@ -59,6 +92,7 @@ TEST_CASE("pk type checks", "[pki][types]") {
                     ));
         REQUIRE(icompare(pk3.name(), "RSA"));
         REQUIRE(pk3.can_do(pk_t::rsa));
+        REQUIRE(pk3.has_private_key());
         REQUIRE(pk3.bitlen() == 2048);
 
         // pk3 is still the same key (with or without password)
@@ -72,16 +106,27 @@ TEST_CASE("pk type checks", "[pki][types]") {
         REQUIRE_FALSE(pk1.can_do(pk_t::eckey));
 
         pk1.reset_as(pk_t::eckey);
+        REQUIRE_FALSE(pk1.has_private_key());
         REQUIRE( icompare(pk1.name(), "EC") );
         REQUIRE( pk1.can_do(pk_t::eckey) );
         REQUIRE( pk1.can_do(pk_t::eckey_dh) );
+        #if defined(MBEDTLS_ECDSA_C)
         REQUIRE( pk1.can_do(pk_t::ecdsa) );
+        #else // MBEDTLS_ECDSA_C
+        REQUIRE_FALSE( pk1.can_do(pk_t::ecdsa) );
+        #endif // MBEDTLS_ECDSA_C
+        auto af = pk1.what_can_do();
+        // pk1 has no key. all capabilities must be false
+        REQUIRE_FALSE( (af.encrypt || af.decrypt || af.sign || af.verify) );
 
         pk1.reset_as(pk_t::eckey_dh);
         REQUIRE( icompare(pk1.name(), "EC_DH") );
+        REQUIRE_FALSE(pk1.has_private_key());
         REQUIRE( pk1.can_do(pk_t::eckey_dh) );
         REQUIRE( pk1.can_do(pk_t::eckey) );
         REQUIRE_FALSE( pk1.can_do(pk_t::ecdsa) );
+        // pk1 has no key. all capabilities must be false
+        REQUIRE_FALSE( (af.encrypt || af.decrypt || af.sign || af.verify) );
 
 
     }
@@ -94,16 +139,20 @@ TEST_CASE("pk type checks", "[pki][types]") {
 
         pk1.reset_as(pk_t::ecdsa);
         REQUIRE( icompare(pk1.name(), "ECDSA") );
+        REQUIRE_FALSE(pk1.has_private_key());
         REQUIRE( pk1.can_do(pk_t::ecdsa) );
         REQUIRE_FALSE( pk1.can_do(pk_t::eckey) );
         REQUIRE_FALSE( pk1.can_do(pk_t::eckey_dh) );
+        auto af = pk1.what_can_do();
+        // pk1 has no key. all capabilities must be false
+        REQUIRE_FALSE( (af.encrypt || af.decrypt || af.sign || af.verify) );
     }
 #endif // MBEDTLS_ECDSA_C
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_CASE("pki cryptography", "[pki]") {
+TEST_CASE("rsa pki cryptography", "[pki]") {
     using namespace mbedcrypto;
 
     SECTION("sign and verify") {
@@ -153,17 +202,49 @@ TEST_CASE("key gen", "[pki]") {
         pki pk1;
         // pk1 is not defined as rsa
         REQUIRE_THROWS( pk1.rsa_generate_key(1024) );
+        REQUIRE_FALSE( pk1.has_private_key() );
 
         pki pk2(pk_t::rsa);
         REQUIRE_NOTHROW( pk2.rsa_generate_key(1024) );
+        REQUIRE( pk2.has_private_key() );
         REQUIRE_NOTHROW( pk2.rsa_generate_key(2048, 3) );
+        REQUIRE( pk2.has_private_key() );
     }
 #endif
 
-#if defined(MBEDTLS_ECP_C)
+#if defined(MBEDTLS_ECP_C)  &&  defined(MBEDTLS_PEM_WRITE_C)
     SECTION("ec key generation") {
+        const auto ctype = curve_t::secp256k1;
+        pki pk;
+        // pk1 is not defined as ec family
+        REQUIRE_THROWS( pk.ec_generate_key(ctype) );
+
+        auto test_proc = [](pk_t ptype, curve_t ctype,
+                const pki::action_flags& afpri,
+                const pki::action_flags& afpub) {
+
+            pki pri(ptype);
+            REQUIRE_NOTHROW( pri.ec_generate_key(ctype) );
+            REQUIRE( (pri.what_can_do() == afpri) );
+
+            auto pub_data = pri.export_public_key(pki::pem_format);
+            pki pub;
+            REQUIRE_NOTHROW( pub.parse_public_key(pub_data) );
+            REQUIRE( (pub.what_can_do() == afpub) );
+        };
+
+        test_proc(pk_t::eckey, ctype,
+            #if defined(MBEDTLS_ECDSA_C)
+                pki::action_flags{false, false, true, true},
+                pki::action_flags{false, false, false, true}
+            #else
+                pki::action_flags{false, false, false, true},
+                pki::action_flags{false, false, false, false}
+            #endif
+                );
+
     }
-#endif // MBEDTLS_ECP_C
+#endif // MBEDTLS_ECP_C && MBEDTLS_PEM_WRITE_C
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -231,10 +312,7 @@ TEST_CASE("key export tests", "[pki]") {
             //curve_t::curve25519,
         };
 
-        const std::string message(test::long_text());
-        const auto hvalue = hash::make(hash_t::sha1, message);
-
-        auto key_test = [&message, &hvalue](curve_t ctype) {
+        auto key_test = [](curve_t ctype) {
             pki gen(pk_t::eckey);
             gen.ec_generate_key(ctype);
             auto pkey   = gen.export_key(pki::pem_format);
