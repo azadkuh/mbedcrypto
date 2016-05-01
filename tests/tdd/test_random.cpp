@@ -1,7 +1,7 @@
 #include <catch.hpp>
 #include <iostream>
 
-#include "mbedcrypto/random.hpp"
+#include "mbedcrypto/rnd_generator.hpp"
 #include "mbedcrypto/tcodec.hpp"
 ///////////////////////////////////////////////////////////////////////////////
 namespace {
@@ -14,7 +14,7 @@ namespace {
 TEST_CASE("random generator tests", "[random]") {
     using namespace mbedcrypto;
 
-    mbedcrypto::random rnd("some custom text or binary data");
+    rnd_generator rnd("some custom text or binary data");
 
     auto buf = rnd.make(128);
     REQUIRE( buf.size() == 128 );
@@ -30,7 +30,7 @@ TEST_CASE("random generator tests", "[random]") {
     rnd.reseed_interval(200);
     rnd.prediction_resistance(true);
 
-    mbedcrypto::random rnd2;
+    rnd_generator rnd2;
     buf = rnd2.make(93);
     REQUIRE( buf.size() == 93 );
 

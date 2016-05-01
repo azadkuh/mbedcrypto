@@ -1,4 +1,4 @@
-/** @file random.hpp
+/** @file rnd_generator.hpp
  *
  * @copyright (C) 2016
  * @date 2016.03.07
@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef MBEDCRYPTO_RANDOM_HPP
-#define MBEDCRYPTO_RANDOM_HPP
+#ifndef MBEDCRYPTO_RND_GENERATOR_HPP
+#define MBEDCRYPTO_RND_GENERATOR_HPP
 
 #include "types.hpp"
 ///////////////////////////////////////////////////////////////////////////////
@@ -18,11 +18,11 @@ namespace mbedcrypto {
 /// counter mode deterministic random byte generator (CTR_DRBG).
 /// @note mbedtls (mbedcrypto) CTR_DRBG based on AES-256 (NIST SP 800-90) and
 ///  internally uses an entropy collection modules.
-class random
+class rnd_generator
 {
 public:
     /// initializes both entropy collector and CTR_DRBG
-    random();
+    rnd_generator();
 
     /// optional custom data can be provided in addition to the more generic entropy source.
     /// useful when using random objects (possibly on different threads).
@@ -30,9 +30,9 @@ public:
     /// This makes sure that the random generators between the different
     ///  threads have the least amount of correlation possible and can
     ///  thus be considered as independent as possible.
-    explicit random(const buffer_t& custom);
+    explicit rnd_generator(const buffer_t& custom);
 
-    ~random();
+    ~rnd_generator();
 
     /// returns a random binary buffer with specified length
     /// @note automatically reseeds if reseed_interval is passed.
@@ -64,18 +64,18 @@ public: // auxiliary methods
     void update(const unsigned char* additional, size_t length) noexcept;
 
     // move only
-    random(const random&)            = delete;
-    random(random&&)                 = default;
-    random& operator=(const random&) = delete;
-    random& operator=(random&&)      = default;
+    rnd_generator(const rnd_generator&)            = delete;
+    rnd_generator(rnd_generator&&)                 = default;
+    rnd_generator& operator=(const rnd_generator&) = delete;
+    rnd_generator& operator=(rnd_generator&&)      = default;
 
 protected:
     struct impl;
     std::unique_ptr<impl> pimpl;
-}; // random
+}; // rnd_generator
 
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
 ///////////////////////////////////////////////////////////////////////////////
-#endif // MBEDCRYPTO_RANDOM_HPP
+#endif // MBEDCRYPTO_RND_GENERATOR_HPP
 

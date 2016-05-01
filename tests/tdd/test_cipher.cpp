@@ -2,7 +2,7 @@
 
 #include "mbedtls/cipher.h"
 #include "mbedcrypto/cipher.hpp"
-#include "mbedcrypto/random.hpp"
+#include "mbedcrypto/rnd_generator.hpp"
 #include "mbedcrypto/tcodec.hpp"
 #include "src/conversions.hpp"
 
@@ -72,7 +72,7 @@ chunk_size_of(cipher_t ct) {
 }
 
 buffer_t
-make_input(cipher_bm bm, size_t bs, mbedcrypto::random& drbg) {
+make_input(cipher_bm bm, size_t bs, rnd_generator& drbg) {
     switch ( bm ) {
         case cipher_bm::ecb:
             return drbg.make(100 * bs);
@@ -147,7 +147,7 @@ public:
     explicit cipher_tester(cipher_t ct)
         : ctype(ct), cipenc(ct), cipdec(ct) {}
 
-    bool setup(mbedcrypto::random& drbg) {
+    bool setup(rnd_generator& drbg) {
         // properties
         block_mode   = cipher::block_mode(ctype);
         block_size   = cipher::block_size(ctype);
@@ -298,7 +298,7 @@ TEST_CASE("test block mode", "[cipher][types]") {
 TEST_CASE("test ciphers against mbedtls", "[cipher]") {
     using namespace mbedcrypto;
 
-    mbedcrypto::random drbg;
+    rnd_generator drbg;
 
     const auto types = installed_ciphers();
     for ( auto ctype : types ) {

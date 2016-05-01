@@ -1,4 +1,4 @@
-#include "mbedcrypto/random.hpp"
+#include "mbedcrypto/rnd_generator.hpp"
 #include "mbedcrypto/types.hpp"
 
 #include "mbedtls/entropy.h"
@@ -7,8 +7,8 @@
 namespace mbedcrypto {
 namespace {
 ///////////////////////////////////////////////////////////////////////////////
-static_assert(std::is_copy_constructible<random>::value == false, "");
-static_assert(std::is_move_constructible<random>::value == true , "");
+static_assert(std::is_copy_constructible<rnd_generator>::value == false, "");
+static_assert(std::is_move_constructible<rnd_generator>::value == true , "");
 
 int
 make_chunked(mbedtls_ctr_drbg_context* ctx,
@@ -47,7 +47,7 @@ make_chunked(mbedtls_ctr_drbg_context* ctx,
 } // namespace anon
 ///////////////////////////////////////////////////////////////////////////////
 
-struct random::impl
+struct rnd_generator::impl
 {
     mbedtls_entropy_context   entropy_;
     mbedtls_ctr_drbg_context  ctx_;
@@ -76,32 +76,32 @@ struct random::impl
                 );
     }
 
-}; // class random::imp
+}; // class rnd_generator::imp
 
 ///////////////////////////////////////////////////////////////////////////////
-random::random(const buffer_t& b) : pimpl(std::make_unique<impl>()) {
+rnd_generator::rnd_generator(const buffer_t& b) : pimpl(std::make_unique<impl>()) {
     pimpl->setup(to_const_ptr(b), b.size());
 }
 
-random::random() : pimpl(std::make_unique<impl>()) {
+rnd_generator::rnd_generator() : pimpl(std::make_unique<impl>()) {
     pimpl->setup(nullptr, 0);
 }
 
-random::~random() {
+rnd_generator::~rnd_generator() {
 }
 
 void
-random::entropy_length(size_t len) noexcept {
+rnd_generator::entropy_length(size_t len) noexcept {
     mbedtls_ctr_drbg_set_entropy_len(&pimpl->ctx_, len);
 }
 
 void
-random::reseed_interval(size_t interval) noexcept {
+rnd_generator::reseed_interval(size_t interval) noexcept {
     mbedtls_ctr_drbg_set_reseed_interval(&pimpl->ctx_, interval);
 }
 
 void
-random::prediction_resistance(bool p) noexcept {
+rnd_generator::prediction_resistance(bool p) noexcept {
     mbedtls_ctr_drbg_set_prediction_resistance(
             &pimpl->ctx_,
             p ? MBEDTLS_CTR_DRBG_PR_ON : MBEDTLS_CTR_DRBG_PR_OFF
@@ -109,12 +109,12 @@ random::prediction_resistance(bool p) noexcept {
 }
 
 int
-random::make(unsigned char* buffer, size_t olen) noexcept {
+rnd_generator::make(unsigned char* buffer, size_t olen) noexcept {
     return make_chunked(&pimpl->ctx_, buffer, olen);
 }
 
 buffer_t
-random::make(size_t length) {
+rnd_generator::make(size_t length) {
     buffer_t buf(length, '\0');
     mbedcrypto_c_call(make_chunked,
             &pimpl->ctx_,
@@ -126,14 +126,14 @@ random::make(size_t length) {
 }
 
 void
-random::reseed() {
+rnd_generator::reseed() {
     mbedcrypto_c_call(mbedtls_ctr_drbg_reseed,
             &pimpl->ctx_, nullptr, 0
           );
 }
 
 void
-random::reseed(const buffer_t& custom) {
+rnd_generator::reseed(const buffer_t& custom) {
     mbedcrypto_c_call(mbedtls_ctr_drbg_reseed,
             &pimpl->ctx_,
             to_const_ptr(custom),
@@ -142,12 +142,12 @@ random::reseed(const buffer_t& custom) {
 }
 
 int
-random::reseed(const unsigned char* custom, size_t length) noexcept {
+rnd_generator::reseed(const unsigned char* custom, size_t length) noexcept {
     return mbedtls_ctr_drbg_reseed(&pimpl->ctx_, custom, length);
 }
 
 void
-random::update(const buffer_t& additional) {
+rnd_generator::update(const buffer_t& additional) {
     mbedtls_ctr_drbg_update(
             &pimpl->ctx_,
             to_const_ptr(additional),
@@ -156,7 +156,7 @@ random::update(const buffer_t& additional) {
 }
 
 void
-random::update(const unsigned char* additional, size_t length) noexcept {
+rnd_generator::update(const unsigned char* additional, size_t length) noexcept {
     mbedtls_ctr_drbg_update(
             &pimpl->ctx_, additional, length
             );

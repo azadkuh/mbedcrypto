@@ -1,5 +1,5 @@
 #include "mbedcrypto/pki.hpp"
-#include "mbedcrypto/random.hpp"
+#include "mbedcrypto/rnd_generator.hpp"
 #include "mbedcrypto/hash.hpp"
 #include "conversions.hpp"
 
@@ -54,7 +54,7 @@ finalize_pem(buffer_t& pem) {
 
 int
 random_func(void* ctx, unsigned char* p, size_t len) {
-    mbedcrypto::random* rnd = reinterpret_cast<mbedcrypto::random*>(ctx);
+    rnd_generator* rnd = reinterpret_cast<rnd_generator*>(ctx);
     return rnd->make(p, len);
 }
 
@@ -85,7 +85,7 @@ public:
 struct pki::impl
 {
     bool key_is_private_ = false;
-    mbedcrypto::random rnd_{"mbedcrypto pki implementation"};
+    rnd_generator      rnd_{"mbedcrypto pki implementation"};
     mbedtls_pk_context ctx_;
 
     explicit impl() {
@@ -107,6 +107,7 @@ struct pki::impl
         mbedtls_pk_free(&ctx_);
         key_is_private_ = false;
     }
+
     void reset_as(pk_t type) {
         reset();
         setup(type);

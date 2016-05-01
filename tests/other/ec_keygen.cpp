@@ -1,5 +1,5 @@
 #include "mbedcrypto/pki.hpp"
-#include "mbedcrypto/random.hpp"
+#include "mbedcrypto/rnd_generator.hpp"
 
 #include "mbedtls/ecp.h"
 #include "mbedtls/ecdsa.h"
@@ -49,14 +49,14 @@ test1() {
 
 int
 my_random2(void* prng, unsigned char* output, size_t olen) {
-    auto* rnd = reinterpret_cast<mbedcrypto::random*>(prng);
+    auto* rnd = reinterpret_cast<mbedcrypto::rnd_generator*>(prng);
     return rnd->make(output, olen);
 }
 
 void
 test2() {
     using namespace mbedcrypto;
-    mbedcrypto::random rnd{"mbedcrypto sample implementation for you"};
+    rnd_generator rnd{"mbedcrypto sample implementation for you"};
     mbedtls::pki pk;
 
     mbedcrypto_c_call(mbedtls_pk_setup,
