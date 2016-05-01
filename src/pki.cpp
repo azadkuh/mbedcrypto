@@ -3,6 +3,7 @@
 #include "mbedcrypto/hash.hpp"
 #include "conversions.hpp"
 
+#include "mbedtls/pk_internal.h"
 #include "mbedtls/pk.h"
 #include "mbedtls/ecp.h"
 #include <cstring>
@@ -83,6 +84,7 @@ public:
 
 struct pki::impl
 {
+    bool key_is_private_ = false;
     mbedcrypto::random rnd_{"mbedcrypto pki implementation"};
     mbedtls_pk_context ctx_;
 
@@ -101,10 +103,15 @@ struct pki::impl
                 );
     }
 
-    void reset_as(pk_t type) {
+    void reset() {
         mbedtls_pk_free(&ctx_);
+        key_is_private_ = false;
+    }
+    void reset_as(pk_t type) {
+        reset();
         setup(type);
     }
+
 
 }; // pki::impl
 
@@ -162,6 +169,11 @@ pki::max_crypt_size()const {
     //throw exception("unsupported pk type");
 }
 
+bool
+pki::has_private_key()const noexcept {
+    return pimpl->key_is_private_;
+}
+
 const char*
 pki::name()const noexcept {
     return mbedtls_pk_get_name(&pimpl->ctx_);
@@ -169,8 +181,7 @@ pki::name()const noexcept {
 
 void
 pki::parse_key(const buffer_t& private_key, const buffer_t& password) {
-    // resets
-    mbedtls_pk_free(&pimpl->ctx_);
+    pimpl->reset();
 
     const auto* ppass = (password.size() != 0) ? to_const_ptr(password) : nullptr;
 
@@ -181,28 +192,26 @@ pki::parse_key(const buffer_t& private_key, const buffer_t& password) {
             ppass,
             password.size()
           );
+    // set the key type
+    pimpl->key_is_private_ = true;
 }
 
 void
 pki::parse_public_key(const buffer_t& public_key) {
-    // resets
-    mbedtls_pk_free(&pimpl->ctx_);
+    pimpl->reset();
 
     mbedcrypto_c_call(mbedtls_pk_parse_public_key,
         &pimpl->ctx_,
         to_const_ptr(public_key),
         public_key.size()
         );
+    // set the key type
+    pimpl->key_is_private_ = false;
 }
 
 void
 pki::load_key(const char* file_path, const buffer_t& password) {
-    #if !defined(MBEDTLS_FS_IO)
-    throw exception("not implemented in current build system");
-    #endif // MBEDTLS_FS_IO
-
-    // resets
-    mbedtls_pk_free(&pimpl->ctx_);
+    pimpl->reset();
 
     const auto* ppass = (password.size() != 0) ? password.data() : nullptr;
 
@@ -211,21 +220,20 @@ pki::load_key(const char* file_path, const buffer_t& password) {
             file_path,
             ppass
           );
+    // set the key type
+    pimpl->key_is_private_ = true;
 }
 
 void
 pki::load_public_key(const char* file_path) {
-    #if !defined(MBEDTLS_FS_IO)
-    throw exception("not implemented in current build system");
-    #endif // MBEDTLS_FS_IO
-
-    // resets
-    mbedtls_pk_free(&pimpl->ctx_);
+    pimpl->reset();
 
     mbedcrypto_c_call(mbedtls_pk_parse_public_keyfile,
             &pimpl->ctx_,
             file_path
           );
+    // set the key type
+    pimpl->key_is_private_ = false;
 }
 
 bool
@@ -310,17 +318,22 @@ pki::export_public_key(pki::key_format fmt) {
 }
 
 bool
-pki::can_do(pk_t type) const noexcept {
-    return mbedtls_pk_can_do(&pimpl->ctx_, to_native(type)) == 1;
+pki::can_do(pk_t ptype) const noexcept {
+    int ret = mbedtls_pk_can_do(&pimpl->ctx_, to_native(ptype));
+
+    // refinement due to build options
+    if ( type() == pk_t::eckey  &&  ptype == pk_t::ecdsa ) {
+        #if !defined(MBEDTLS_ECDSA_C)
+        ret = 0;
+        #endif // MBEDTLS_ECDSA_C
+    }
+
+    return ret == 1;
 }
 
 size_t
-pki::bitlen()const {
-    int ret = mbedtls_pk_get_bitlen(&pimpl->ctx_);
-    if ( ret == 0 )
-        throw exception("failed to determine the key bit size");
-
-    return size_t(ret);
+pki::bitlen()const noexcept {
+    return (size_t) mbedtls_pk_get_bitlen(&pimpl->ctx_);
 }
 
 size_t
@@ -454,6 +467,9 @@ pki::rsa_generate_key(size_t key_bitlen, size_t exponent) {
             key_bitlen,
             exponent
             );
+    // set the key type
+    pimpl->key_is_private_ = true;
+
 
 #else // MBEDTLS_GENPRIME
     throw rsa_keygen_exception();
@@ -486,6 +502,8 @@ pki::ec_generate_key(curve_t ctype) {
             random_func,
             &pimpl->rnd_
             );
+    // set the key type
+    pimpl->key_is_private_ = true;
 
 #else // MBEDTLS_ECP_C
     throw ecp_exception();

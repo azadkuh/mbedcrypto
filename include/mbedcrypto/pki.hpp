@@ -44,6 +44,7 @@ public: // static helper functions
     static bool supports_ec_keygen();
 
 public:
+    /// set the pk type explicitly, with empty key
     explicit pki(pk_t type);
     /// type will be set by key funcs: parse_xxx() or load_xxx()
     pki();
@@ -96,7 +97,8 @@ public: // properties
     bool can_do(pk_t other_type)const noexcept;
 
     /// size of underlying key in bits, ex 2048 or ...
-    size_t bitlen()const;
+    /// returns 0 if the key is not initialized yet
+    size_t bitlen()const noexcept;
 
     /// size of underlying key in bytes
     size_t length()const;
@@ -106,6 +108,9 @@ public: // properties
     ///  key size (2048 bits = 256 bytes) minus padding / header data
     //   (11 bytes for PKCS#1 v1.5 padding)
     size_t max_crypt_size()const;
+
+    /// returns true if the key is a valid private key
+    bool has_private_key()const noexcept;
 
 public:
     /// signs a hash value (or a plain message) by the private key.
