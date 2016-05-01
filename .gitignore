@@ -46,6 +46,8 @@ node_modules
 # YouCompleteMe
 .vimrc
 .gvimrc
+init.vim
+Session.vim
 .ycm_extra_conf.*
 .color_coded*
 
