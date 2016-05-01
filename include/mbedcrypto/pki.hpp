@@ -93,6 +93,25 @@ public: // properties
     /// returns the name of current algorithm
     auto name()const noexcept -> const char*;
 
+    /// the capability of this pki instance based on algorithms and key validity
+    struct action_flags {
+        bool encrypt = false;   ///< can do the encryption?
+        bool decrypt = false;   ///< can do the decryption?
+        bool sign    = false;   ///< can do the signing?
+        bool verify  = false;   ///< can do the verification?
+
+        explicit action_flags(bool e, bool d, bool s, bool v)
+            : encrypt(e), decrypt(d), sign(s), verify(v) {}
+
+        bool operator==(const action_flags& o)const {
+            return encrypt == o.encrypt && decrypt == o.decrypt
+                && sign == o.sign && verify == o.verify;
+        }
+    }; // struct capability_flags
+
+    /// returns the capability of this pki based on algorithms, and/or pub/priv key
+    auto what_can_do()const noexcept -> action_flags;
+
     /// returns true if the current key can do specific operation
     bool can_do(pk_t other_type)const noexcept;
 

@@ -317,6 +317,40 @@ pki::export_public_key(pki::key_format fmt) {
 #endif // MBEDTLS_PK_WRITE_C
 }
 
+pki::action_flags
+pki::what_can_do() const noexcept {
+    action_flags f{false, false, false, false};
+
+    if ( pimpl->ctx_.pk_info != nullptr   &&   bitlen() > 0 ) {
+        const auto* info = pimpl->ctx_.pk_info;
+
+        f.encrypt = info->encrypt_func != nullptr;
+        f.decrypt = info->decrypt_func != nullptr;
+        f.sign    = info->sign_func    != nullptr;
+        f.verify  = info->verify_func  != nullptr;
+
+        // refine due to pub/priv key
+        // pub keys can not sign, nor decrypt
+        switch ( type() ) {
+            case pk_t::rsa:
+                if ( !pimpl->key_is_private_ )
+                    f.decrypt = f.sign = false;
+                break;
+
+            case pk_t::eckey:
+            case pk_t::ecdsa:
+                if ( !pimpl->key_is_private_ )
+                    f.sign = false;
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    return f;
+}
+
 bool
 pki::can_do(pk_t ptype) const noexcept {
     int ret = mbedtls_pk_can_do(&pimpl->ctx_, to_native(ptype));
