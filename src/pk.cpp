@@ -23,6 +23,35 @@ static_assert(std::is_copy_constructible<context>::value == false, "");
 static_assert(std::is_move_constructible<context>::value == true, "");
 ///////////////////////////////////////////////////////////////////////////////
 
+pk_t
+type_of(const context& d) {
+    return from_native(mbedtls_pk_get_type(&d.pk_));
+}
+
+size_t
+key_length(const context& d) noexcept {
+    return (size_t) mbedtls_pk_get_len(&d.pk_);
+}
+
+size_t
+key_bitlen(const context& d) noexcept {
+    return (size_t) mbedtls_pk_get_bitlen(&d.pk_);
+}
+
+bool
+can_do(const context& d, pk_t ptype) {
+    int ret = mbedtls_pk_can_do(&d.pk_, to_native(ptype));
+
+    // refinement due to build options
+    if ( type_of(d) == pk_t::eckey  &&  ptype == pk_t::ecdsa ) {
+        #if !defined(MBEDTLS_ECDSA_C)
+        ret = 0;
+        #endif // MBEDTLS_ECDSA_C
+    }
+
+    return ret == 1;
+}
+
 bool
 check_pair(const context& pub, const context& priv) {
     int ret = mbedtls_pk_check_pair(&pub.pk_, &priv.pk_);
@@ -172,7 +201,7 @@ export_public_key(context& d, key_format fmt) {
 }
 
 bool
-supports_key_export() {
+supports_key_export() noexcept {
 #if defined(MBEDTLS_PK_WRITE_C)
     return true;
 #else // MBEDTLS_PK_WRITE_C
@@ -181,7 +210,7 @@ supports_key_export() {
 }
 
 bool
-supports_rsa_keygen() {
+supports_rsa_keygen() noexcept {
 #if defined(MBEDTLS_GENPRIME)
     return true;
 #else
@@ -190,7 +219,7 @@ supports_rsa_keygen() {
 }
 
 bool
-supports_ec_keygen() {
+supports_ec_keygen() noexcept {
 #if defined(MBEDTLS_ECP_C)
     return true;
 #else

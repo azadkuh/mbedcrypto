@@ -14,15 +14,7 @@
 namespace mbedcrypto {
 ///////////////////////////////////////////////////////////////////////////////
 
-/** asymmetric, public key infrastructure.
- *
- * related cmake build options:
- *   BUILD_PK_EXPORT
- *   BUILD_RSA_KEYGEN
- *   BUILD_EC
- *   BUILD_ECDSA
- *
- */
+/// asymmetric, public key infrastructure (deprecated)
 class pki
 {
 public: // static helper functions
@@ -85,7 +77,7 @@ public: // key i/o
 
 public: // properties
     /// returns the type fed by constructor or key
-    pk_t type()const noexcept;
+    pk_t type()const;
 
     /// returns the name of current algorithm
     auto name()const noexcept -> const char*;
@@ -101,7 +93,8 @@ public: // properties
     size_t bitlen()const noexcept;
 
     /// size of underlying key in bytes
-    size_t length()const;
+    /// returns 0 if the key is not initialized yet
+    size_t length()const noexcept;
 
     /// returns maximum size of data which is possible to encrypt() or sign()
     /// RSA is only able to encrypt data to a maximum amount of your

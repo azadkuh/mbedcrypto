@@ -67,10 +67,18 @@ pki::check_pair(const pki& pub, const pki& priv) {
 }
 
 pk_t
-pki::type()const noexcept {
-    return from_native(
-            mbedtls_pk_get_type(&pimpl->pk_)
-            );
+pki::type()const {
+    return pk::type_of(*pimpl);
+}
+
+size_t
+pki::length()const noexcept {
+    return pk::key_length(*pimpl);
+}
+
+size_t
+pki::bitlen()const noexcept {
+    return pk::key_bitlen(*pimpl);
 }
 
 size_t
@@ -161,30 +169,7 @@ pki::what_can_do() const noexcept {
 
 bool
 pki::can_do(pk_t ptype) const noexcept {
-    int ret = mbedtls_pk_can_do(&pimpl->pk_, to_native(ptype));
-
-    // refinement due to build options
-    if ( type() == pk_t::eckey  &&  ptype == pk_t::ecdsa ) {
-        #if !defined(MBEDTLS_ECDSA_C)
-        ret = 0;
-        #endif // MBEDTLS_ECDSA_C
-    }
-
-    return ret == 1;
-}
-
-size_t
-pki::bitlen()const noexcept {
-    return (size_t) mbedtls_pk_get_bitlen(&pimpl->pk_);
-}
-
-size_t
-pki::length()const {
-    int ret = mbedtls_pk_get_len(&pimpl->pk_);
-    if ( ret == 0 )
-        throw exception("failed to determine the key size");
-
-    return size_t(ret);
+    return pk::can_do(*pimpl, ptype);
 }
 
 buffer_t
