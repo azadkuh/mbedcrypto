@@ -4,7 +4,7 @@
 
 #include "mbedcrypto_mbedtls_config.h"
 #include "mbedcrypto/cipher.hpp"
-#include "mbedcrypto/pki.hpp"
+#include "mbedcrypto/pk.hpp"
 #include "generator.hpp"
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -257,9 +257,9 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
     }
 
     SECTION("pki") {
-        REQUIRE( supports(features::pk_export) == pki::supports_pk_export() );
-        REQUIRE( supports(features::rsa_keygen) == pki::supports_rsa_keygen() );
-        REQUIRE( supports(features::ec_keygen) == pki::supports_ec_keygen() );
+        REQUIRE( supports(features::pk_export) == pk::supports_key_export() );
+        REQUIRE( supports(features::rsa_keygen) == pk::supports_rsa_keygen() );
+        REQUIRE( supports(features::ec_keygen) == pk::supports_ec_keygen() );
     }
 
     SECTION("curve names") {

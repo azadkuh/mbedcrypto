@@ -1,6 +1,6 @@
 #include "mbedcrypto/types.hpp"
 #include "mbedcrypto/cipher.hpp"
-#include "mbedcrypto/pki.hpp"
+#include "mbedcrypto/pk.hpp"
 #include "enumerator.hxx"
 #include "conversions.hpp"
 
@@ -67,13 +67,13 @@ supports(features f) {
             return cipher::supports_aead();
 
         case features::pk_export:
-            return pki::supports_pk_export();
+            return pk::supports_key_export();
 
         case features::rsa_keygen:
-            return pki::supports_rsa_keygen();
+            return pk::supports_rsa_keygen();
 
         case features::ec_keygen:
-            return pki::supports_ec_keygen();
+            return pk::supports_ec_keygen();
 
         default:
             return false;

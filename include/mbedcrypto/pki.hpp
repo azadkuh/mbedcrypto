@@ -23,24 +23,6 @@ public: // static helper functions
     /// @warning both pki instances must be of a same type (ex pk_t::rsa)
     static bool check_pair(const pki& pub, const pki& pri);
 
-    /// returns true only by enabled BUILD_PK_EXPORT builds.
-    /// @sa pki::export_public_key() and pki::export_key()
-    static bool supports_pk_export() {
-        return pk::supports_key_export();
-    }
-
-    /// returns true only by enabled BUILD_RSA_KEYGEN builds.
-    /// @sa pki::rsa_generate_key()
-    static bool supports_rsa_keygen() {
-        return pk::supports_rsa_keygen();
-    }
-
-    /// returns true only by enabled BUILD_EC builds.
-    /// @sa pki::ec_generate_key();
-    static bool supports_ec_keygen() {
-        return pk::supports_ec_keygen();
-    }
-
 public:
     /// set the pk type explicitly, with empty key
     explicit pki(pk_t type);
