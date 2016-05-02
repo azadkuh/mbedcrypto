@@ -23,9 +23,29 @@ static_assert(std::is_copy_constructible<context>::value == false, "");
 static_assert(std::is_move_constructible<context>::value == true, "");
 ///////////////////////////////////////////////////////////////////////////////
 
+void
+reset(context& d) noexcept {
+    d.key_is_private_ = false;
+    mbedtls_pk_free(&d.pk_);
+}
+
+void
+reset_as(context& d, pk_t ptype) {
+    reset(d);
+    mbedcrypto_c_call(mbedtls_pk_setup,
+            &d.pk_,
+            native_info(ptype)
+            );
+}
+
 pk_t
 type_of(const context& d) {
     return from_native(mbedtls_pk_get_type(&d.pk_));
+}
+
+const char*
+name_of(const context& d) noexcept {
+    return mbedtls_pk_get_name(&d.pk_);
 }
 
 size_t
@@ -36,6 +56,11 @@ key_length(const context& d) noexcept {
 size_t
 key_bitlen(const context& d) noexcept {
     return (size_t) mbedtls_pk_get_bitlen(&d.pk_);
+}
+
+bool
+has_private_key(const context& d) noexcept {
+    return d.key_is_private_;
 }
 
 bool
@@ -73,7 +98,7 @@ check_pair(const context& pub, const context& priv) {
 
 void
 import_key(context& d, const buffer_t& priv_data, const buffer_t& pass) {
-    d.reset();
+    reset(d);
 
     const auto* ppass = (pass.size() != 0) ? to_const_ptr(pass) : nullptr;
 
@@ -90,7 +115,7 @@ import_key(context& d, const buffer_t& priv_data, const buffer_t& pass) {
 
 void
 import_public_key(context& d, const buffer_t& pub_data) {
-    d.reset();
+    reset(d);
 
     mbedcrypto_c_call(mbedtls_pk_parse_public_key,
         &d.pk_,
@@ -103,7 +128,7 @@ import_public_key(context& d, const buffer_t& pub_data) {
 
 void
 load_key(context& d, const char* fpath, const buffer_t& pass) {
-    d.reset();
+    reset(d);
 
     const auto* ppass = (pass.size() != 0) ? pass.data() : nullptr;
 
@@ -118,7 +143,7 @@ load_key(context& d, const char* fpath, const buffer_t& pass) {
 
 void
 load_public_key(context& d, const char* fpath) {
-    d.reset();
+    reset(d);
 
     mbedcrypto_c_call(mbedtls_pk_parse_public_keyfile,
             &d.pk_,

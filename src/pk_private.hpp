@@ -32,24 +32,7 @@ struct context {
     }
 
     ~context() {
-        reset();
-    }
-
-    void reset() {
-        key_is_private_ = false;
-        mbedtls_pk_free(&pk_);
-    }
-
-    void setup(pk_t type) {
-        mbedcrypto_c_call(mbedtls_pk_setup,
-                &pk_,
-                native_info(type)
-                );
-    }
-
-    void reset_as(pk_t type) {
-        reset();
-        setup(type);
+        reset(*this);
     }
 
     context(const context&)            = delete;

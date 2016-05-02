@@ -15,7 +15,7 @@ namespace mbedcrypto {
 ///////////////////////////////////////////////////////////////////////////////
 
 /// asymmetric, public key infrastructure (deprecated)
-class pki
+class pki : public pk::pk_base
 {
 public: // static helper functions
 
@@ -26,43 +26,11 @@ public: // static helper functions
 public:
     /// set the pk type explicitly, with empty key
     explicit pki(pk_t type);
-    /// type will be set by key funcs: parse_xxx() or load_xxx()
+    /// type will be set by key funcs: import_xxx() or load_xxx()
     pki();
-    ~pki();
-
-    /// clears previous internal states, and setup to new type
-    void reset_as(pk_t new_type);
-
-public: // key i/o
-    /// (re)initializes by private key data.
-    void parse_key(const buffer_t& private_key,
-            const buffer_t& password = buffer_t{});
-
-    /// (re)initializes by public key data.
-    void parse_public_key(const buffer_t& public_key);
-
-    /// loads the private key from a file.
-    void load_key(const char* file_path,
-            const buffer_t& password = buffer_t{});
-
-    /// loads public key from a file.
-    void load_public_key(const char* file_path);
-
-    /// export private key
-    /// @warning requires the activation of BUILD_PK_EXPORT option
-    ///  (see cmake file)
-    auto export_key(pk::key_format)        -> buffer_t;
-    /// export public key
-    /// @warning requires the activation of BUILD_PK_EXPORT option
-    ///  (see cmake file)
-    auto export_public_key(pk::key_format) -> buffer_t;
+    virtual ~pki();
 
 public: // properties
-    /// returns the type fed by constructor or key
-    pk_t type()const;
-
-    /// returns the name of current algorithm
-    auto name()const noexcept -> const char*;
 
     /// returns the capability of this pki based on algorithms, and/or pub/priv key
     auto what_can_do()const noexcept -> pk::action_flags;
@@ -70,22 +38,11 @@ public: // properties
     /// returns true if the current key can do specific operation
     bool can_do(pk_t other_type)const noexcept;
 
-    /// size of underlying key in bits, ex 2048 or ...
-    /// returns 0 if the key is not initialized yet
-    size_t bitlen()const noexcept;
-
-    /// size of underlying key in bytes
-    /// returns 0 if the key is not initialized yet
-    size_t length()const noexcept;
-
     /// returns maximum size of data which is possible to encrypt() or sign()
     /// RSA is only able to encrypt data to a maximum amount of your
     ///  key size (2048 bits = 256 bytes) minus padding / header data
     //   (11 bytes for PKCS#1 v1.5 padding)
     size_t max_crypt_size()const;
-
-    /// returns true if the key is a valid private key
-    bool has_private_key()const noexcept;
 
 public:
     /// signs a hash value (or a plain message) by the private key.
@@ -133,6 +90,9 @@ public:
     pki(pki&&)                 = default;
     pki& operator=(const pki&) = delete;
     pki& operator=(pki&&)      = default;
+
+    virtual pk::context& context() override;
+    virtual const pk::context& context() const override;
 
 protected:
     struct impl;

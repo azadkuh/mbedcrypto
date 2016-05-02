@@ -50,15 +50,20 @@ struct pki::impl : public pk::context
 pki::pki() : pimpl(std::make_unique<impl>()) {}
 
 pki::pki(pk_t type) : pimpl(std::make_unique<impl>()) {
-    pimpl->setup(type);
+    pk::reset_as(*pimpl, type);
 }
 
 pki::~pki() {
 }
 
-void
-pki::reset_as(pk_t ntype) {
-    pimpl->reset_as(ntype);
+pk::context&
+pki::context() {
+    return *pimpl;
+}
+
+const pk::context&
+pki::context() const {
+    return *pimpl;
 }
 
 bool
@@ -66,78 +71,23 @@ pki::check_pair(const pki& pub, const pki& priv) {
     return pk::check_pair(*pub.pimpl, *priv.pimpl);
 }
 
-pk_t
-pki::type()const {
-    return pk::type_of(*pimpl);
-}
-
-size_t
-pki::length()const noexcept {
-    return pk::key_length(*pimpl);
-}
-
-size_t
-pki::bitlen()const noexcept {
-    return pk::key_bitlen(*pimpl);
-}
-
 size_t
 pki::max_crypt_size()const {
     // padding / header data (11 bytes for PKCS#1 v1.5 padding).
     if ( type() == pk_t::rsa )
-        return length() - 11;
+        return key_length() - 11;
 
-    return length();
+    return key_length();
 
     // other pk types are note yet supported
     //throw exception("unsupported pk type");
-}
-
-bool
-pki::has_private_key()const noexcept {
-    return pimpl->key_is_private_;
-}
-
-const char*
-pki::name()const noexcept {
-    return mbedtls_pk_get_name(&pimpl->pk_);
-}
-
-void
-pki::parse_key(const buffer_t& private_key, const buffer_t& password) {
-    pk::import_key(*pimpl, private_key, password);
-}
-
-void
-pki::parse_public_key(const buffer_t& public_key) {
-    pk::import_public_key(*pimpl, public_key);
-}
-
-void
-pki::load_key(const char* file_path, const buffer_t& password) {
-    pk::load_key(*pimpl, file_path, password);
-}
-
-void
-pki::load_public_key(const char* file_path) {
-    pk::load_public_key(*pimpl, file_path);
-}
-
-buffer_t
-pki::export_key(pk::key_format fmt) {
-    return pk::export_key(*pimpl, fmt);
-}
-
-buffer_t
-pki::export_public_key(pk::key_format fmt) {
-    return pk::export_public_key(*pimpl, fmt);
 }
 
 pk::action_flags
 pki::what_can_do() const noexcept {
     pk::action_flags f{false, false, false, false};
 
-    if ( pimpl->pk_.pk_info != nullptr   &&   bitlen() > 0 ) {
+    if ( pimpl->pk_.pk_info != nullptr   &&   key_bitlen() > 0 ) {
         const auto* info = pimpl->pk_.pk_info;
 
         f.encrypt = info->encrypt_func != nullptr;
@@ -248,7 +198,7 @@ pki::encrypt(const buffer_t& hmvalue, hash_t hash_type) {
 
 buffer_t
 pki::decrypt(const buffer_t& encrypted_value) {
-    if ( (encrypted_value.size() << 3) > bitlen() )
+    if ( (encrypted_value.size() << 3) > key_bitlen() )
         throw exception("the encrypted value is larger than the key size");
 
     size_t olen = 32 + max_crypt_size();
@@ -276,7 +226,7 @@ pki::rsa_generate_key(size_t key_bitlen, size_t exponent) {
         throw exception("the instance is not initialized as rsa");
 
     // resets previous states
-    pimpl->reset_as(pk_t::rsa);
+    pk::reset_as(*pimpl, pk_t::rsa);
 
     mbedcrypto_c_call(mbedtls_rsa_gen_key,
             mbedtls_pk_rsa(pimpl->pk_),
@@ -303,7 +253,7 @@ pki::ec_generate_key(curve_t ctype) {
         throw exception("the instance is not initialized as ec");
 
     // resets previous states
-    pimpl->reset_as(type());
+    pk::reset_as(*pimpl, type());
 
     mbedcrypto_c_call(mbedtls_ecp_gen_key,
             to_native(ctype),
