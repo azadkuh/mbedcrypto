@@ -6,6 +6,7 @@
 #include "mbedcrypto/mbedtls_wrapper.hxx"
 
 #include <initializer_list>
+#include <cstring>
 #include <iostream>
 
 namespace {

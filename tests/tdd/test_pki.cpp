@@ -18,19 +18,19 @@ icompare(const char* a, const char* b) {
     return std::strncmp(a, b, strlen(b)) == 0;
 }
 
-const char*
-bstring(bool b) {
-    return b ? "true" : "false";
-}
+// const char*
+// bstring(bool b) {
+//      eturn b ? "true" : "false";
+// }
 
-std::ostream&
-operator<<(std::ostream& s, const pki::action_flags& f) {
-    s << "encrypt: " << bstring(f.encrypt) << " , "
-      << "decrypt: " << bstring(f.decrypt) << " , "
-      << "sign: " << bstring(f.sign) << " , "
-      << "verify: " << bstring(f.verify);
-    return  s;
-}
+// std::ostream&
+// operator<<(std::ostream& s, const pk::action_flags& f) {
+     //s << "encrypt: " << bstring(f.encrypt) << " , "
+       //<< "decrypt: " << bstring(f.decrypt) << " , "
+       //<< "sign: " << bstring(f.sign) << " , "
+       //<< "verify: " << bstring(f.verify);
+     //return  s;
+// }
 
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace anon
@@ -57,23 +57,23 @@ TEST_CASE("pk type checks", "[pki][types]") {
 
 
         pki pk3;
-        REQUIRE_NOTHROW(pk3.parse_key(test::rsa_private_key()));
+        REQUIRE_NOTHROW(pk3.import_key(test::rsa_private_key()));
         REQUIRE(icompare(pk3.name(), "RSA"));
         REQUIRE(pk3.can_do(pk_t::rsa));
         REQUIRE_FALSE(pk3.can_do(pk_t::rsa_alt));
         REQUIRE(pk3.has_private_key());
-        REQUIRE(pk3.bitlen() == 2048);
+        REQUIRE(pk3.key_bitlen() == 2048);
         af = pk3.what_can_do();
         // private key, can do all of the tasks
         REQUIRE( (af.encrypt && af.decrypt && af.sign && af.verify) );
 
         pki pk4;
-        REQUIRE_NOTHROW(pk4.parse_public_key(test::rsa_public_key()));
+        REQUIRE_NOTHROW(pk4.import_public_key(test::rsa_public_key()));
         REQUIRE(icompare(pk4.name(), "RSA"));
         REQUIRE(pk4.can_do(pk_t::rsa));
         REQUIRE_FALSE(pk4.can_do(pk_t::rsa_alt));
         REQUIRE_FALSE(pk4.has_private_key());
-        REQUIRE(pk4.bitlen() == 2048);
+        REQUIRE(pk4.key_bitlen() == 2048);
         af = pk4.what_can_do();
         // public key can both encrypt or verify
         REQUIRE( (af.encrypt  &&  af.verify) );
@@ -85,14 +85,14 @@ TEST_CASE("pk type checks", "[pki][types]") {
         REQUIRE( pki::check_pair(pk4, pk3) == true );
 
         // reuse of pk3
-        REQUIRE_NOTHROW(pk3.parse_key(
+        REQUIRE_NOTHROW(pk3.import_key(
                     test::rsa_private_key_password(),
                     "mbedcrypto1234" // password
                     ));
         REQUIRE(icompare(pk3.name(), "RSA"));
         REQUIRE(pk3.can_do(pk_t::rsa));
         REQUIRE(pk3.has_private_key());
-        REQUIRE(pk3.bitlen() == 2048);
+        REQUIRE(pk3.key_bitlen() == 2048);
 
         // pk3 is still the same key (with or without password)
         REQUIRE( pki::check_pair(pk4, pk3) == true );
@@ -159,7 +159,7 @@ TEST_CASE("rsa pki cryptography", "[pki]") {
         auto message = test::long_text();
 
         pki pks;
-        pks.parse_key(test::rsa_private_key());
+        pks.import_key(test::rsa_private_key());
         // invalid message size
         REQUIRE_THROWS( pks.sign(message) );
 
@@ -169,7 +169,7 @@ TEST_CASE("rsa pki cryptography", "[pki]") {
         REQUIRE( pks.verify(signature, message, hash_t::sha1) );
 
         pki pkv;
-        pkv.parse_public_key(test::rsa_public_key());
+        pkv.import_public_key(test::rsa_public_key());
         REQUIRE( pkv.verify(signature, message, hash_t::sha1) );
     }
 
@@ -178,13 +178,13 @@ TEST_CASE("rsa pki cryptography", "[pki]") {
         const auto hvalue = hash::make(hash_t::sha256, message);
 
         pki pke;
-        pke.parse_public_key(test::rsa_public_key());
+        pke.import_public_key(test::rsa_public_key());
 
         REQUIRE_THROWS( pke.encrypt(message) );
         auto encv = pke.encrypt(message, hash_t::sha256);
 
         pki pkd;
-        pkd.parse_key(test::rsa_private_key());
+        pkd.import_key(test::rsa_private_key());
         REQUIRE_THROWS( pkd.decrypt(message) );
         auto decv = pkd.decrypt(encv);
         REQUIRE( decv == hvalue );
@@ -213,32 +213,31 @@ TEST_CASE("key gen", "[pki]") {
 
 #if defined(MBEDTLS_ECP_C)  &&  defined(MBEDTLS_PEM_WRITE_C)
     SECTION("ec key generation") {
-        const auto ctype = curve_t::secp256k1;
         pki pk;
         // pk1 is not defined as ec family
-        REQUIRE_THROWS( pk.ec_generate_key(ctype) );
+        REQUIRE_THROWS( pk.ec_generate_key(curve_t::secp521r1) );
 
         auto test_proc = [](pk_t ptype, curve_t ctype,
-                const pki::action_flags& afpri,
-                const pki::action_flags& afpub) {
+                const pk::action_flags& afpri,
+                const pk::action_flags& afpub) {
 
             pki pri(ptype);
             REQUIRE_NOTHROW( pri.ec_generate_key(ctype) );
             REQUIRE( (pri.what_can_do() == afpri) );
 
-            auto pub_data = pri.export_public_key(pki::pem_format);
+            auto pub_data = pri.export_public_key(pk::pem_format);
             pki pub;
-            REQUIRE_NOTHROW( pub.parse_public_key(pub_data) );
+            REQUIRE_NOTHROW( pub.import_public_key(pub_data) );
             REQUIRE( (pub.what_can_do() == afpub) );
         };
 
-        test_proc(pk_t::eckey, ctype,
+        test_proc(pk_t::eckey, curve_t::secp256k1,
             #if defined(MBEDTLS_ECDSA_C)
-                pki::action_flags{false, false, true, true},
-                pki::action_flags{false, false, false, true}
+                pk::action_flags{false, false, true, true},
+                pk::action_flags{false, false, false, true}
             #else
-                pki::action_flags{false, false, false, true},
-                pki::action_flags{false, false, false, false}
+                pk::action_flags{false, false, false, true},
+                pk::action_flags{false, false, false, false}
             #endif
                 );
 
@@ -262,23 +261,23 @@ TEST_CASE("key export tests", "[pki]") {
 
         // test pem public
         pki pk_pub;
-        pk_pub.parse_public_key(pk_g.export_public_key(pki::pem_format));
+        pk_pub.import_public_key(pk_g.export_public_key(pk::pem_format));
         REQUIRE( pk_pub.verify(signature, message, hash_t::sha256) );
         REQUIRE( pki::check_pair(pk_pub, pk_g) == true );
 
         // test pem private
         pki pk_pri;
-        pk_pri.parse_key(pk_g.export_key(pki::pem_format));
+        pk_pri.import_key(pk_g.export_key(pk::pem_format));
         REQUIRE(( signature == pk_pri.sign(message, hash_t::sha256) ));
         REQUIRE( pki::check_pair(pk_pub, pk_pri) == true );
 
         // test der public
-        pk_pub.parse_public_key(pk_g.export_public_key(pki::der_format));
+        pk_pub.import_public_key(pk_g.export_public_key(pk::der_format));
         REQUIRE( pk_pub.verify(signature, message, hash_t::sha256) );
         REQUIRE( pki::check_pair(pk_pub, pk_g) == true );
 
         // test der private
-        pk_pri.parse_key(pk_g.export_key(pki::der_format));
+        pk_pri.import_key(pk_g.export_key(pk::der_format));
         REQUIRE(( signature == pk_pri.sign(message, hash_t::sha256) ));
         REQUIRE( pki::check_pair(pk_pub, pk_pri) == true );
 
@@ -314,16 +313,16 @@ TEST_CASE("key export tests", "[pki]") {
         auto key_test = [](curve_t ctype) {
             pki gen(pk_t::eckey);
             gen.ec_generate_key(ctype);
-            auto pkey   = gen.export_key(pki::pem_format);
-            auto pubkey = gen.export_public_key(pki::pem_format);
+            auto pkey   = gen.export_key(pk::pem_format);
+            auto pubkey = gen.export_public_key(pk::pem_format);
 
             pki pri;
-            pri.parse_key(pkey);
+            pri.import_key(pkey);
             REQUIRE( pri.type() == gen.type() );
-            REQUIRE( (pubkey == pri.export_public_key(pki::pem_format)) );
+            REQUIRE( (pubkey == pri.export_public_key(pk::pem_format)) );
 
             pki pub;
-            pub.parse_public_key(pubkey);
+            pub.import_public_key(pubkey);
             REQUIRE( pub.type() == gen.type() );
 
             REQUIRE( pki::check_pair(pub, pri) );
