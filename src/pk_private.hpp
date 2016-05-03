@@ -15,6 +15,7 @@
 
 #include "mbedtls/pk_internal.h"
 #include "mbedtls/pk.h"
+#include "mbedtls/ecp.h"
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
 namespace pk {
@@ -71,6 +72,12 @@ native_info(pk_t type) {
         throw unknown_pk_type();
 
     return pinfot;
+}
+
+inline int
+random_func(void* ctx, unsigned char* p, size_t len) {
+    rnd_generator* rnd = reinterpret_cast<rnd_generator*>(ctx);
+    return rnd->make(p, len);
 }
 
 

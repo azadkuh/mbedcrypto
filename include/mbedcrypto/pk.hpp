@@ -122,6 +122,20 @@ bool supports_rsa_keygen() noexcept;
 /// returns true only by enabled BUILD_EC builds
 bool supports_ec_keygen() noexcept;
 
+/** generates an RSA (private) key.
+ * @sa supports_rsa_keygen()
+ * exponent rsa public exponent. only change the default exponent value if you
+ *  know exactly what you're doing.
+ * @warning requires the BUILD_RSA_KEYGEN option (see cmake file)
+ */
+void generate_rsa_key(context&, size_t key_bitlen, size_t exponent = 65537);
+
+/** generates an EC (private) key.
+ * @sa supports_ec_keygen()
+ * @warning requires the BUILD_EC option (see cmake file)
+ */
+void generate_ec_key(context&, curve_t);
+
 ///////////////////////////////////////////////////////////////////////////////
 struct pk_base {
     virtual ~pk_base() = default;

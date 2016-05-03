@@ -287,6 +287,48 @@ supports_ec_keygen() noexcept {
 #endif
 }
 
+void
+generate_rsa_key(context& d, size_t key_bitlen, size_t exponent) {
+#if defined(MBEDTLS_GENPRIME)
+    // resets previous states
+    pk::reset_as(d, pk_t::rsa);
+
+    mbedcrypto_c_call(mbedtls_rsa_gen_key,
+            mbedtls_pk_rsa(d.pk_),
+            pk::random_func,
+            &d.rnd_,
+            key_bitlen,
+            exponent
+            );
+    // set the key type
+    d.key_is_private_ = true;
+
+
+#else // MBEDTLS_GENPRIME
+    throw rsa_keygen_exception();
+#endif // MBEDTLS_GENPRIME
+}
+
+void
+generate_ec_key(context& d, curve_t ctype) {
+#if defined(MBEDTLS_ECP_C)
+    // resets previous states
+    pk::reset_as(d, pk_t::eckey);
+
+    mbedcrypto_c_call(mbedtls_ecp_gen_key,
+            to_native(ctype),
+            mbedtls_pk_ec(d.pk_),
+            pk::random_func,
+            &d.rnd_
+            );
+    // set the key type
+    d.key_is_private_ = true;
+
+#else // MBEDTLS_ECP_C
+    throw ecp_exception();
+#endif // MBEDTLS_ECP_C
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace pk
 } // namespace mbedcrypto

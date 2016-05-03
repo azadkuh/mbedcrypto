@@ -62,21 +62,15 @@ public:
     /// @sa max_crypt_size()
     auto decrypt(const buffer_t& encrypted_value) -> buffer_t;
 
-public: // rsa key generation
+public: // key generation
 
-    /// generates a key only if the type() is pk_t::rsa.
-    /// @sa pki::supports_rsa_keygen()
-    /// exponent rsa public exponent.
-    /// only change the default exponent value if you know exactly what you're doing.
-    /// @warning rsa_generate_key() requires the activation
-    ///  of BUILD_RSA_KEYGEN option (see cmake file)
-    void rsa_generate_key(size_t key_bitlen, size_t exponent = 65537);
+    void rsa_generate_key(size_t key_bitlen, size_t exponent = 65537) {
+        pk::generate_rsa_key(context(), key_bitlen, exponent);
+    }
 
-public: // ec key generation
-    /// generates a key only if the type is pk_t::eckey, eckey_dh or ecdsa.
-    /// @sa pki::supports_ec_keygen()
-    /// @warning requires the activation of BUILD_EC option (see cmake file)
-    void ec_generate_key(curve_t);
+    void ec_generate_key(curve_t ctype) {
+        pk::generate_ec_key(context(), ctype);
+    }
 
 public:
     // move only

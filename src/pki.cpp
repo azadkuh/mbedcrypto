@@ -2,7 +2,6 @@
 #include "mbedcrypto/hash.hpp"
 #include "pk_private.hpp"
 
-#include "mbedtls/ecp.h"
 #include <cstring>
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
@@ -10,12 +9,6 @@ namespace {
 ///////////////////////////////////////////////////////////////////////////////
 static_assert(std::is_copy_constructible<pki>::value == false, "");
 static_assert(std::is_move_constructible<pki>::value == true, "");
-
-int
-random_func(void* ctx, unsigned char* p, size_t len) {
-    rnd_generator* rnd = reinterpret_cast<rnd_generator*>(ctx);
-    return rnd->make(p, len);
-}
 
 class hm_prepare
 {
@@ -97,7 +90,7 @@ pki::sign(const buffer_t& hmvalue, hash_t halgo) {
             hvalue.size(),
             to_ptr(output),
             &olen,
-            random_func,
+            pk::random_func,
             &pimpl->rnd_
           );
 
@@ -149,7 +142,7 @@ pki::encrypt(const buffer_t& hmvalue, hash_t hash_type) {
             to_ptr(output),
             &olen,
             olen,
-            random_func,
+            pk::random_func,
             &pimpl->rnd_
           );
 
@@ -172,62 +165,12 @@ pki::decrypt(const buffer_t& encrypted_value) {
             to_ptr(output),
             &olen,
             olen,
-            random_func,
+            pk::random_func,
             &pimpl->rnd_
           );
 
     output.resize(olen);
     return output;
-}
-
-void
-pki::rsa_generate_key(size_t key_bitlen, size_t exponent) {
-#if defined(MBEDTLS_GENPRIME)
-    if ( !can_do(pk_t::rsa) )
-        throw exception("the instance is not initialized as rsa");
-
-    // resets previous states
-    pk::reset_as(*pimpl, pk_t::rsa);
-
-    mbedcrypto_c_call(mbedtls_rsa_gen_key,
-            mbedtls_pk_rsa(pimpl->pk_),
-            random_func,
-            &pimpl->rnd_,
-            key_bitlen,
-            exponent
-            );
-    // set the key type
-    pimpl->key_is_private_ = true;
-
-
-#else // MBEDTLS_GENPRIME
-    throw rsa_keygen_exception();
-#endif // MBEDTLS_GENPRIME
-}
-
-void
-pki::ec_generate_key(curve_t ctype) {
-#if defined(MBEDTLS_ECP_C)
-    if ( !can_do(pk_t::eckey)
-            && !can_do(pk_t::eckey_dh)
-            && !can_do(pk_t::ecdsa) )
-        throw exception("the instance is not initialized as ec");
-
-    // resets previous states
-    pk::reset_as(*pimpl, type());
-
-    mbedcrypto_c_call(mbedtls_ecp_gen_key,
-            to_native(ctype),
-            mbedtls_pk_ec(pimpl->pk_),
-            random_func,
-            &pimpl->rnd_
-            );
-    // set the key type
-    pimpl->key_is_private_ = true;
-
-#else // MBEDTLS_ECP_C
-    throw ecp_exception();
-#endif // MBEDTLS_ECP_C
 }
 
 ///////////////////////////////////////////////////////////////////////////////
