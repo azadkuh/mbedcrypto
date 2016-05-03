@@ -15,21 +15,20 @@ using namespace mbedcrypto;
 ///////////////////////////////////////////////////////////////////////////////
 bool
 icompare(const char* a, const char* b) {
-    return std::strncmp(a, b, strlen(b)) == 0;
+    return std::strncmp(a, b, std::strlen(b)) == 0;
 }
-
-// const char*
-// bstring(bool b) {
-//      eturn b ? "true" : "false";
-// }
 
 // std::ostream&
 // operator<<(std::ostream& s, const pk::action_flags& f) {
-     //s << "encrypt: " << bstring(f.encrypt) << " , "
-       //<< "decrypt: " << bstring(f.decrypt) << " , "
-       //<< "sign: " << bstring(f.sign) << " , "
-       //<< "verify: " << bstring(f.verify);
-     //return  s;
+//     auto bs = [](bool b) {
+//         return b ? "true" : "false";
+//     };
+
+//     s << "encrypt: " << bs(f.encrypt) << " , "
+//       << "decrypt: " << bs(f.decrypt) << " , "
+//       << "sign: "    << bs(f.sign)    << " , "
+//       << "verify: "  << bs(f.verify);
+//     return  s;
 // }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -200,8 +199,9 @@ TEST_CASE("key gen", "[pki]") {
     SECTION("rsa key generation") {
         pki pk1;
         // pk1 is not defined as rsa
-        REQUIRE_THROWS( pk1.rsa_generate_key(1024) );
-        REQUIRE_FALSE( pk1.has_private_key() );
+        REQUIRE_NOTHROW( pk1.rsa_generate_key(1024) );
+        REQUIRE( pk1.has_private_key() );
+        REQUIRE( pk1.type() == pk_t::rsa );
 
         pki pk2(pk_t::rsa);
         REQUIRE_NOTHROW( pk2.rsa_generate_key(1024) );
@@ -213,10 +213,6 @@ TEST_CASE("key gen", "[pki]") {
 
 #if defined(MBEDTLS_ECP_C)  &&  defined(MBEDTLS_PEM_WRITE_C)
     SECTION("ec key generation") {
-        pki pk;
-        // pk1 is not defined as ec family
-        REQUIRE_THROWS( pk.ec_generate_key(curve_t::secp521r1) );
-
         auto test_proc = [](pk_t ptype, curve_t ctype,
                 const pk::action_flags& afpri,
                 const pk::action_flags& afpub) {
@@ -290,7 +286,7 @@ TEST_CASE("key export tests", "[pki]") {
 #if defined(MBEDTLS_ECP_C)
     SECTION("ec") {
         pki pk1;
-        REQUIRE_THROWS( pk1.ec_generate_key(curve_t::secp256k1) );
+        REQUIRE_NOTHROW( pk1.ec_generate_key(curve_t::secp256k1) );
 
         pki pk2(pk_t::eckey);
         REQUIRE_THROWS( pk2.ec_generate_key(curve_t::none) );
@@ -311,7 +307,7 @@ TEST_CASE("key export tests", "[pki]") {
         };
 
         auto key_test = [](curve_t ctype) {
-            pki gen(pk_t::eckey);
+            pki gen;
             gen.ec_generate_key(ctype);
             auto pkey   = gen.export_key(pk::pem_format);
             auto pubkey = gen.export_public_key(pk::pem_format);
