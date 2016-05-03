@@ -83,45 +83,6 @@ pki::max_crypt_size()const {
     //throw exception("unsupported pk type");
 }
 
-pk::action_flags
-pki::what_can_do() const noexcept {
-    pk::action_flags f{false, false, false, false};
-
-    if ( pimpl->pk_.pk_info != nullptr   &&   key_bitlen() > 0 ) {
-        const auto* info = pimpl->pk_.pk_info;
-
-        f.encrypt = info->encrypt_func != nullptr;
-        f.decrypt = info->decrypt_func != nullptr;
-        f.sign    = info->sign_func    != nullptr;
-        f.verify  = info->verify_func  != nullptr;
-
-        // refine due to pub/priv key
-        // pub keys can not sign, nor decrypt
-        switch ( type() ) {
-            case pk_t::rsa:
-                if ( !pimpl->key_is_private_ )
-                    f.decrypt = f.sign = false;
-                break;
-
-            case pk_t::eckey:
-            case pk_t::ecdsa:
-                if ( !pimpl->key_is_private_ )
-                    f.sign = false;
-                break;
-
-            default:
-                break;
-        }
-    }
-
-    return f;
-}
-
-bool
-pki::can_do(pk_t ptype) const noexcept {
-    return pk::can_do(*pimpl, ptype);
-}
-
 buffer_t
 pki::sign(const buffer_t& hmvalue, hash_t halgo) {
     hm_prepare hm;

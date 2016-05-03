@@ -32,12 +32,6 @@ public:
 
 public: // properties
 
-    /// returns the capability of this pki based on algorithms, and/or pub/priv key
-    auto what_can_do()const noexcept -> pk::action_flags;
-
-    /// returns true if the current key can do specific operation
-    bool can_do(pk_t other_type)const noexcept;
-
     /// returns maximum size of data which is possible to encrypt() or sign()
     /// RSA is only able to encrypt data to a maximum amount of your
     ///  key size (2048 bits = 256 bytes) minus padding / header data

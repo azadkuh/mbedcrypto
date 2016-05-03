@@ -1,6 +1,7 @@
 #include "mbedcrypto/pk.hpp"
 #include "pk_private.hpp"
 
+#include <cstring>
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
 namespace {
@@ -75,6 +76,40 @@ can_do(const context& d, pk_t ptype) {
     }
 
     return ret == 1;
+}
+
+action_flags
+what_can_do(const context& d) {
+    pk::action_flags f{false, false, false, false};
+
+    if ( d.pk_.pk_info != nullptr   &&   key_bitlen(d) > 0 ) {
+        const auto* info = d.pk_.pk_info;
+
+        f.encrypt = info->encrypt_func != nullptr;
+        f.decrypt = info->decrypt_func != nullptr;
+        f.sign    = info->sign_func    != nullptr;
+        f.verify  = info->verify_func  != nullptr;
+
+        // refine due to pub/priv key
+        // pub keys can not sign, nor decrypt
+        switch ( type_of(d) ) {
+            case pk_t::rsa:
+                if ( !d.key_is_private_ )
+                    f.decrypt = f.sign = false;
+                break;
+
+            case pk_t::eckey:
+            case pk_t::ecdsa:
+                if ( !d.key_is_private_ )
+                    f.sign = false;
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    return f;
 }
 
 bool

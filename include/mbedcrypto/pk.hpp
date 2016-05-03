@@ -77,8 +77,11 @@ size_t key_length(const context&) noexcept;
 /// returns true if the key is a valid private key
 bool has_private_key(const context&) noexcept;
 
-/// returns true if the current key can do specific operation
+/// returns true if the current context can do specific operation
 bool can_do(const context&, pk_t other_type);
+
+/// returns the capability of this context based on algorithms, and/or pub/priv key
+auto what_can_do(const context&) -> action_flags;
 
 /// checks if a public-private pair of keys matches.
 bool check_pair(const context& pub, const context& pri);
@@ -147,6 +150,14 @@ struct pk_base {
 
     bool has_private_key()const {
         return pk::has_private_key(context());
+    }
+
+    bool can_do(pk_t ptype) const {
+        return pk::can_do(context(), ptype);
+    }
+
+    auto what_can_do() const {
+        return pk::what_can_do(context());
     }
 
 public: // key i/o
