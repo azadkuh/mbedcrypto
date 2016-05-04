@@ -17,7 +17,7 @@ const mbedtls_md_info_t*
 native_type(hash_t type) {
     const auto* info = mbedtls_md_info_from_type(to_native(type));
     if ( info == nullptr )
-        throw exception(MBEDTLS_ERR_MD_FEATURE_UNAVAILABLE, "unimplemented type");
+        throw unknown_hash_exception{};
 
     return info;
 }
@@ -113,7 +113,7 @@ hash::of_file(hash_t type, const char* filePath) {
     return std::get<1>(digest);
 
 #else
-    throw exception("feature is not available in this build");
+    throw support_exception{{};
 
 #endif
 }

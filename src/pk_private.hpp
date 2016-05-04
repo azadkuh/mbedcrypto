@@ -43,33 +43,13 @@ struct context {
 }; // struct context
 
 ///////////////////////////////////////////////////////////////////////////////
-struct rsa_keygen_exception : public exception {
-    explicit rsa_keygen_exception() :
-        exception("needs RSA_KEYGEN, check build options"){}
-}; // struct rsa_keygen_exception
-
-struct pk_export_exception : public exception {
-    explicit pk_export_exception() :
-        exception("needs PK_EXPORT, check build options"){}
-}; // struct pk_export_exception
-
-struct ecp_exception : public exception {
-    explicit ecp_exception() :
-        exception("needs EC (elliptic curves), check build options"){}
-}; // struct ecp_exception
-
-struct unknown_pk_type : public exception {
-    explicit unknown_pk_type() :
-        exception(MBEDTLS_ERR_PK_UNKNOWN_PK_ALG, "unsupported pk_t"){}
-}; // struct unknown_pk_type
-///////////////////////////////////////////////////////////////////////////////
 
 inline const mbedtls_pk_info_t*
 native_info(pk_t type) {
     const auto* pinfot = mbedtls_pk_info_from_type(to_native(type));
 
     if ( pinfot == nullptr )
-        throw unknown_pk_type();
+        throw unknown_pk_exception{};
 
     return pinfot;
 }

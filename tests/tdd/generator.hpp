@@ -11,6 +11,7 @@
 #define TESTS_GENERATOR_HPP
 
 #include "mbedcrypto/types.hpp"
+#include <cstring>
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
 namespace test {
@@ -71,6 +72,11 @@ chunker(size_t chunk_size, const BufferT& src, Func&& func, Args&&... args) {
 
 /// dumps content of data as binary to filename
 void dump_to_file(const buffer_t& data, const char* filename);
+///////////////////////////////////////////////////////////////////////////////
+inline bool
+icompare(const char* a, const char* b) {
+    return std::strncmp(a, b, std::strlen(b)) == 0;
+}
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace test
 } // namespace mbedcrypto

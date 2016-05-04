@@ -122,7 +122,7 @@ check_pair(const context& pub, const context& priv) {
 
         case MBEDTLS_ERR_PK_BAD_INPUT_DATA:
         case MBEDTLS_ERR_PK_TYPE_MISMATCH:
-            throw exception(ret, __FUNCTION__);
+            throw exception{ret, __FUNCTION__};
             break;
 
         default:
@@ -210,7 +210,7 @@ export_key(context& d, key_format fmt) {
                 K::DefaultExportBufferSize
                 );
         if ( ret < 0 )
-            throw exception(ret, __FUNCTION__);
+            throw exception{ret, __FUNCTION__};
 
         size_t length = ret;
         output.erase(0, K::DefaultExportBufferSize - length);
@@ -220,7 +220,7 @@ export_key(context& d, key_format fmt) {
     return output;
 
 #else // MBEDTLS_PK_WRITE_C
-    throw pk_export_exception();
+    throw pk_export_exception{};
 #endif // MBEDTLS_PK_WRITE_C
 }
 
@@ -246,7 +246,7 @@ export_public_key(context& d, key_format fmt) {
                 K::DefaultExportBufferSize
                 );
         if ( ret < 0 )
-            throw exception(ret, __FUNCTION__);
+            throw exception{ret, __FUNCTION__};
 
         size_t length = ret;
         output.erase(0, K::DefaultExportBufferSize - length);
@@ -256,7 +256,7 @@ export_public_key(context& d, key_format fmt) {
     return output;
 
 #else // MBEDTLS_PK_WRITE_C
-    throw pk_export_exception();
+    throw pk_export_exception{};
 #endif // MBEDTLS_PK_WRITE_C
 }
 
@@ -305,7 +305,7 @@ generate_rsa_key(context& d, size_t key_bitlen, size_t exponent) {
 
 
 #else // MBEDTLS_GENPRIME
-    throw rsa_keygen_exception();
+    throw rsa_keygen_exception{};
 #endif // MBEDTLS_GENPRIME
 }
 
@@ -325,7 +325,7 @@ generate_ec_key(context& d, curve_t ctype) {
     d.key_is_private_ = true;
 
 #else // MBEDTLS_ECP_C
-    throw ecp_exception();
+    throw ecp_exception{};
 #endif // MBEDTLS_ECP_C
 }
 

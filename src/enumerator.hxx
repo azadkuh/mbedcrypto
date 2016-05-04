@@ -30,7 +30,7 @@ auto to_native(Enum e, const Array& items) {
             return i.n;
     }
 
-    throw std::logic_error("invalid conversion type");
+    throw type_exception{};
 }
 
 template<typename Native, class Array>
@@ -40,7 +40,7 @@ auto from_native(Native n, const Array& items) {
             return i.e;
     }
 
-    throw std::logic_error("invalid conversion type");
+    throw type_exception{};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -67,7 +67,7 @@ auto to_string(Enum e, const Array& items) {
             return i.n;
     }
 
-    throw std::logic_error("invalid type");
+    throw type_exception{};
 }
 
 template<typename Enum, class Array>

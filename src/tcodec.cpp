@@ -38,7 +38,7 @@ hex::decode(const char* src, size_t length) {
         return buffer_t{};
 
     if ( (length & 1) != 0 ) // size must be even
-        throw exception("invalid size for hex string");
+        throw usage_exception{"invalid size for hex string"};
 
     buffer_t buffer(length >> 1, '\0');
     unsigned char* bindata = to_ptr(buffer);
@@ -51,7 +51,7 @@ hex::decode(const char* src, size_t length) {
         else if ( s >= 'A'  &&  s <= 'F' ) j = s - '7';
         else if ( s >= 'a'  &&  s <= 'f' ) j = s - 'W';
         else
-            throw exception("invalid character in hex string");
+            throw usage_exception{"invalid character in hex string"};
 
         k = ( ( i & 1 ) != 0 ) ? j : j << 4;
         bindata[i >> 1] = (unsigned char)( bindata[i >> 1] | k );
@@ -135,7 +135,7 @@ base64::encode(const buffer_t& src, buffer_t& dest) {
     int ret = encode(to_const_ptr(src), src.size(), to_ptr(dest), dsize);
 
     if ( ret != 0 )
-        throw exception(ret, "failed to base64 encode");
+        throw exception{ret, "failed to base64 encode"};
 
     // adjust possible null byte at the end
     dest.resize(dsize);
@@ -152,7 +152,7 @@ base64::decode(const buffer_t& src, buffer_t& dest) {
     int ret = decode(to_const_ptr(src), src.size(), to_ptr(dest), dsize);
 
     if ( ret != 0 )
-        throw exception(ret, "failed to base64 decode");
+        throw exception{ret, "failed to base64 decode"};
 }
 
 buffer_t

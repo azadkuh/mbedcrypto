@@ -16,24 +16,10 @@ native_info(cipher_t type) {
     const auto* cinfot = mbedtls_cipher_info_from_type(ntype);
 
     if ( cinfot == nullptr )
-        throw exception(
-                MBEDTLS_ERR_CIPHER_FEATURE_UNAVAILABLE, "unsupported cipher"
-                );
+        throw unknown_cipher_exception{};
 
     return cinfot;
 }
-
-///////////////////////////////////////////////////////////////////////////////
-
-struct aead_exception : public exception {
-    explicit aead_exception()
-        : exception("needs CCM or GCM module, check build options"){}
-}; // gcm_exception
-
-struct gcm_exception : public exception {
-    explicit gcm_exception()
-        : exception("needs GCM module, check build options"){}
-}; // gcm_exception
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -156,8 +142,8 @@ class crypt_engine {
             // compute number of chunks
             if ( block_mode_ == cipher_bm::ecb ) {
                 if ( input_size_ == 0   ||   input_size_ % block_size_ )
-                    throw exception("ecb cipher block:"
-                            " a valid input size must be dividable by block size");
+                    throw usage_exception{"ecb cipher block:"
+                            " a valid input size must be dividable by block size"};
 
                 chunks_ = input_size_ / block_size_;
 
@@ -342,7 +328,7 @@ cipher::encrypt_aead(cipher_t type,
     return std::make_tuple(tag, output);
 
 #else // MBEDTLS_CIPHER_MODE_AEAD
-    throw aead_exception();
+    throw aead_exception{};
 #endif
 }
 
@@ -378,10 +364,10 @@ cipher::decrypt_aead(cipher_t type,
         return std::make_tuple(true, output);
 
     // ret is non zero
-    throw exception(ret, __FUNCTION__);
+    throw exception{ret, __FUNCTION__};
 
 #else // MBEDTLS_CIPHER_MODE_AEAD
-    throw aead_exception();
+    throw aead_exception{};
 #endif
 }
 
@@ -423,7 +409,7 @@ cipher::update(const buffer_t& input) {
                 osize
                 );
         if ( ret != 0 )
-            throw exception(ret, "failed to update the cipher");
+            throw exception{ret, __FUNCTION__};
 
     } else {
         mbedcrypto_c_call(mbedtls_cipher_update,
@@ -453,7 +439,7 @@ cipher::update(size_t count,
                 usize
                 );
         if ( ret != 0 )
-            throw exception(ret, "failed to update the cipher");
+            throw exception{ret, __FUNCTION__};
 
     } else {
         mbedcrypto_c_call(mbedtls_cipher_update,
@@ -559,7 +545,7 @@ cipher::gcm_additional_data(const buffer_t& ad) {
             );
 
 #else // MBEDTLS_
-    throw gcm_exception();
+    throw gcm_exception{};
 #endif // MBEDTLS_
 }
 
@@ -575,7 +561,7 @@ cipher::gcm_encryption_tag(size_t length) {
 
     return tag;
 #else // MBEDTLS_
-    throw gcm_exception();
+    throw gcm_exception{};
 #endif // MBEDTLS_
 }
 
@@ -594,11 +580,11 @@ cipher::gcm_check_decryption_tag(const buffer_t& tag) {
             return false; // authentication failed
 
         default: // other ret codes means error in data or context
-            throw exception(ret, __FUNCTION__);
+            throw exception{ret, __FUNCTION__};
             break;
     }
 #else // MBEDTLS_GCM_C
-    throw gcm_exception();
+    throw gcm_exception{};
 #endif // MBEDTLS_GCM_C
 }
 ///////////////////////////////////////////////////////////////////////////////

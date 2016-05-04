@@ -20,7 +20,7 @@ public:
 
         if ( halgo == hash_t::none ) {
             if ( hmvalue.size() > pk->max_crypt_size() )
-                throw exception("the message is larger than max_crypt_size()");
+                throw usage_exception{"the message is larger than max_crypt_size()"};
 
             return hmvalue;
         }
@@ -73,7 +73,7 @@ pki::max_crypt_size()const {
     return key_length();
 
     // other pk types are note yet supported
-    //throw exception("unsupported pk type");
+    //throw support_exception{};
 }
 
 buffer_t
@@ -119,7 +119,7 @@ pki::verify(const buffer_t& signature,
 
         case MBEDTLS_ERR_PK_BAD_INPUT_DATA:
         case MBEDTLS_ERR_PK_TYPE_MISMATCH:
-                throw exception(ret, "failed to verify the signature");
+                throw exception{ret, "failed to verify the signature"};
                 break;
         default:
             break;
@@ -153,7 +153,7 @@ pki::encrypt(const buffer_t& hmvalue, hash_t hash_type) {
 buffer_t
 pki::decrypt(const buffer_t& encrypted_value) {
     if ( (encrypted_value.size() << 3) > key_bitlen() )
-        throw exception("the encrypted value is larger than the key size");
+        throw usage_exception{"the encrypted value is larger than the key size"};
 
     size_t olen = 32 + max_crypt_size();
     buffer_t output(olen, '\0');
