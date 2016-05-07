@@ -34,12 +34,12 @@ struct exception : public std::runtime_error
     explicit exception(int code, const std::string& message)
         : std::runtime_error(mer(code, message.c_str())), code_(code) {}
 
+    auto to_string()const { return what(); }
+
     int  code()const noexcept { return code_;}
 
     /// mbedtls error string for code_, empty if code_ is not available (0)
     auto error_string()const { return mbedtls_error_string(code_); }
-
-    auto to_string()const { return what(); }
 
 protected:
     int code_ = 0; ///< mbedtls c-api error code
