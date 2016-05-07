@@ -44,25 +44,6 @@ pki::check_pair(const pki& pub, const pki& priv) {
     return pk::check_pair(*pub.pimpl, *priv.pimpl);
 }
 
-buffer_t
-pki::sign(const buffer_t& h_m, hash_t halgo) {
-    return pk::sign(*pimpl, h_m, halgo);
-}
-
-bool
-pki::verify(const buffer_t& sig, const buffer_t& h_m, hash_t halgo) {
-    return pk::verify(*pimpl, sig, h_m, halgo);
-}
-
-buffer_t
-pki::encrypt(const buffer_t& h_m, hash_t halgo) {
-    return pk::encrypt(*pimpl, h_m, halgo);
-}
-
-buffer_t
-pki::decrypt(const buffer_t& enc) {
-    return pk::decrypt(*pimpl, enc);
-}
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
 ///////////////////////////////////////////////////////////////////////////////
