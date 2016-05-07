@@ -113,12 +113,12 @@ void load_public_key(context&, const char* file_path);
 /** exports private key if BUILD_PK_EXPORT has been set.
  * @sa supports_pk_export()
  */
-auto export_key(context&, pk::key_format) -> buffer_t;
+buffer_t export_key(context&, pk::key_format);
 
 /** exports public key if BUILD_PK_EXPORT has been set.
  * @sa supports_pk_export()
  */
-auto export_public_key(context&, pk::key_format) -> buffer_t;
+buffer_t export_public_key(context&, pk::key_format);
 
 /// returns true only by enabled BUILD_PK_EXPORT builds
 bool supports_key_export() noexcept;
@@ -142,6 +142,42 @@ void generate_rsa_key(context&, size_t key_bitlen, size_t exponent = 65537);
  * @warning requires the BUILD_EC option (see cmake file)
  */
 void generate_ec_key(context&, curve_t);
+
+/** signs a hash value (or a plain message) by the rsa private key.
+ * hash_or_message could be a hash value or message.
+ *  if message size is larger than max_crypt_size(), it will be hashed
+ *  by hash_algo first, so hash_algo is only needed for plain long messages.
+ *  if you have a short or already made the message digest, simply pass
+ *  hash_t::none.
+ * @note for RSA keys, the signature is padded by PKCS#1 v1.5
+ * @sa what_can_do()
+ */
+buffer_t sign(context&,
+        const buffer_t& hash_or_message,
+        hash_t hash_algo = hash_t::none);
+
+/** verifies an rsa signature and its padding, @sa sign()
+ * @sa what_can_do()
+ */
+bool verify(context&,
+        const buffer_t& signature,
+        const buffer_t& hash_or_message,
+        hash_t hash_type = hash_t::none);
+
+/** encrypts a hash value (or a plain message) by the rsa public key.
+ * @sa sign()
+ * @sa what_can_do()
+ */
+buffer_t encrypt(context&,
+        const buffer_t& hash_or_message,
+        hash_t hash_algo = hash_t::none);
+
+/** decrypts an encrypted buffer by rsa public key.
+ * @sa max_crypt_size()
+ * @sa what_can_do()
+ */
+buffer_t decrypt(context&,
+        const buffer_t& encrypted_value);
 
 ///////////////////////////////////////////////////////////////////////////////
 struct pk_base {
