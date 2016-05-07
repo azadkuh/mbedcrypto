@@ -74,6 +74,13 @@ size_t key_bitlen(const context&) noexcept;
 /// size of underlying key or 0 if uninitialized
 size_t key_length(const context&) noexcept;
 
+/** maximum size of data (in bytes) for a pk context to sign or verify.
+ * @warning RSA is only able to encrypt data to a maximum amount of your
+ *  key size (2048 bits = 256 bytes) minus padding / header data
+ *  (11 bytes for PKCS#1 v1.5 padding)
+ */
+size_t max_crypt_size(const context&);
+
 /// returns true if the key is a valid private key
 bool has_private_key(const context&) noexcept;
 

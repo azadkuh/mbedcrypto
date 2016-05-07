@@ -1,9 +1,15 @@
 #include "mbedcrypto/pk.hpp"
+#include "mbedcrypto/hash.hpp"
 #include "pk_private.hpp"
 
 #include <cstring>
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
+namespace pk {
+///////////////////////////////////////////////////////////////////////////////
+static_assert(std::is_copy_constructible<context>::value == false, "");
+static_assert(std::is_move_constructible<context>::value == true,  "");
+///////////////////////////////////////////////////////////////////////////////
 namespace {
 ///////////////////////////////////////////////////////////////////////////////
 // constants
@@ -16,12 +22,28 @@ finalize_pem(buffer_t& pem) {
     pem.push_back('\0');
 }
 
+class hm_prepare
+{
+    buffer_t hash_;
+
+public:
+    const buffer_t operator()(const context& pk,
+            const buffer_t& hmvalue, hash_t halgo) {
+
+        if ( halgo == hash_t::none ) {
+            if ( hmvalue.size() > max_crypt_size(pk) )
+                throw usage_exception{"the message is larger than max_crypt_size()"};
+
+            return hmvalue;
+        }
+
+        hash_ = hash::make(halgo, hmvalue);
+        return hash_;
+    }
+}; // hm_prepare
+
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace anon
-namespace pk {
-///////////////////////////////////////////////////////////////////////////////
-static_assert(std::is_copy_constructible<context>::value == false, "");
-static_assert(std::is_move_constructible<context>::value == true, "");
 ///////////////////////////////////////////////////////////////////////////////
 
 void
@@ -57,6 +79,15 @@ key_length(const context& d) noexcept {
 size_t
 key_bitlen(const context& d) noexcept {
     return (size_t) mbedtls_pk_get_bitlen(&d.pk_);
+}
+
+size_t
+max_crypt_size(const context& d) {
+    if ( type_of(d) != pk_t::rsa )
+        throw support_exception{};
+
+    // padding / header data (11 bytes for PKCS#1 v1.5 padding).
+    return key_length(d) - 11;
 }
 
 bool
@@ -327,6 +358,104 @@ generate_ec_key(context& d, curve_t ctype) {
 #else // MBEDTLS_ECP_C
     throw ecp_exception{};
 #endif // MBEDTLS_ECP_C
+}
+
+buffer_t
+sign(context& d, const buffer_t& hmvalue, hash_t halgo) {
+    hm_prepare hm;
+    const auto& hvalue = hm(d, hmvalue, halgo);
+
+    size_t olen = 32 + max_crypt_size(d);
+    buffer_t output(olen, '\0');
+    mbedcrypto_c_call(mbedtls_pk_sign,
+            &d.pk_,
+            to_native(halgo),
+            to_const_ptr(hvalue),
+            hvalue.size(),
+            to_ptr(output),
+            &olen,
+            pk::random_func,
+            &d.rnd_
+          );
+
+    output.resize(olen);
+    return output;
+}
+
+bool
+verify(context& d,
+        const buffer_t& signature,
+        const buffer_t& hm_value, hash_t halgo) {
+    hm_prepare hm;
+    const auto& hvalue = hm(d, hm_value, halgo);
+
+    int ret = mbedtls_pk_verify(&d.pk_,
+            to_native(halgo),
+            to_const_ptr(hvalue),
+            hvalue.size(),
+            to_const_ptr(signature),
+            signature.size()
+            );
+
+    // TODO: check when to report other errors
+    switch ( ret ) {
+        case 0:
+            return true;
+
+        case MBEDTLS_ERR_PK_BAD_INPUT_DATA:
+        case MBEDTLS_ERR_PK_TYPE_MISMATCH:
+                throw exception{ret, "failed to verify the signature"};
+                break;
+        default:
+            break;
+    }
+
+    return false;
+}
+
+buffer_t
+encrypt(context& d, const buffer_t& hmvalue, hash_t halgo) {
+    hm_prepare hm;
+    const auto& hvalue = hm(d, hmvalue, halgo);
+
+    size_t olen = 32 + max_crypt_size(d);
+    buffer_t output(olen, '\0');
+    mbedcrypto_c_call(mbedtls_pk_encrypt,
+            &d.pk_,
+            to_const_ptr(hvalue),
+            hvalue.size(),
+            to_ptr(output),
+            &olen,
+            olen,
+            pk::random_func,
+            &d.rnd_
+          );
+
+    output.resize(olen);
+    return output;
+}
+
+buffer_t
+decrypt(context& d, const buffer_t& encrypted_value) {
+    if ( (encrypted_value.size() << 3) > key_bitlen(d) )
+        throw usage_exception{"the encrypted value is larger than the key size"};
+
+    size_t olen = 32 + max_crypt_size(d);
+    buffer_t output(olen, '\0');
+
+    mbedcrypto_c_call(mbedtls_pk_decrypt,
+            &d.pk_,
+            to_const_ptr(encrypted_value),
+            encrypted_value.size(),
+            to_ptr(output),
+            &olen,
+            olen,
+            pk::random_func,
+            &d.rnd_
+          );
+
+    output.resize(olen);
+    return output;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

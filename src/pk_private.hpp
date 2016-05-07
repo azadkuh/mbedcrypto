@@ -60,6 +60,24 @@ random_func(void* ctx, unsigned char* p, size_t len) {
     return rnd->make(p, len);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
+
+auto sign(context&,
+        const buffer_t& hash_or_message,
+        hash_t hash_algo = hash_t::none) -> buffer_t;
+
+bool verify(context&,
+        const buffer_t& signature,
+        const buffer_t& hash_or_message,
+        hash_t hash_type = hash_t::none);
+
+auto encrypt(context&,
+        const buffer_t& hash_or_message,
+        hash_t hash_algo = hash_t::none) -> buffer_t;
+
+auto decrypt(context&,
+        const buffer_t& encrypted_value) -> buffer_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace pk

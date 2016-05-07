@@ -30,36 +30,26 @@ public:
     pki();
     virtual ~pki();
 
-public: // properties
-
-    /// returns maximum size of data which is possible to encrypt() or sign()
-    /// RSA is only able to encrypt data to a maximum amount of your
-    ///  key size (2048 bits = 256 bytes) minus padding / header data
-    //   (11 bytes for PKCS#1 v1.5 padding)
-    size_t max_crypt_size()const;
-
 public:
-    /// signs a hash value (or a plain message) by the private key.
-    /// hash_or_message could be a hash value or message.
-    ///  if message size is larger than max_crypt_size(), it is hashed first
-    ///  by hash_algo, so hash_algo is only needed for plain long messages.
-    ///
-    /// @note for RSA keys, the signature is padded by PKCS#1 v1.5
+    /** signs a hash value (or a plain message) by the private key.
+     * hash_or_message could be a hash value or message.
+     *  if message size is larger than max_crypt_size(), it is hashed first
+     *  by hash_algo, so hash_algo is only needed for plain long messages.
+     * @note for RSA keys, the signature is padded by PKCS#1 v1.5
+     */
     auto sign(const buffer_t& hash_or_message,
             hash_t hash_algo = hash_t::none) -> buffer_t;
 
     /// verifies a signature and its padding if relevant
     bool verify(const buffer_t& signature,
             const buffer_t& hash_or_message,
-            hash_t hash_type = hash_t::none);
+            hash_t hash_algo = hash_t::none);
 
-    /// encrypt a hash value (or a plain message) by the public key
-    /// @sa sign()
+    /// encrypt a hash value (or a plain message) by the public key. @sa sign()
     auto encrypt(const buffer_t& hash_or_message,
             hash_t hash_algo = hash_t::none) -> buffer_t;
 
-    /// decrypt an encrypted buffer by public key
-    /// @sa max_crypt_size()
+    /// decrypt an encrypted buffer by public key. @sa max_crypt_size()
     auto decrypt(const buffer_t& encrypted_value) -> buffer_t;
 
 public: // key generation
