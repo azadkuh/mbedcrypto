@@ -101,9 +101,8 @@ can_do(const context& d, pk_t ptype) {
 
     // refinement due to build options
     if ( type_of(d) == pk_t::eckey  &&  ptype == pk_t::ecdsa ) {
-        #if !defined(MBEDTLS_ECDSA_C)
-        ret = 0;
-        #endif // MBEDTLS_ECDSA_C
+        if ( !supports(pk_t::ecdsa) )
+            ret = 0;
     }
 
     return ret == 1;

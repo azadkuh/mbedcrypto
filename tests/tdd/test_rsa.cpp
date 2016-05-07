@@ -137,7 +137,7 @@ TEST_CASE("rsa key tests", "[pk]") {
         const auto message = test::long_text();
 
         rsa my_gen;
-        my_gen.generate_key(1024); // small key for speeding up following tests
+        my_gen.import_key(test::rsa_private_key());
         const auto signature = my_gen.sign(message, hash_t::sha256);
 
         // test pem public
