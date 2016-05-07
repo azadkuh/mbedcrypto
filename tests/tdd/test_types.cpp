@@ -256,10 +256,32 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
         }
     }
 
-    SECTION("pki") {
-        REQUIRE( supports(features::pk_export) == pk::supports_key_export() );
+    SECTION("pk features") {
+        REQUIRE( supports(features::pk_export)  == pk::supports_key_export() );
         REQUIRE( supports(features::rsa_keygen) == pk::supports_rsa_keygen() );
-        REQUIRE( supports(features::ec_keygen) == pk::supports_ec_keygen() );
+        REQUIRE( supports(features::ec_keygen)  == pk::supports_ec_keygen()  );
+
+        auto check = pk::supports_key_export();
+        #if defined(MBEDTLS_PEM_WRITE_C)
+        REQUIRE( check );
+        #else // MBEDTLS_PEM_WRITE_C
+        REQUIRE_FALSE( check );
+        #endif // MBEDTLS_PEM_WRITE_C
+
+        check = supports(features::rsa_keygen);
+        #if defined(MBEDTLS_GENPRIME)
+        REQUIRE( check );
+        #else
+        REQUIRE_FALSE( check );
+        #endif // MBEDTLS_GENPRIME
+
+        check = supports(features::ec_keygen);
+        #if defined(MBEDTLS_ECP_C)
+        REQUIRE( check );
+        #else // MBEDTLS_ECP_C
+        REQUIRE_FALSE( check );
+        #endif // MBEDTLS_ECP_C
+
     }
 
     SECTION("curve names") {
