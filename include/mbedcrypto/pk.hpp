@@ -56,11 +56,13 @@ struct action_flags {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// TODO: remove reset and reset_as as public interface
 /// resets and clean up the memory
 void reset(context&) noexcept;
 
-/// resets and initalize as the new type
+/** resets and initalize to the new type.
+ * throws if ptype is not compatible with current type.
+ * (ex reset an eckey_dh to rsa will throw)
+ */
 void reset_as(context&, pk_t ptype);
 
 /// returns the type of a pk context

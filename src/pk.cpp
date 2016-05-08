@@ -44,6 +44,67 @@ public:
     }
 }; // hm_prepare
 
+void
+reset_as_impl(context& d, pk_t ptype) {
+    reset(d);
+    mbedcrypto_c_call(mbedtls_pk_setup,
+            &d.pk_,
+            native_info(ptype)
+            );
+}
+
+bool
+check_rsa_conversion(pk_t ptype) {
+    switch ( ptype ) {
+        case pk_t::rsa:
+        case pk_t::rsa_alt:
+        case pk_t::rsassa_pss:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+bool
+check_ec_conversion(pk_t ptype) {
+    switch ( ptype ) {
+        case pk_t::eckey:
+        case pk_t::eckey_dh:
+        case pk_t::ecdsa:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+void
+ensure_type_match(context& d, pk_t old_type, pk_t new_type) {
+    switch ( old_type ) {
+        case pk_t::rsa:
+        case pk_t::rsa_alt:
+        case pk_t::rsassa_pss:
+            if ( !check_rsa_conversion(new_type) ) {
+                reset_as_impl(d, old_type);
+                throw exceptions::type_error{};
+            }
+            break;
+
+        case pk_t::eckey:
+        case pk_t::eckey_dh:
+        case pk_t::ecdsa:
+            if ( !check_ec_conversion(new_type) ) {
+                reset_as_impl(d, old_type);
+                throw exceptions::type_error{};
+            }
+            break;
+
+        default:
+            break;
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace anon
 ///////////////////////////////////////////////////////////////////////////////
@@ -56,11 +117,10 @@ reset(context& d) noexcept {
 
 void
 reset_as(context& d, pk_t ptype) {
-    reset(d);
-    mbedcrypto_c_call(mbedtls_pk_setup,
-            &d.pk_,
-            native_info(ptype)
-            );
+    // is ptype compatible with current context?
+    ensure_type_match(d, type_of(d), ptype);
+
+    reset_as_impl(d, ptype);
 }
 
 pk_t
@@ -165,6 +225,7 @@ check_pair(const context& pub, const context& priv) {
 
 void
 import_key(context& d, const buffer_t& priv_data, const buffer_t& pass) {
+    auto old_type = type_of(d);
     reset(d);
 
     const auto* ppass = (pass.size() != 0) ? to_const_ptr(pass) : nullptr;
@@ -176,12 +237,15 @@ import_key(context& d, const buffer_t& priv_data, const buffer_t& pass) {
             ppass,
             pass.size()
           );
-    // set the key type
+    // check the key type
+    ensure_type_match(d, old_type, type_of(d));
+
     d.key_is_private_ = true;
 }
 
 void
 import_public_key(context& d, const buffer_t& pub_data) {
+    auto old_type = type_of(d);
     reset(d);
 
     mbedcrypto_c_call(mbedtls_pk_parse_public_key,
@@ -189,12 +253,15 @@ import_public_key(context& d, const buffer_t& pub_data) {
         to_const_ptr(pub_data),
         pub_data.size()
         );
-    // set the key type
+    // check the key type
+    ensure_type_match(d, old_type, type_of(d));
+
     d.key_is_private_ = false;
 }
 
 void
 load_key(context& d, const char* fpath, const buffer_t& pass) {
+    auto old_type = type_of(d);
     reset(d);
 
     const auto* ppass = (pass.size() != 0) ? pass.data() : nullptr;
@@ -204,19 +271,24 @@ load_key(context& d, const char* fpath, const buffer_t& pass) {
             fpath,
             ppass
           );
-    // set the key type
+    // check the key type
+    ensure_type_match(d, old_type, type_of(d));
+
     d.key_is_private_ = true;
 }
 
 void
 load_public_key(context& d, const char* fpath) {
+    auto old_type = type_of(d);
     reset(d);
 
     mbedcrypto_c_call(mbedtls_pk_parse_public_keyfile,
             &d.pk_,
             fpath
           );
-    // set the key type
+    // check the key type
+    ensure_type_match(d, old_type, type_of(d));
+
     d.key_is_private_ = false;
 }
 
@@ -363,6 +435,9 @@ generate_ec_key(context& d, curve_t ctype) {
 
 buffer_t
 sign(context& d, const buffer_t& hmvalue, hash_t halgo) {
+    if ( type_of(d) != pk_t::rsa )
+        throw exceptions::support_error{};
+
     hm_prepare hm;
     const auto& hvalue = hm(d, hmvalue, halgo);
 
@@ -387,6 +462,9 @@ bool
 verify(context& d,
         const buffer_t& signature,
         const buffer_t& hm_value, hash_t halgo) {
+    if ( type_of(d) != pk_t::rsa )
+        throw exceptions::support_error{};
+
     hm_prepare hm;
     const auto& hvalue = hm(d, hm_value, halgo);
 
@@ -416,6 +494,9 @@ verify(context& d,
 
 buffer_t
 encrypt(context& d, const buffer_t& hmvalue, hash_t halgo) {
+    if ( type_of(d) != pk_t::rsa )
+        throw exceptions::support_error{};
+
     hm_prepare hm;
     const auto& hvalue = hm(d, hmvalue, halgo);
 
@@ -438,6 +519,9 @@ encrypt(context& d, const buffer_t& hmvalue, hash_t halgo) {
 
 buffer_t
 decrypt(context& d, const buffer_t& encrypted_value) {
+    if ( type_of(d) != pk_t::rsa )
+        throw exceptions::support_error{};
+
     if ( (encrypted_value.size() << 3) > key_bitlen(d) )
         throw exceptions::usage_error{
             "the encrypted value is larger than the key size"
