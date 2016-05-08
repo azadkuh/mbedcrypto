@@ -1,6 +1,7 @@
 #include <catch.hpp>
 
 #include "mbedcrypto/ecp.hpp"
+#include "mbedcrypto/rsa.hpp"
 #include "generator.hpp"
 
 #include <iostream>
@@ -45,6 +46,18 @@ TEST_CASE("ec type checks", "[types][pk]") {
         // my_key has no key. all capabilities must be false
         REQUIRE_FALSE( (af.encrypt || af.decrypt || af.sign || af.verify) );
 
+        REQUIRE_THROWS( my_key.reset_as(pk_t::none) );
+        REQUIRE_THROWS( my_key.reset_as(pk_t::rsa) );
+        REQUIRE_THROWS( my_key.reset_as(pk_t::rsa_alt) );
+        REQUIRE_THROWS( my_key.reset_as(pk_t::rsassa_pss) );
+        REQUIRE_NOTHROW( my_key.reset_as(pk_t::eckey) );
+        REQUIRE_NOTHROW( my_key.reset_as(pk_t::eckey_dh) );
+        if ( supports(pk_t::ecdsa) ) {
+            REQUIRE_NOTHROW( my_key.reset_as(pk_t::ecdsa) );
+        } else {
+            REQUIRE_THROWS( my_key.reset_as(pk_t::ecdsa) );
+        }
+
         my_key.reset_as(pk_t::eckey_dh);
         REQUIRE( test::icompare(my_key.name(), "EC_DH") );
         REQUIRE( !my_key.has_private_key() );
@@ -53,6 +66,9 @@ TEST_CASE("ec type checks", "[types][pk]") {
         REQUIRE( !my_key.can_do(pk_t::ecdsa) ); // in any circumstances
         // my_key has no key. all capabilities must be false
         REQUIRE_FALSE( (af.encrypt || af.decrypt || af.sign || af.verify) );
+
+        // rsa key is not loadable into ecp
+        REQUIRE_THROWS( my_key.import_key(test::rsa_private_key()) );
     }
 
     if ( supports(pk_t::ecdsa) ) {
@@ -74,6 +90,16 @@ TEST_CASE("ec key tests", "[pk]") {
     if ( supports(features::pk_export)  &&  supports(pk_t::eckey) ) {
         ecp gen;
         REQUIRE_THROWS( gen.generate_key(curve_t::none) );
+        // test rsa conversion
+        {
+            REQUIRE_NOTHROW( gen.generate_key(curve_t::secp192r1) );
+            auto pri_data = gen.export_key(pk::pem_format);
+            auto pub_data = gen.export_public_key(pk::pem_format);
+
+            rsa rkey;
+            REQUIRE_THROWS( rkey.import_key(pri_data) );
+            REQUIRE_THROWS( rkey.import_public_key(pub_data) );
+        }
 
         const std::initializer_list<curve_t> Items = {
             curve_t::secp192r1,

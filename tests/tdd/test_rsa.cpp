@@ -20,6 +20,18 @@ TEST_CASE("rsa type checks", "[types][pk]") {
         // empty instance, all members must be false
         REQUIRE_FALSE( (af.encrypt || af.decrypt || af.sign || af.verify) );
 
+        REQUIRE_THROWS( my_empty.reset_as(pk_t::none) );
+        REQUIRE_THROWS( my_empty.reset_as(pk_t::eckey) );
+        REQUIRE_THROWS( my_empty.reset_as(pk_t::eckey_dh) );
+        REQUIRE_THROWS( my_empty.reset_as(pk_t::ecdsa) );
+        REQUIRE_NOTHROW( my_empty.reset_as(pk_t::rsa) );
+        if ( supports(pk_t::rsa_alt) ) {
+            REQUIRE_NOTHROW( my_empty.reset_as(pk_t::rsa_alt) );
+        }
+        if ( supports(pk_t::rsassa_pss) ) {
+            REQUIRE_NOTHROW( my_empty.reset_as(pk_t::rsassa_pss) );
+        }
+
         rsa my_pri;
         REQUIRE_NOTHROW( my_pri.import_key(test::rsa_private_key()) );
         REQUIRE( test::icompare(my_pri.name(), "RSA") );
