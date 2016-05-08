@@ -29,60 +29,6 @@ using namespace mbedcrypto;
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace anon
 ///////////////////////////////////////////////////////////////////////////////
-TEST_CASE("pk type checks", "[pki][types]") {
-    using namespace mbedcrypto;
-
-#if defined(MBEDTLS_ECP_C)
-    SECTION("ec creation tests") {
-        pki pk1;
-        REQUIRE_FALSE(pk1.can_do(pk_t::eckey));
-
-        pk1.reset_as(pk_t::eckey);
-        REQUIRE_FALSE(pk1.has_private_key());
-        REQUIRE( test::icompare(pk1.name(), "EC") );
-        REQUIRE( pk1.can_do(pk_t::eckey) );
-        REQUIRE( pk1.can_do(pk_t::eckey_dh) );
-        #if defined(MBEDTLS_ECDSA_C)
-        REQUIRE( pk1.can_do(pk_t::ecdsa) );
-        #else // MBEDTLS_ECDSA_C
-        REQUIRE_FALSE( pk1.can_do(pk_t::ecdsa) );
-        #endif // MBEDTLS_ECDSA_C
-        auto af = pk1.what_can_do();
-        // pk1 has no key. all capabilities must be false
-        REQUIRE_FALSE( (af.encrypt || af.decrypt || af.sign || af.verify) );
-
-        pk1.reset_as(pk_t::eckey_dh);
-        REQUIRE( test::icompare(pk1.name(), "EC_DH") );
-        REQUIRE_FALSE(pk1.has_private_key());
-        REQUIRE( pk1.can_do(pk_t::eckey_dh) );
-        REQUIRE( pk1.can_do(pk_t::eckey) );
-        REQUIRE_FALSE( pk1.can_do(pk_t::ecdsa) );
-        // pk1 has no key. all capabilities must be false
-        REQUIRE_FALSE( (af.encrypt || af.decrypt || af.sign || af.verify) );
-
-
-    }
-#endif // MBEDTLS_ECP_C
-
-#if defined(MBEDTLS_ECDSA_C)
-    SECTION("ecdsa creation tests") {
-        pki pk1;
-        REQUIRE_FALSE(pk1.can_do(pk_t::eckey));
-
-        pk1.reset_as(pk_t::ecdsa);
-        REQUIRE( test::icompare(pk1.name(), "ECDSA") );
-        REQUIRE_FALSE(pk1.has_private_key());
-        REQUIRE( pk1.can_do(pk_t::ecdsa) );
-        REQUIRE_FALSE( pk1.can_do(pk_t::eckey) );
-        REQUIRE_FALSE( pk1.can_do(pk_t::eckey_dh) );
-        auto af = pk1.what_can_do();
-        // pk1 has no key. all capabilities must be false
-        REQUIRE_FALSE( (af.encrypt || af.decrypt || af.sign || af.verify) );
-    }
-#endif // MBEDTLS_ECDSA_C
-}
-
-///////////////////////////////////////////////////////////////////////////////
 
 TEST_CASE("key gen", "[pki]") {
     using namespace mbedcrypto;
