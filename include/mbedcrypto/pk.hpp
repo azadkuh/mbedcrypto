@@ -56,6 +56,7 @@ struct action_flags {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// TODO: remove reset and reset_as as public interface
 /// resets and clean up the memory
 void reset(context&) noexcept;
 
@@ -180,6 +181,7 @@ buffer_t decrypt(context&,
         const buffer_t& encrypted_value);
 
 ///////////////////////////////////////////////////////////////////////////////
+/// a base class for public key implementation. @sa rsa and ecp
 struct pk_base {
     virtual ~pk_base() = default;
     virtual pk::context& context() = 0;
