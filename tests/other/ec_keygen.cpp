@@ -1,4 +1,4 @@
-#include "mbedcrypto/pki.hpp"
+#include "mbedcrypto/ecp.hpp"
 #include "mbedcrypto/rnd_generator.hpp"
 
 #include "mbedtls/ecp.h"
@@ -78,10 +78,10 @@ test2() {
 void
 test3() {
     using namespace mbedcrypto;
-    pki pk(pk_t::eckey);
-    pk.ec_generate_key(curve_t::secp192r1);
+    ecp pk;
+    pk.generate_key(curve_t::secp192r1);
 
-    std::cout << "mbedcrypto::pki: successful. done!" << std::endl;
+    std::cout << "mbedcrypto::ecp: successful. done!" << std::endl;
 }
 
 } // namespace anon
