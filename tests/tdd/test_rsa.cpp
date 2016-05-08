@@ -11,33 +11,33 @@ TEST_CASE("rsa type checks", "[types][pk]") {
 
     SECTION("creation") {
         rsa my_empty;
-        REQUIRE(test::icompare(my_empty.name(), "RSA"));
-        REQUIRE(my_empty.can_do(pk_t::rsa));
-        REQUIRE(!my_empty.can_do(pk_t::rsa_alt));
-        REQUIRE(!my_empty.can_do(pk_t::ecdsa));
-        REQUIRE(!my_empty.has_private_key());
+        REQUIRE( test::icompare(my_empty.name(), "RSA") );
+        REQUIRE( my_empty.can_do(pk_t::rsa) );
+        REQUIRE( !my_empty.can_do(pk_t::rsa_alt) );
+        REQUIRE( !my_empty.can_do(pk_t::ecdsa) );
+        REQUIRE( !my_empty.has_private_key() );
         auto af = my_empty.what_can_do();
         // empty instance, all members must be false
         REQUIRE_FALSE( (af.encrypt || af.decrypt || af.sign || af.verify) );
 
         rsa my_pri;
-        REQUIRE_NOTHROW(my_pri.import_key(test::rsa_private_key()));
-        REQUIRE(test::icompare(my_pri.name(), "RSA"));
-        REQUIRE(my_pri.has_private_key());
-        REQUIRE(my_pri.can_do(pk_t::rsa));
-        REQUIRE(!my_pri.can_do(pk_t::rsa_alt));
-        REQUIRE(my_pri.key_bitlen() == 2048);
+        REQUIRE_NOTHROW( my_pri.import_key(test::rsa_private_key()) );
+        REQUIRE( test::icompare(my_pri.name(), "RSA") );
+        REQUIRE( my_pri.has_private_key() );
+        REQUIRE( my_pri.can_do(pk_t::rsa) );
+        REQUIRE( !my_pri.can_do(pk_t::rsa_alt) );
+        REQUIRE( my_pri.key_bitlen() == 2048 );
         af = my_pri.what_can_do();
         // private key, can do all of the tasks
         REQUIRE( (af.encrypt && af.decrypt && af.sign && af.verify) );
 
         rsa my_key;
-        REQUIRE_NOTHROW(my_key.import_public_key(test::rsa_public_key()));
-        REQUIRE(test::icompare(my_key.name(), "RSA"));
-        REQUIRE(!my_key.has_private_key());
-        REQUIRE(my_key.can_do(pk_t::rsa));
-        REQUIRE(!my_key.can_do(pk_t::rsa_alt));
-        REQUIRE(my_key.key_bitlen() == 2048);
+        REQUIRE_NOTHROW( my_key.import_public_key(test::rsa_public_key()) );
+        REQUIRE( test::icompare(my_key.name(), "RSA") );
+        REQUIRE( !my_key.has_private_key() );
+        REQUIRE( my_key.can_do(pk_t::rsa) );
+        REQUIRE( !my_key.can_do(pk_t::rsa_alt) );
+        REQUIRE( my_key.key_bitlen() == 2048 );
         af = my_key.what_can_do();
         // public key can both encrypt or verify
         REQUIRE( (af.encrypt  &&  af.verify) );
@@ -54,10 +54,10 @@ TEST_CASE("rsa type checks", "[types][pk]") {
                     test::rsa_private_key_password(),
                     "mbedcrypto1234" // password
                     ));
-        REQUIRE(test::icompare(my_key.name(), "RSA"));
-        REQUIRE(my_key.has_private_key());
-        REQUIRE(my_key.can_do(pk_t::rsa));
-        REQUIRE(my_key.key_bitlen() == 2048);
+        REQUIRE( test::icompare(my_key.name(), "RSA") );
+        REQUIRE( my_key.has_private_key() );
+        REQUIRE( my_key.can_do(pk_t::rsa) );
+        REQUIRE( my_key.key_bitlen() == 2048 );
 
         // my_key is still the same key (with or without password)
         REQUIRE( check_pair(my_pri, my_key) == true );
@@ -161,9 +161,5 @@ TEST_CASE("rsa key tests", "[pk]") {
         my_pri.import_key(my_gen.export_key(pk::der_format));
         REQUIRE(( signature == my_pri.sign(message, hash_t::sha256) ));
         REQUIRE( check_pair(my_pub, my_pri) == true );
-
-        // recreate key
-        REQUIRE_NOTHROW( my_pri.generate_key(512, 3) );
-        REQUIRE( check_pair(my_pub, my_pri) == false );
     }
 }
