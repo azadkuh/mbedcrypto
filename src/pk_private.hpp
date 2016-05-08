@@ -49,7 +49,7 @@ native_info(pk_t type) {
     const auto* pinfot = mbedtls_pk_info_from_type(to_native(type));
 
     if ( pinfot == nullptr )
-        throw unknown_pk_exception{};
+        throw exceptions::unknown_pk{};
 
     return pinfot;
 }

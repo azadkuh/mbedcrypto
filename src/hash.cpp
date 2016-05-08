@@ -17,7 +17,7 @@ const mbedtls_md_info_t*
 native_type(hash_t type) {
     const auto* info = mbedtls_md_info_from_type(to_native(type));
     if ( info == nullptr )
-        throw unknown_hash_exception{};
+        throw exceptions::unknown_hash{};
 
     return info;
 }

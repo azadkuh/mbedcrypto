@@ -52,63 +52,71 @@ protected:
 inline auto to_string(const exception& cerr) {
     return cerr.what();
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// derived exceptions
+namespace exceptions {
 ///////////////////////////////////////////////////////////////////////////////
 
-/// invalid or unknown type
-struct type_exception : public exception {
-    explicit type_exception();
+/// invalid or unknown type, or conversion error
+struct type_error : public exception {
+    explicit type_error();
 };
 
 /// not supported and/or not implemented yet
-struct support_exception : public exception {
-    explicit support_exception();
+struct support_error : public exception {
+    explicit support_error();
 };
 
 /// wrong usage or invalid argument
-struct usage_exception : public exception {
+struct usage_error : public exception {
     using exception::exception;
 };
 
-struct unknown_hash_exception : public exception {
-    explicit unknown_hash_exception();
+/// unsupported hash type
+struct unknown_hash : public exception {
+    explicit unknown_hash();
 };
 
-/// unsupported cipher type of feature
-struct unknown_cipher_exception : public exception {
-    explicit unknown_cipher_exception();
+/// unsupported cipher type
+struct unknown_cipher : public exception {
+    explicit unknown_cipher();
 };
 
 /// needs CCM or GCM module, check build options
-struct aead_exception : public exception {
-    explicit aead_exception();
+struct aead_error : public exception {
+    explicit aead_error();
 };
 
 /// needs GCM module, check build options
-struct gcm_exception : public exception {
-    explicit gcm_exception();
+struct gcm_error : public exception {
+    explicit gcm_error();
 };
 
 /// unsupported pk_t or feature
-struct unknown_pk_exception : public exception {
-    explicit unknown_pk_exception();
+struct unknown_pk : public exception {
+    explicit unknown_pk();
 };
 
 /// needs PK_EXPORT, check build options
-struct pk_export_exception : public exception {
-    explicit pk_export_exception();
+struct pk_export_missed : public exception {
+    explicit pk_export_missed();
 };
 
 /// needs RSA_KEYGEN, check build options
-struct rsa_keygen_exception : public exception {
-    explicit rsa_keygen_exception();
+struct rsa_keygen_missed : public exception {
+    explicit rsa_keygen_missed();
 };
 
 /// needs EC (elliptic curves), check build options
-struct ecp_exception : public exception {
-    explicit ecp_exception();
+struct ecp_missed : public exception {
+    explicit ecp_missed();
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+} // namespace exceptions
+///////////////////////////////////////////////////////////////////////////////
+
 /// helper function used internally for throwing an exception if a c mbedtls function fails.
 template<class Func, class... Args> inline void
 c_call_impl(const char* error_tag, Func&& c_func, Args&&... args) {

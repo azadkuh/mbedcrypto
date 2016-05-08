@@ -24,7 +24,9 @@ ecp::ecp(pk_t ptype) : pimpl(std::make_unique<impl>()) {
             break;
 
         default:
-            throw usage_exception("invalid or unsupported ec type");
+            throw exceptions::usage_error{
+                "invalid or unsupported ec type"
+            };
             break;
     }
     pk::reset_as(*pimpl, ptype);

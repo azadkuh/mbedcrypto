@@ -27,47 +27,50 @@ mbedtls_error_string(int err, const char* message) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+namespace exceptions {
+///////////////////////////////////////////////////////////////////////////////
 
-type_exception::type_exception() :
-    exception("invalid or unknown type") {
+type_error::type_error() :
+    exception("invalid or unknown type, or conversion error") {
 }
 
-support_exception::support_exception() :
+support_error::support_error() :
     exception("not supported and/or implemented yet") {
 }
 
-unknown_hash_exception::unknown_hash_exception() :
+unknown_hash::unknown_hash() :
     exception(MBEDTLS_ERR_MD_FEATURE_UNAVAILABLE, "unsupported hash") {
 }
 
-unknown_cipher_exception::unknown_cipher_exception() :
+unknown_cipher::unknown_cipher() :
     exception(MBEDTLS_ERR_CIPHER_FEATURE_UNAVAILABLE, "unsupported cipher") {
 }
 
-aead_exception::aead_exception() :
+aead_error::aead_error() :
     exception("needs CCM or GCM module, check build options"){
 }
 
-gcm_exception::gcm_exception() :
+gcm_error::gcm_error() :
     exception("needs GCM module, check build options") {
 }
 
-unknown_pk_exception::unknown_pk_exception() :
+unknown_pk::unknown_pk() :
     exception(MBEDTLS_ERR_PK_UNKNOWN_PK_ALG, "unsupported pk") {
 }
 
-pk_export_exception::pk_export_exception() :
+pk_export_missed::pk_export_missed() :
     exception("needs PK_EXPORT, check build options") {
 }
 
-rsa_keygen_exception::rsa_keygen_exception() :
+rsa_keygen_missed::rsa_keygen_missed() :
     exception("needs RSA_KEYGEN, check build options") {
 }
 
-ecp_exception::ecp_exception() :
+ecp_missed::ecp_missed() :
     exception("needs EC (elliptic curves), check build options") {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+} // namespace exceptions
 } // namespace mbedcrypto
 ///////////////////////////////////////////////////////////////////////////////

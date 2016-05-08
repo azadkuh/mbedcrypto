@@ -38,7 +38,7 @@ hex::decode(const char* src, size_t length) {
         return buffer_t{};
 
     if ( (length & 1) != 0 ) // size must be even
-        throw usage_exception{"invalid size for hex string"};
+        throw exceptions::usage_error{"invalid size for hex string"};
 
     buffer_t buffer(length >> 1, '\0');
     unsigned char* bindata = to_ptr(buffer);
@@ -51,7 +51,7 @@ hex::decode(const char* src, size_t length) {
         else if ( s >= 'A'  &&  s <= 'F' ) j = s - '7';
         else if ( s >= 'a'  &&  s <= 'f' ) j = s - 'W';
         else
-            throw usage_exception{"invalid character in hex string"};
+            throw exceptions::usage_error{"invalid character in hex string"};
 
         k = ( ( i & 1 ) != 0 ) ? j : j << 4;
         bindata[i >> 1] = (unsigned char)( bindata[i >> 1] | k );

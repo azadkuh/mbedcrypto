@@ -16,7 +16,7 @@ native_info(cipher_t type) {
     const auto* cinfot = mbedtls_cipher_info_from_type(ntype);
 
     if ( cinfot == nullptr )
-        throw unknown_cipher_exception{};
+        throw exceptions::unknown_cipher{};
 
     return cinfot;
 }
@@ -142,8 +142,10 @@ class crypt_engine {
             // compute number of chunks
             if ( block_mode_ == cipher_bm::ecb ) {
                 if ( input_size_ == 0   ||   input_size_ % block_size_ )
-                    throw usage_exception{"ecb cipher block:"
-                            " a valid input size must be dividable by block size"};
+                    throw exceptions::usage_error{
+                        "ecb cipher block:"
+                        " a valid input size must be dividable by block size"
+                    };
 
                 chunks_ = input_size_ / block_size_;
 

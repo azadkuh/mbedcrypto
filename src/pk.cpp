@@ -32,7 +32,9 @@ public:
 
         if ( halgo == hash_t::none ) {
             if ( hmvalue.size() > max_crypt_size(pk) )
-                throw usage_exception{"the message is larger than max_crypt_size()"};
+                throw exceptions::usage_error{
+                    "the message is larger than max_crypt_size()"
+                };
 
             return hmvalue;
         }
@@ -84,7 +86,7 @@ key_bitlen(const context& d) noexcept {
 size_t
 max_crypt_size(const context& d) {
     if ( type_of(d) != pk_t::rsa )
-        throw support_exception{};
+        throw exceptions::support_error{};
 
     // padding / header data (11 bytes for PKCS#1 v1.5 padding).
     return key_length(d) - 11;
@@ -437,7 +439,9 @@ encrypt(context& d, const buffer_t& hmvalue, hash_t halgo) {
 buffer_t
 decrypt(context& d, const buffer_t& encrypted_value) {
     if ( (encrypted_value.size() << 3) > key_bitlen(d) )
-        throw usage_exception{"the encrypted value is larger than the key size"};
+        throw exceptions::usage_error{
+            "the encrypted value is larger than the key size"
+        };
 
     size_t olen = 32 + max_crypt_size(d);
     buffer_t output(olen, '\0');
