@@ -12,7 +12,7 @@ and has more features with smaller footprint.
 
 ## features and highlights
 
-- *small size*: the `mbedcrypto` is less than `250KB` in size (under Linux and
+- *small size*: the `mbedcrypto` is less than `250KB` in size (stripped under Linux and
  OS X) with all *predefined* algorithms. it can be easily embedded into
  your service or application.
 - *easy to use*: although cryptography<sup>[note](#cryptography)</sup> is
@@ -20,8 +20,8 @@ and has more features with smaller footprint.
  be easy to use and hard to misuse. see [samples](#usage)
 - *portable*: needs an standard `c++11/14` compiler and compliant `stl`,
  compiled and tested by:
-  - `gcc 5.x` under `linux`
-  - `clang` under `os x`
+  - `gcc 5.x+` under `linux`
+  - `clang 3.6+` under `os x`
   - `msvc 2015` community edition under `windows 7`
 - *low dependency*:
   - the `mbedtls`<sup>[note](#mbedtls)</sup> as underlying cryptography engine,
@@ -82,6 +82,8 @@ following algorithms are included in `mbedcrypto` in *default build* (see
    and `rsassa_pss` RSA standard signature algorithm, probabilistic signature
    scheme
   - optional `rsa` key generator
+  - optional `ec curves` from well known domain parameters as `NIST`, `Kolbitz`,
+  `brainpool` and `Curve25519`.
 
 total number of supported algorithms:
 
@@ -193,7 +195,7 @@ namespace mbedcrypto {
 is widely used in `mbedcrypto` api as main data container for input / output
 methods.
 
-current `std::string` implementations are known to be contiguous, so I prefer
+current `std::string` implementations are known to be *contiguous*, so I prefer
 `std::string` over `std::vector<unsigned char>` because it helps users to
 easily feed both text and binary buffers into `mbedtls` api without any cast or
 conversion.
@@ -291,7 +293,7 @@ see [types.hpp](./include/mbedcrypto/types.hpp)
 
 
 ### text-binary conversion
-handy utility to convert binary into (from) text:
+handy utility to convert binary into (or from) text:
 ```cpp
 using namespace mbedcrypto;
 
@@ -317,14 +319,15 @@ see [tcodec.hpp](./include/mbedcrypto/tcodec.hpp)
 
 
 ### hashes
+(cryptographic hashes also known as message digests)
 ```cpp
 using namespace mbedcrypto;
 
 // by single shot functions
-auto hvalue = make_hash(hash_t::sha256, source_data);
-std::cout << to_base64(hvalue) << std::endl;
+auto hash_value = make_hash(hash_t::sha256, source_data);
+auto hmac_value = hmac::make(hash_t::sha1, key_data, source_data);
 
-auto hmac_value = hmac::make(hash_t::md5, key_data, source_data);
+std::cout << to_base64(hash_value) << std::endl;
 ```
 or
 ```cpp
@@ -335,12 +338,12 @@ h1.start();
 while ( ... ) {
   h1.update(read_some_data());
 }
-auto hvalue = h1.finish();
+auto hash_value = h1.finish();
 
 // re-use
 h1.start();
-h1.update(...);
-hvalue = h1.finish();
+h1.update(...); // single or multiple updates
+hash_value = h1.finish();
 ```
 
 see [hash.hpp](./include/mbedcrypto/hash.hpp)
@@ -395,8 +398,7 @@ auto decr = cipher::decrypt_aead(
     iv_data,
     key_data,
     the_additional_data,
-    std::get<1>(encr), // encrypted input
-    std::get<0>(encr)  // authentication tag
+    encr
     );  ///< returns a std::tuple< authentication_status, decrypted_data >
 
 
@@ -436,72 +438,103 @@ see [cipher.hpp](./include/mbedcrypto/cipher.hpp)
 
 
 ### random byte generator
+to make cryptographically secure psuedo random bytes:
+
 ```cpp
-mbedcrypto::random rnd_generator;
-auto random_data1 = rnd_generator.make(256); // in bytes
-auto random_data2 = rnd_generator.make(32);  // in bytes
-//
+rnd_generator rgen;
+auto random_data1 = rgen.make(256); // in bytes
+// entropy and ctr_drbg are not so cheap, reuse them:
+auto random_data2 = rgen.make(32);  // in bytes
+
+// update internal state with custom data (may helps entropy)
+rgen.update(some_random_volatile_data);
+auto nonce = rgen.make(64);
 ```
 
-see [random.hpp](./include/mbedcrypto/random.hpp)
+see [rnd_generator.hpp](./include/mbedcrypto/rnd_generator.hpp)
 
 
 ### pks
-loading or exporting keys:
+playing with `rsa` keys:
+
 ```cpp
 using namespace mbedcrypto;
 
-pki pri;
-pri.parse_key(private_key_data, optional_password);
-// or load from by a file name
-// pri.load_key("private_key.pem");
+rsa pri_key;
+// import from data buffer
+pri_key.import_key(private_key_data, optional_password);
+// or load from a file by file-name
+pri_key.load_key("private_key.pem");
 
-pki pub;
-pub.parse_public_key(public_key_data);
+rsa pub_key;
+pub_key.import_public_key(public_key_data);
 
 // [optional] check matching public/private pair
-REQUIRE( pki::check_pair(pub, pri) == true );
+REQUIRE( check_pair(pub_key, pri_key) == true );
 
 // export keys
 if ( supports(features::pk_export) ) {
-    auto der_data = pri.export_key(pki::der_format);
-    // write or send
+    auto der_data = pub_key.export_public_key(pk::der_format);
+    // write or share
 }
 
 // key generation
 if ( supports(features::rsa_keygen) ) {
-    pki rg(pk_t::rsa);
-    rg.rsa_generate_key(2048);
+    rsa pri_key;
+    pri_key.generate_key(2048); // a 2048bit key
+    // do stuff
+}
+
+auto af = pub_key.what_can_do(); // what can i do with this key?
+// returns pk::action_flags (key capabilities) with following data:
+// af.encrypt = true
+// af.decrypt = false
+// af.sign    = false
+// af.verify  = true
+// because pub_key is a valid rsa public-key
+
+```
+
+to sign and verify by `rsa`:
+```cpp
+// signature & verification
+std::string message = read_message_from_somewhere();
+auto signature      = pri_key.sign(message, hash_t::sha256);
+REQUIRE( pub_key.verify(signature, message, hash_t::sha256);
+```
+
+to encrypt and decrypt by `rsa`:
+```cpp
+const auto hvalue = hash::make(hash_t::sha256, message);
+
+auto encv = pub_key.encrypt(hvalue);
+auto decv = pri_key.decrypt(encv);
+REQUIRE( decv == hvalue );
+
+// or
+auto encv = pub_key.encrypt(message, hash_t::sha256);
+auto decv = pri_key.decrypt(encv);
+REQUIRE( decv == hash::make(hash_t::sha256, message) );
+
+```
+
+see [rsa.hpp](./include/mbedcrypto/rsa.hpp)
+
+
+to create `ec` keys from curves:
+```cpp
+using namespace mbedcrypto;
+
+if ( supports(features::pk_export)  &&  supports(pk_t::eckey) ) {
+    ecp gen; // elliptic curve public key infrastructure
+    gen.generate_key(curve_t::secp224k1); // or any other supported curves
+    auto pri_data = gen.export_key(pk::pem_format);
+    auto pub_data = gen.export_public_key(pk::pem_format);
     // do stuff
 }
 ```
 
-sign and verify:
-```cpp
-// signature & verification
-std::string message = read_message_from_somewhere();
-auto signature      = pri.sign(message, hash_t::sha256);
-REQUIRE( pub.verify(signature, message, hash_t::sha256);
-```
-
-to encrypt and decrypt by pki:
-```cpp
-const auto hvalue = hash::make(hash_t::sha256, message);
-
-pki pub;
-pub.parse_public_key(public_key_data);
-
-auto encv = pub.encrypt(message, hash_t::sha256);
-// or
-// auto encv = pub.encrypt(hvalue);
-
-pki pri;
-pri.parse_key(private_key_data);
-auto decv = pri.decrypt(encv);
-REQUIRE( decv == hvalue );
-```
-
-see [pki.hpp](./include/mbedcrypto/pki.hpp)
+see [ecp.hpp](./include/mbedcrypto/ecp.hpp)
 
 ---
 
@@ -511,19 +544,38 @@ samples and unit tests are available under [tests/tdd](./tests/tdd/) folder.
 the test application has been built by
 [catch](https://github.com/philsquared/Catch):
 ```bash
+# to list all available test tags:
 $xbin/> ./tests -t
-All available tags:
-   1  [base64]
-   2  [cipher]
-   1  [exception]
-   1  [hash]
-   1  [hex]
-   2  [pki]
-   1  [random]
-   4  [types]
-8 tags
+
+# run the tests
+$xbin/> ./tests
 ```
 
+possible output:
+```text
+supports 6 hash algorithms: MD5 , SHA1 , SHA224 , SHA256 , SHA384 , SHA512 ,
+supports 5 padding algorithms: PKCS7 , ONE_AND_ZEROS , ZEROS_AND_LEN , ZEROS ,
+         NONE ,
+supports 6 block modes: NONE , ECB , CBC , CTR , GCM , CCM ,
+supports 21 cipher algorithms: AES-128-ECB , AES-192-ECB , AES-256-ECB ,
+         AES-128-CBC , AES-192-CBC , AES-256-CBC , AES-128-CTR , AES-192-CTR ,
+         AES-256-CTR , AES-128-GCM , AES-192-GCM , AES-256-GCM , DES-ECB ,
+         DES-CBC , DES-EDE-ECB , DES-EDE-CBC , DES-EDE3-ECB , DES-EDE3-CBC ,
+         AES-128-CCM , AES-192-CCM , AES-256-CCM ,
+ this system supports AESNI (hardware accelerated AES)
+ this build supports AEAD (authenticated encryption with additional data)
+supports 4 pk (public key) algorithms: RSA , EC , EC_DH , ECDSA ,
+ this build supports PK export (*.pem, *.der) facility
+ this build supports RSA key generation
+ this build supports EC (elliptic curve) key generation
+supports 12 elliptic curves: SECP192R1 , SECP224R1 , SECP256R1 , SECP384R1 ,
+         SECP521R1 , SECP192K1 , SECP224K1 , SECP256K1 , BP256R1 , BP384R1 ,
+         BP512R1 , CURVE25519 ,
+
+===============================================================================
+All tests passed (405 assertions in 13 test cases)
+
+```
 ---
 
 ## notes
