@@ -63,8 +63,9 @@ public: // iterative usage, reusing the instance
     /// resets and prepares the object to digest a new message.
     void start();
 
-    /// updates the hash by chunks of data.
-    /// may be called repeatedly between start() and finish().
+    /** updates the hash by chunks of data.
+     * may be called repeatedly between start() and finish().
+     */
     void update(const unsigned char* chunk, size_t chunk_size);
 
     void update(const buffer_t& chunk) {
@@ -108,8 +109,9 @@ protected:
 class hmac
 {
 public: // single-shot hamc computation
-    /// makes a generic HMAC checksum by custom key.
-    /// HMAC key could be of any size
+    /** makes a generic HMAC checksum by custom key.
+     * HMAC key could be of any size
+     */
     static buffer_t make(hash_t type, const buffer_t& key,
             const unsigned char* src, size_t src_length);
 
@@ -129,8 +131,9 @@ public: // iterative or reuse
     void start();
 
 
-    /// updates the hash by chunks of data.
-    /// may be called repeatedly between start() and finish().
+    /** updates the hash by chunks of data.
+     * may be called repeatedly between start() and finish().
+     */
     void update(const unsigned char* chunk, size_t chunk_size);
 
     void update(const buffer_t& chunk) {

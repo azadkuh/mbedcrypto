@@ -22,11 +22,12 @@
 namespace mbedcrypto {
 ///////////////////////////////////////////////////////////////////////////////
 
-/// all possible supported hash (message-digest) types in mbedcrypto.
-/// hints:
-/// @warning md2 is unsecure and deprecated, md4 is no much better.
-/// @warning using md5 and sha1 are insecure for password hashing,
-///  and more susceptible to hardware-accelerated attacks.
+/** all possible supported hash (message-digest) types in mbedcrypto.
+ * hints:
+ * @warning md2 is unsecure and deprecated, md4 is no much better.
+ * @warning using md5 and sha1 are insecure for password hashing,
+ * and more susceptible to hardware-accelerated attacks.
+ */
 enum class hash_t {
     none,        ///< invalid or unknown
     md2,         ///< unsecure and unacceptable
@@ -49,23 +50,24 @@ enum class padding_t {
     zeros,            ///< zero padding (not reversible!)
 };
 
-/// block mode: https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation
-/// hints:
-/// ebc so fast, not cryptographically strong
-///  input size must be = N * block_size, so no padding is required
-/// cbc is slow and cryptographically strong
-///  needs iv and padding
-/// cfb needs iv, no padding
-/// ctr is fast and strong only with ciphers that have block_size() >= 128bits
-///  needs iv, does not require padding, transforms a block to stream
-/// @warning in ctr and all other counter based modes,
-///   the iv should be used only once per operation to be secure
-/// gcm is fast and strong if tag size is not smaller than 96bits
-///  also used in aead (authenticated encryption with additional data)
-///  needs iv, does not require padding
-/// ccm is fast, strong if the iv never be used more than once for a given key
-///  only used in aead (authenticated encryption with additional data)
-///  needs iv, does not require padding
+/** block mode: https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation
+ * hints:
+ * ebc so fast, not cryptographically strong
+ * input size must be = N * block_size, so no padding is required
+ * cbc is slow and cryptographically strong
+ * needs iv and padding
+ * cfb needs iv, no padding
+ * ctr is fast and strong only with ciphers that have block_size() >= 128bits
+ * needs iv, does not require padding, transforms a block to stream
+ * @warning in ctr and all other counter based modes,
+ * the iv should be used only once per operation to be secure
+ * gcm is fast and strong if tag size is not smaller than 96bits
+ * also used in aead (authenticated encryption with additional data)
+ * needs iv, does not require padding
+ * ccm is fast, strong if the iv never be used more than once for a given key
+ * only used in aead (authenticated encryption with additional data)
+ * needs iv, does not require padding
+ */
 enum class cipher_bm {
     none,       ///< none or unknown
     ecb,        ///< electronic codebook, input size = N * block_size
@@ -77,12 +79,13 @@ enum class cipher_bm {
     stream,     ///< as in arc4_128 or null ciphers (unsecure)
 };
 
-/// all possible supported cipher types in mbedcrypto.
-/// hints:
-/// @warning blowfish is known to be susceptible to attacks when using weak keys,
-///  you'd be better to use aes or twofish instead.
-/// @warning arc4 is a stream cipher with serious weaknesses in its initial stream output,
-///  Its use is strongly discouraged. arc4 does not use mode constructions.
+/** all possible supported cipher types in mbedcrypto.
+ * hints:
+ * @warning blowfish is known to be susceptible to attacks when using weak keys,
+ * you'd be better to use aes or twofish instead.
+ * @warning arc4 is a stream cipher with serious weaknesses in its initial stream output,
+ * Its use is strongly discouraged. arc4 does not use mode constructions.
+ */
 enum class cipher_t {
     none,             ///< invalid or unknown
     null,
@@ -201,8 +204,10 @@ auto installed_pks()         -> std::vector<pk_t>;
 auto installed_curves()      -> std::vector<curve_t>;
 
 
-/// returns true if an algorithm or a type is present at runtime (by name string).
-/// both lower or upper case names are supported.
+// returns true if an algorithm or a type is present at runtime (by name
+// string).
+// both lower or upper case names are supported.
+
 
 bool supports_hash(const char*);
 bool supports_padding(const char*);
