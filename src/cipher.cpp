@@ -336,8 +336,8 @@ std::tuple<bool, buffer_t>
 cipher::decrypt_aead(cipher_t type,
         const buffer_t& iv, const buffer_t& key,
         const buffer_t& ad,
-        const buffer_t& input,
-        const buffer_t& tag) {
+        const buffer_t& tag,
+        const buffer_t& input) {
 #if defined(MBEDTLS_CIPHER_MODE_AEAD)
 
     cipher::impl cip;

@@ -100,8 +100,22 @@ public: // aead methods require BUILD_CCM or BUILD_GCM
     static auto decrypt_aead(cipher_t,
             const buffer_t& iv, const buffer_t& key,
             const buffer_t& additional_data,
-            const buffer_t& input,
-            const buffer_t& tag) -> std::tuple<bool, buffer_t>;
+            const buffer_t& tag,
+            const buffer_t& input) -> std::tuple<bool, buffer_t>;
+
+    /// helper
+    template<class Tuple>
+    static auto decrypt_aead(cipher_t ctype,
+            const buffer_t& iv, const buffer_t& key,
+            const buffer_t& additional_data,
+            const Tuple& tuple_aead) {
+                return decrypt_aead(ctype,
+                        iv, key,
+                        additional_data,
+                        std::get<0>(tuple_aead),
+                        std::get<1>(tuple_aead)
+                        );
+            }
 
 
 public:

@@ -227,12 +227,11 @@ public:
                 ctype,
                 iv, key,
                 AdditionalData(),
-                std::get<1>(encr), // encrypted input
-                std::get<0>(encr)  // authentication tag
+                encr
                 );
 
         INFO( to_string(ctype) );
-        REQUIRE( std::get<0>(decr) );
+        REQUIRE( std::get<0>(decr) ); // result status
         REQUIRE( (std::get<1>(decr) == input) );
     }
 
