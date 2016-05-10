@@ -2,6 +2,7 @@
 
 #include "mbedcrypto/ecp.hpp"
 #include "mbedcrypto/rsa.hpp"
+#include "mbedcrypto/tcodec.hpp"
 #include "generator.hpp"
 
 #include <iostream>
@@ -21,6 +22,32 @@ operator<<(std::ostream& s, const pk::action_flags& f) {
       << "sign: "    << bs(f.sign)    << " , "
       << "verify: "  << bs(f.verify);
     return  s;
+}
+
+void
+dumper(const char* name, const pk::mpi& mpi) {
+    std::cout << name << ": (size = "
+        << mpi.size() << " , " << mpi.bitlen()
+        << ")\n" << mpi.to_string(16)
+        << "\n" << to_hex(mpi.dump())
+        << std::endl;
+}
+
+void
+mpi_checker(const char*, const pk::mpi& mpi) {
+    REQUIRE( mpi == true );
+    REQUIRE( mpi.size() > 0 );
+    REQUIRE( mpi.bitlen() <= (mpi.size() << 3) );
+
+    auto bin = mpi.dump();
+    REQUIRE( bin.size() == mpi.size() );
+
+    auto str = mpi.to_string(16);
+    REQUIRE( str.size() == (mpi.size() << 1) );
+
+    REQUIRE( from_hex(str) == bin );
+
+    // dumper(name, mpi);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -125,10 +152,20 @@ TEST_CASE("ec key tests", "[pk]") {
             pri.import_key(pri_data);
             REQUIRE( pri.type() == gen.type() );
             REQUIRE( (pub_data == pri.export_public_key(pk::pem_format)) );
+            auto ki = pri.key_info();
+            mpi_checker("Qx: ", ki.Qx);
+            mpi_checker("Qy: ", ki.Qy);
+            mpi_checker("Qz: ", ki.Qz);
+            mpi_checker("D: ",  ki.D);
 
             ecp pub;
             pub.import_public_key(pub_data);
             REQUIRE( pub.type() == gen.type() );
+            ki = pub.key_info();
+            mpi_checker("Qx: ", ki.Qx);
+            mpi_checker("Qy: ", ki.Qy);
+            mpi_checker("Qz: ", ki.Qz);
+            REQUIRE( ki.D == false );
 
             REQUIRE( check_pair(pub, pri) );
 

@@ -9,6 +9,39 @@
 
 #include <iostream>
 ///////////////////////////////////////////////////////////////////////////////
+namespace {
+using namespace mbedcrypto;
+///////////////////////////////////////////////////////////////////////////////
+
+void
+dumper(const char* name, const pk::mpi& mpi) {
+    std::cout << name << ": (size = "
+        << mpi.size() << " , " << mpi.bitlen()
+        << ")\n" << mpi.to_string(16)
+        << "\n" << to_hex(mpi.dump())
+        << std::endl;
+}
+
+void
+mpi_checker(const char*, const pk::mpi& mpi) {
+    REQUIRE( mpi == true );
+    REQUIRE( mpi.size() > 0 );
+    REQUIRE( mpi.bitlen() <= (mpi.size() << 3) );
+
+    auto bin = mpi.dump();
+    REQUIRE( bin.size() == mpi.size() );
+
+    auto str = mpi.to_string(16);
+    REQUIRE( str.size() == (mpi.size() << 1) );
+
+    REQUIRE( from_hex(str) == bin );
+
+    // dumper(name, mpi);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+} // namespace anon
+///////////////////////////////////////////////////////////////////////////////
 TEST_CASE("rsa type checks", "[types][pk]") {
    using namespace mbedcrypto;
 
@@ -182,24 +215,7 @@ TEST_CASE("rsa key tests", "[pk]") {
 TEST_CASE("rsa key params", "[pk]") {
     using namespace mbedcrypto;
 
-    auto checker = [](const pk::mpi& mpi) {
-        REQUIRE( mpi == true );
-        REQUIRE( mpi.size() > 0 );
-        REQUIRE( mpi.bitlen() <= (mpi.size() << 3) );
-
-        auto bin = mpi.dump();
-        REQUIRE( bin.size() == mpi.size() );
-
-        auto str = mpi.to_string(16);
-        REQUIRE( str.size() == (mpi.size() << 1) );
-
-        REQUIRE( from_hex(str) == bin );
-    };
-
-    auto dumper = [checker](const char* name, const pk::mpi& mpi) {
-        checker(mpi);
-        return;
-
+    auto dumper = [](const char* name, const pk::mpi& mpi) {
         std::cout << name << ": (size = "
             << mpi.size() << " , " << mpi.bitlen()
             << ")\n" << mpi.to_string(16)
@@ -212,14 +228,14 @@ TEST_CASE("rsa key params", "[pk]") {
         pri_key.import_key(test::rsa_private_key());
 
         auto ki = pri_key.key_info();
-        dumper("N", ki.N);
-        dumper("E", ki.E);
-        dumper("D", ki.D);
-        dumper("P", ki.P);
-        dumper("Q", ki.Q);
-        dumper("DP", ki.DP);
-        dumper("DQ", ki.DQ);
-        dumper("QP", ki.QP);
+        mpi_checker("N", ki.N);
+        mpi_checker("E", ki.E);
+        mpi_checker("D", ki.D);
+        mpi_checker("P", ki.P);
+        mpi_checker("Q", ki.Q);
+        mpi_checker("DP", ki.DP);
+        mpi_checker("DQ", ki.DQ);
+        mpi_checker("QP", ki.QP);
     }
 
     SECTION("public checks") {
@@ -227,8 +243,8 @@ TEST_CASE("rsa key params", "[pk]") {
         pub_key.import_public_key(test::rsa_public_key());
 
         auto ki = pub_key.key_info();
-        dumper("N", ki.N);
-        dumper("E", ki.E);
+        mpi_checker("N", ki.N);
+        mpi_checker("E", ki.E);
 
         // private parts must be empty
         REQUIRE( ki.D  == false );
