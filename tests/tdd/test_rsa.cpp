@@ -2,7 +2,10 @@
 
 #include "mbedcrypto/rsa.hpp"
 #include "mbedcrypto/hash.hpp"
+#include "mbedcrypto/tcodec.hpp"
 #include "generator.hpp"
+#include "mbedtls/rsa.h"
+#include "mbedtls/bignum.h"
 
 #include <iostream>
 ///////////////////////////////////////////////////////////////////////////////
@@ -174,4 +177,67 @@ TEST_CASE("rsa key tests", "[pk]") {
         REQUIRE(( signature == my_pri.sign(message, hash_t::sha256) ));
         REQUIRE( check_pair(my_pub, my_pri) == true );
     }
+}
+
+TEST_CASE("rsa key params", "[pk]") {
+    using namespace mbedcrypto;
+
+    auto checker = [](const pk::mpi& mpi) {
+        REQUIRE( mpi == true );
+        REQUIRE( mpi.size() > 0 );
+        REQUIRE( mpi.bitlen() <= (mpi.size() << 3) );
+
+        auto bin = mpi.dump();
+        REQUIRE( bin.size() == mpi.size() );
+
+        auto str = mpi.to_string(16);
+        REQUIRE( str.size() == (mpi.size() << 1) );
+
+        REQUIRE( from_hex(str) == bin );
+    };
+
+    auto dumper = [checker](const char* name, const pk::mpi& mpi) {
+        checker(mpi);
+        return;
+
+        std::cout << name << ": (size = "
+            << mpi.size() << " , " << mpi.bitlen()
+            << ")\n" << mpi.to_string(16)
+            << "\n" << to_hex(mpi.dump())
+            << std::endl;
+    };
+
+    SECTION("private checks") {
+        rsa pri_key;
+        pri_key.import_key(test::rsa_private_key());
+
+        auto ki = pri_key.key_info();
+        dumper("N", ki.N);
+        dumper("E", ki.E);
+        dumper("D", ki.D);
+        dumper("P", ki.P);
+        dumper("Q", ki.Q);
+        dumper("DP", ki.DP);
+        dumper("DQ", ki.DQ);
+        dumper("QP", ki.QP);
+    }
+
+    SECTION("public checks") {
+        rsa pub_key;
+        pub_key.import_public_key(test::rsa_public_key());
+
+        auto ki = pub_key.key_info();
+        dumper("N", ki.N);
+        dumper("E", ki.E);
+
+        // private parts must be empty
+        REQUIRE( ki.D  == false );
+        REQUIRE( ki.P  == false );
+        REQUIRE( ki.Q  == false );
+        REQUIRE( ki.DP == false );
+        REQUIRE( ki.DQ == false );
+        REQUIRE( ki.QP == false );
+
+    }
+
 }

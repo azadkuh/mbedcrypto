@@ -56,6 +56,22 @@ public: // helper functions for rsa functionalities
         pk::generate_rsa_key(context(), key_bitlen, exponent);
     }
 
+public: // key information
+    struct key_info {
+        pk::mpi N;  ///< public modulus
+        pk::mpi E;  ///< public exponent
+
+        // only valid if the key is a private key
+        pk::mpi D;  ///< private exponent
+        pk::mpi P;  ///< 1st prime factor
+        pk::mpi Q;  ///< 2nd prime factor
+        pk::mpi DP; ///< D % (P - 1)
+        pk::mpi DQ; ///< D % (Q - 1)
+        pk::mpi QP; ///< 1 / (Q % P)
+    }; // struct key_info
+
+    auto key_info()const -> struct key_info;
+
 public: // move only
     rsa(const rsa&) = delete;
     rsa(rsa&&)      = default;
