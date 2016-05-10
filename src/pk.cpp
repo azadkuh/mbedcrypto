@@ -22,6 +22,11 @@ finalize_pem(buffer_t& pem) {
     pem.push_back('\0');
 }
 
+inline mbedtls_mpi*
+mpi_to_native(void* p) noexcept {
+    return reinterpret_cast<mbedtls_mpi*>(p);
+}
+
 class hm_prepare
 {
     buffer_t hash_;
@@ -543,6 +548,56 @@ decrypt(context& d, const buffer_t& encrypted_value) {
 
     output.resize(olen);
     return output;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+size_t
+mpi::bitlen()const noexcept {
+    return mbedtls_mpi_bitlen(mpi_to_native(ctx_));
+}
+
+size_t
+mpi::size()const noexcept {
+    return mbedtls_mpi_size(mpi_to_native(ctx_));
+}
+
+std::string
+mpi::to_string(int radix)const {
+    size_t olen = 0;
+
+    // get the string size
+    mbedtls_mpi_write_string(
+            mpi_to_native(ctx_),
+            radix,
+            nullptr,
+            0,
+            &olen
+            );
+
+    std::string buffer(olen+1, '\0');
+    mbedcrypto_c_call(mbedtls_mpi_write_string,
+            mpi_to_native(ctx_),
+            radix,
+            &buffer.front(),
+            olen,
+            &olen
+            );
+
+    // remove trailing null byte
+    buffer.resize(olen-1);
+    return buffer;
+}
+
+std::string
+mpi::dump()const {
+    std::string buffer(size(), '\0');
+    mbedcrypto_c_call(mbedtls_mpi_write_binary,
+            mpi_to_native(ctx_),
+            to_ptr(buffer),
+            buffer.size()
+            );
+    return buffer;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

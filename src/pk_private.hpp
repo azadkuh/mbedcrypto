@@ -14,8 +14,6 @@
 #include "conversions.hpp"
 
 #include "mbedtls/pk_internal.h"
-#include "mbedtls/pk.h"
-#include "mbedtls/ecp.h"
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
 namespace pk {
@@ -34,6 +32,10 @@ struct context {
 
     ~context() {
         reset(*this);
+    }
+
+    static void mpi(pk::mpi& a, mbedtls_mpi& b) noexcept {
+        a.ctx_ = &b;
     }
 
     context(const context&)            = delete;
