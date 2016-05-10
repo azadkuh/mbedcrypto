@@ -493,6 +493,16 @@ auto af = pub_key.what_can_do(); // what can i do with this key?
 // af.verify  = true
 // because pub_key is a valid rsa public-key
 
+auto kinfo = pri_key.key_info();
+// kinfo.N  :  public modulus
+// kinfo.E  :  public exponent
+// only valid if the key is a private key
+// kinfo.D  :  private exponent
+// kinfo.P  :  1st prime factor
+// kinfo.Q  :  2nd prime factor
+// kinfo.DP  : D % (P - 1)
+// kinfo.DQ  : D % (Q - 1)
+// kinfo.QP  : 1 / (Q % P)
 ```
 
 to sign and verify by `rsa`:
@@ -531,6 +541,14 @@ if ( supports(features::pk_export)  &&  supports(pk_t::eckey) ) {
     auto pri_data = gen.export_key(pk::pem_format);
     auto pub_data = gen.export_public_key(pk::pem_format);
     // do stuff
+
+    auto kinfo = gen.key_info(); // ecurve points and secret
+    std::cout
+        << "\nQx (" << kinfo.Qx.bitlen() << "): " << kinfo.Qx.to_string()
+        << "\nQy (" << kinfo.Qy.bitlen() << "): " << kinfo.Qy.to_string()
+        << "\nQz (" << kinfo.Qz.bitlen() << "): " << kinfo.Qz.to_string()
+        << "\nD  (" << kinfo.D.bitlen()  << "): " << kinfo.D.to_string()
+        << std::endl;
 }
 ```
 
@@ -573,7 +591,7 @@ supports 12 elliptic curves: SECP192R1 , SECP224R1 , SECP256R1 , SECP384R1 ,
          BP512R1 , CURVE25519 ,
 
 ===============================================================================
-All tests passed (405 assertions in 13 test cases)
+All tests passed (944 assertions in 14 test cases)
 
 ```
 ---
