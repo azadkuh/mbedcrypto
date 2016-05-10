@@ -34,21 +34,21 @@ rsa::context() const {
 
 struct rsa::key_info
 rsa::key_info()const {
-    struct key_info kp;
+    struct key_info ki;
     auto* rsa_ctx = mbedtls_pk_rsa(pimpl->pk_);
-    pk::context::mpi(kp.N, rsa_ctx->N);
-    pk::context::mpi(kp.E, rsa_ctx->E);
+    pk::context::mpi(ki.N, rsa_ctx->N);
+    pk::context::mpi(ki.E, rsa_ctx->E);
 
     if ( pimpl->key_is_private_ ) {
-        pk::context::mpi(kp.D,  rsa_ctx->D);
-        pk::context::mpi(kp.P,  rsa_ctx->P);
-        pk::context::mpi(kp.Q,  rsa_ctx->Q);
-        pk::context::mpi(kp.DP, rsa_ctx->DP);
-        pk::context::mpi(kp.DQ, rsa_ctx->DQ);
-        pk::context::mpi(kp.QP, rsa_ctx->QP);
+        pk::context::mpi(ki.D,  rsa_ctx->D);
+        pk::context::mpi(ki.P,  rsa_ctx->P);
+        pk::context::mpi(ki.Q,  rsa_ctx->Q);
+        pk::context::mpi(ki.DP, rsa_ctx->DP);
+        pk::context::mpi(ki.DQ, rsa_ctx->DQ);
+        pk::context::mpi(ki.QP, rsa_ctx->QP);
     }
 
-    return kp;
+    return ki;
 }
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto

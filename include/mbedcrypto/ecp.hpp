@@ -36,6 +36,18 @@ public: // helper funtions for ec functionalities
         pk::generate_ec_key(context(), curve_type);
     }
 
+public: // key information
+    struct key_info {
+        pk::mpi Qx;  ///< x of public point
+        pk::mpi Qy;  ///< y of public point
+        pk::mpi Qz;  ///< z of public point
+
+        // only valid if the key is a private key
+        pk::mpi D;   ///< secret value
+    }; // struct key_info
+
+    auto key_info()const -> struct key_info;
+
 public: // move only
     ecp(const ecp&) = delete;
     ecp(ecp&&)      = default;

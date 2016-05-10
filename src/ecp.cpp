@@ -45,6 +45,21 @@ ecp::context()const {
     return *pimpl;
 }
 
+struct ecp::key_info
+ecp::key_info()const {
+    struct ecp::key_info ki;
+    auto* ec_ctx = mbedtls_pk_ec(pimpl->pk_);
+    pk::context::mpi(ki.Qx, ec_ctx->Q.X);
+    pk::context::mpi(ki.Qy, ec_ctx->Q.Y);
+    pk::context::mpi(ki.Qz, ec_ctx->Q.Z);
+
+    if ( pimpl->key_is_private_ ) {
+        pk::context::mpi(ki.D, ec_ctx->d);
+    }
+
+    return ki;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
 ///////////////////////////////////////////////////////////////////////////////
