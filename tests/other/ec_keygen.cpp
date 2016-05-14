@@ -48,12 +48,6 @@ test1() {
     std::cout << "raw c: successful. done!" << std::endl;
 }
 
-int
-my_random2(void* prng, unsigned char* output, size_t olen) {
-    auto* rnd = reinterpret_cast<mbedcrypto::rnd_generator*>(prng);
-    return rnd->make(output, olen);
-}
-
 void
 test2() {
     using namespace mbedcrypto;
@@ -67,7 +61,7 @@ test2() {
     mbedcrypto_c_call(mbedtls_ecp_gen_key,
             MBEDTLS_ECP_DP_SECP192R1,
             mbedtls_pk_ec(pk.ref()),
-            my_random2,
+            rnd_generator::maker,
             &rnd
             );
 

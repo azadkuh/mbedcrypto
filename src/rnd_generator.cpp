@@ -125,6 +125,13 @@ rnd_generator::make(size_t length) {
     return buf;
 }
 
+int
+rnd_generator::maker(void* p_rng,
+        unsigned char* buffer, size_t olen) noexcept {
+    rnd_generator* ctx = reinterpret_cast<rnd_generator*>(p_rng);
+    return ctx->make(buffer, olen);
+}
+
 void
 rnd_generator::reseed() {
     mbedcrypto_c_call(mbedtls_ctr_drbg_reseed,
@@ -161,7 +168,6 @@ rnd_generator::update(const unsigned char* additional, size_t length) noexcept {
             &pimpl->ctx_, additional, length
             );
 }
-
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
 ///////////////////////////////////////////////////////////////////////////////

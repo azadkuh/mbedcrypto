@@ -404,7 +404,7 @@ generate_rsa_key(context& d, size_t key_bitlen, size_t exponent) {
 
     mbedcrypto_c_call(mbedtls_rsa_gen_key,
             mbedtls_pk_rsa(d.pk_),
-            pk::random_func,
+            rnd_generator::maker,
             &d.rnd_,
             key_bitlen,
             exponent
@@ -427,7 +427,7 @@ generate_ec_key(context& d, curve_t ctype) {
     mbedcrypto_c_call(mbedtls_ecp_gen_key,
             to_native(ctype),
             mbedtls_pk_ec(d.pk_),
-            pk::random_func,
+            rnd_generator::maker,
             &d.rnd_
             );
     // set the key type
@@ -455,7 +455,7 @@ sign(context& d, const buffer_t& hmvalue, hash_t halgo) {
             hvalue.size(),
             to_ptr(output),
             &olen,
-            pk::random_func,
+            rnd_generator::maker,
             &d.rnd_
           );
 
@@ -514,7 +514,7 @@ encrypt(context& d, const buffer_t& hmvalue, hash_t halgo) {
             to_ptr(output),
             &olen,
             olen,
-            pk::random_func,
+            rnd_generator::maker,
             &d.rnd_
           );
 
@@ -542,7 +542,7 @@ decrypt(context& d, const buffer_t& encrypted_value) {
             to_ptr(output),
             &olen,
             olen,
-            pk::random_func,
+            rnd_generator::maker,
             &d.rnd_
           );
 

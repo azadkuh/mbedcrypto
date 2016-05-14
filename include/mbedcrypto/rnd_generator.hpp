@@ -55,6 +55,20 @@ public:
     /// low level overload
     int  make(unsigned char* buffer, size_t length)noexcept;
 
+    /** equivalent for mbedtls_ctr_drbg_random().
+     * p_rng must be the address of a rnd_generator instance.
+     * @code
+     * rnd_generator my_rnd{"ecdsa randomizer"};
+     * ret = mbedtls_ecdsa_genkey(&ctx_sign,
+     *     ECPARAMS,
+     *     rnd_generator::maker,
+     *     &my_rnd
+     *     );
+     * @endcode
+     * @sa mbedtls_ctr_drbg_random()
+     */
+    static int maker(void* p_rng, unsigned char*, size_t)noexcept;
+
 public: // auxiliary methods
     /** set entropy read length. default: 32/48 (sha256/sha512).
      * based on build configs, uses sha256 or sha512

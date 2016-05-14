@@ -56,12 +56,6 @@ native_info(pk_t type) {
     return pinfot;
 }
 
-inline int
-random_func(void* ctx, unsigned char* p, size_t len) {
-    rnd_generator* rnd = reinterpret_cast<rnd_generator*>(ctx);
-    return rnd->make(p, len);
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace pk
 } // namespace mbedcrypto
