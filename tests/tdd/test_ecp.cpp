@@ -1,37 +1,11 @@
 #include <catch.hpp>
 
-#include "mbedcrypto/ecp.hpp"
-#include "mbedcrypto/rsa.hpp"
-#include "mbedcrypto/tcodec.hpp"
-#include "generator.hpp"
+#include "pk_common.hpp"
 
-#include <iostream>
 ///////////////////////////////////////////////////////////////////////////////
 namespace {
 using namespace mbedcrypto;
 ///////////////////////////////////////////////////////////////////////////////
-
-std::ostream&
-operator<<(std::ostream& s, const pk::action_flags& f) {
-    auto bs = [](bool b) {
-        return b ? "true" : "false";
-    };
-
-    s << "encrypt: " << bs(f.encrypt) << " , "
-      << "decrypt: " << bs(f.decrypt) << " , "
-      << "sign: "    << bs(f.sign)    << " , "
-      << "verify: "  << bs(f.verify);
-    return  s;
-}
-
-void
-dumper(const char* name, const pk::mpi& mpi) {
-    std::cout << name << ": (size = "
-        << mpi.size() << " , " << mpi.bitlen()
-        << ")\n" << mpi.to_string(16)
-        << "\n" << to_hex(mpi.dump())
-        << std::endl;
-}
 
 void
 mpi_checker(const char*, const pk::mpi& mpi) {
@@ -58,7 +32,6 @@ TEST_CASE("ec type checks", "[types][pk]") {
 
     if ( supports(pk_t::eckey)  ||  supports(pk_t::eckey_dh) ) {
         ecp my_key; // default as eckey
-        REQUIRE( my_key.can_do(pk_t::eckey)) ;
         REQUIRE( !my_key.has_private_key() ); // no key is provided
         REQUIRE( test::icompare(my_key.name(), "EC") );
         REQUIRE( my_key.can_do(pk_t::eckey) );

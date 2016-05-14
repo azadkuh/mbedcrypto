@@ -49,8 +49,8 @@ struct action_flags {
         : encrypt(e), decrypt(d), sign(s), verify(v) {}
 
     bool operator==(const action_flags& o)const {
-        return encrypt == o.encrypt && decrypt == o.decrypt
-            && sign == o.sign && verify == o.verify;
+        return std::make_tuple(encrypt, decrypt, sign, verify) ==
+            std::make_tuple(o.encrypt, o.decrypt, o.sign, o.verify);
     }
 }; // struct capability_flags
 

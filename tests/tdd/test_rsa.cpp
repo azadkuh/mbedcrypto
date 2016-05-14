@@ -1,9 +1,7 @@
 #include <catch.hpp>
 
-#include "mbedcrypto/rsa.hpp"
+#include "pk_common.hpp"
 #include "mbedcrypto/hash.hpp"
-#include "mbedcrypto/tcodec.hpp"
-#include "generator.hpp"
 #include "mbedtls/rsa.h"
 #include "mbedtls/bignum.h"
 
@@ -12,15 +10,6 @@
 namespace {
 using namespace mbedcrypto;
 ///////////////////////////////////////////////////////////////////////////////
-
-void
-dumper(const char* name, const pk::mpi& mpi) {
-    std::cout << name << ": (size = "
-        << mpi.size() << " , " << mpi.bitlen()
-        << ")\n" << mpi.to_string(16)
-        << "\n" << to_hex(mpi.dump())
-        << std::endl;
-}
 
 void
 mpi_checker(const char*, const pk::mpi& mpi) {
