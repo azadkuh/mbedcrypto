@@ -45,19 +45,20 @@ ecp::context()const {
     return *pimpl;
 }
 
-struct ecp::key_info
-ecp::key_info()const {
-    struct ecp::key_info ki;
-    auto* ec_ctx = mbedtls_pk_ec(pimpl->pk_);
-    pk::context::mpi(ki.Qx, ec_ctx->Q.X);
-    pk::context::mpi(ki.Qy, ec_ctx->Q.Y);
-    pk::context::mpi(ki.Qz, ec_ctx->Q.Z);
+void
+ecp::operator>>(ecp::key_info& ki)const {
+#if defined(MBEDTLS_ECP_C)
+    const auto* ec_ctx = mbedtls_pk_ec(pimpl->pk_);
+    ki.Qx << ec_ctx->Q.X;
+    ki.Qy << ec_ctx->Q.Y;
+    ki.Qz << ec_ctx->Q.Z;
 
-    if ( pimpl->key_is_private_ ) {
-        pk::context::mpi(ki.D, ec_ctx->d);
-    }
+    // copies a an empty value if the key is not private
+    ki.D << ec_ctx->d;
 
-    return ki;
+#else
+    throw exceptions::ecp_missed{};
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////

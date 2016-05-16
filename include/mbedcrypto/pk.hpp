@@ -7,9 +7,10 @@
  *
  */
 
-#ifndef __PK_HPP__
-#define __PK_HPP__
+#ifndef __MBEDCRYPTO_PK_HPP__
+#define __MBEDCRYPTO_PK_HPP__
 #include "mbedcrypto/types.hpp"
+#include "mbedcrypto/mpi.hpp"
 
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
@@ -54,25 +55,6 @@ struct action_flags {
     }
 }; // struct capability_flags
 
-/** multi-precision integer (bignum).
- * used as key parameters for rsa and ecp algorithms.
- * @sa rsa::key_info and @sa ecp::key_info
- */
-class mpi {
-    void*  ctx_ = nullptr;
-    friend struct context;
-
-public:
-    operator bool()const noexcept { return ctx_ != nullptr; }
-    /// returns the integer size in byte (ex: 512 for a 4096bit integer)
-    size_t   size()const noexcept;
-    /// returns the integer bitsize
-    size_t   bitlen()const noexcept;
-    /// writes the integer into string with defined radix(16 or 10)
-    auto     to_string(int radix=16)const -> std::string;
-    /// writes the integer into unsigned binary data (big endian)
-    auto     dump()const -> std::string;
-}; // class key_params
 ///////////////////////////////////////////////////////////////////////////////
 
 /// resets and clean up the memory
@@ -273,4 +255,4 @@ public: // key i/o
 } // namespace pk
 } // namespace mbedcrypto
 ///////////////////////////////////////////////////////////////////////////////
-#endif // __PK_HPP__
+#endif // __MBEDCRYPTO_PK_HPP__

@@ -33,7 +33,7 @@ operator<<(std::ostream& s, const mbedcrypto::pk::action_flags& f) {
 }
 
 inline void
-dumper(const char* name, const mbedcrypto::pk::mpi& mpi) {
+dumper(const char* name, const mbedcrypto::mpi& mpi) {
     using namespace mbedcrypto;
 
     std::cout << name << ": (size = "

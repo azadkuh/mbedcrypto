@@ -14,6 +14,7 @@
 #include "conversions.hpp"
 
 #include "mbedtls/pk_internal.h"
+#include "mbedtls/bignum.h"
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
 namespace pk {
@@ -32,10 +33,6 @@ struct context {
 
     ~context() {
         reset(*this);
-    }
-
-    static void mpi(pk::mpi& a, mbedtls_mpi& b) noexcept {
-        a.ctx_ = &b;
     }
 
     context(const context&)            = delete;
@@ -58,6 +55,13 @@ native_info(pk_t type) {
 
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace pk
+///////////////////////////////////////////////////////////////////////////////
+/// deep copy
+void operator<<(mpi&, const mbedtls_mpi&);
+/// deep copy
+void operator>>(const mpi&, mbedtls_mpi&);
+
+///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
 ///////////////////////////////////////////////////////////////////////////////
 #endif // __PK_PRIVATE_HPP__

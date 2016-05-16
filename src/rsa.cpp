@@ -32,23 +32,19 @@ rsa::context() const {
     return *pimpl;
 }
 
-struct rsa::key_info
-rsa::key_info()const {
-    struct key_info ki;
+void
+rsa::operator>>(rsa::key_info& ki)const {
     auto* rsa_ctx = mbedtls_pk_rsa(pimpl->pk_);
-    pk::context::mpi(ki.N, rsa_ctx->N);
-    pk::context::mpi(ki.E, rsa_ctx->E);
+    ki.N << rsa_ctx->N;
+    ki.E << rsa_ctx->E;
 
-    if ( pimpl->key_is_private_ ) {
-        pk::context::mpi(ki.D,  rsa_ctx->D);
-        pk::context::mpi(ki.P,  rsa_ctx->P);
-        pk::context::mpi(ki.Q,  rsa_ctx->Q);
-        pk::context::mpi(ki.DP, rsa_ctx->DP);
-        pk::context::mpi(ki.DQ, rsa_ctx->DQ);
-        pk::context::mpi(ki.QP, rsa_ctx->QP);
-    }
-
-    return ki;
+    // copies a an empty value if the key is not private
+    ki.D  << rsa_ctx->D;
+    ki.P  << rsa_ctx->P;
+    ki.Q  << rsa_ctx->Q;
+    ki.DP << rsa_ctx->DP;
+    ki.DQ << rsa_ctx->DQ;
+    ki.QP << rsa_ctx->QP;
 }
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto

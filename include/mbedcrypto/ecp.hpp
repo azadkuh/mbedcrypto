@@ -38,15 +38,16 @@ public: // helper funtions for ec functionalities
 
 public: // key information
     struct key_info {
-        pk::mpi Qx;  ///< x of public point
-        pk::mpi Qy;  ///< y of public point
-        pk::mpi Qz;  ///< z of public point
+        mpi Qx;  ///< x of public point
+        mpi Qy;  ///< y of public point
+        mpi Qz;  ///< z of public point
 
         // only valid if the key is a private key
-        pk::mpi D;   ///< secret value
+        mpi D;   ///< secret value
     }; // struct key_info
 
-    auto key_info()const -> struct key_info;
+    // exports info of current key
+    void operator>>(key_info&)const;
 
 public: // move only
     ecp(const ecp&) = delete;
