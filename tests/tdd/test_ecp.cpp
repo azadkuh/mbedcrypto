@@ -125,8 +125,7 @@ TEST_CASE("ec key tests", "[pk]") {
             pri.import_key(pri_data);
             REQUIRE( pri.type() == gen.type() );
             REQUIRE( (pub_data == pri.export_public_key(pk::pem_format)) );
-            ecp::key_info ki;
-            pri >> ki;
+            auto ki = pri.key_info();
             mpi_checker("Qx: ", ki.Qx);
             mpi_checker("Qy: ", ki.Qy);
             mpi_checker("Qz: ", ki.Qz);
@@ -135,7 +134,7 @@ TEST_CASE("ec key tests", "[pk]") {
             ecp pub;
             pub.import_public_key(pub_data);
             REQUIRE( pub.type() == gen.type() );
-            pub >> ki;
+            ki = pub.key_info();
             mpi_checker("Qx: ", ki.Qx);
             mpi_checker("Qy: ", ki.Qy);
             mpi_checker("Qz: ", ki.Qz);

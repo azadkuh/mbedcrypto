@@ -10,6 +10,7 @@
 #ifndef __PK_PRIVATE_HPP__
 #define __PK_PRIVATE_HPP__
 #include "mbedcrypto/pk.hpp"
+#include "mbedcrypto/mpi.hpp"
 #include "mbedcrypto/rnd_generator.hpp"
 #include "conversions.hpp"
 
@@ -56,10 +57,49 @@ native_info(pk_t type) {
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace pk
 ///////////////////////////////////////////////////////////////////////////////
+struct mpi::impl
+{
+    mbedtls_mpi ctx_;
+
+public:
+    explicit impl() {
+        mbedtls_mpi_init(&ctx_);
+    }
+
+    ~impl() {
+        mbedtls_mpi_free(&ctx_);
+    }
+
+    void copy_to(mbedtls_mpi* other) const {
+        mbedcrypto_c_call(mbedtls_mpi_copy, other, &ctx_);
+    }
+
+    void copy_from(const mbedtls_mpi* other) {
+        mbedcrypto_c_call(mbedtls_mpi_copy, &ctx_, other);
+    }
+
+    void copy_to(impl& other) const {
+        copy_to(&other.ctx_);
+    }
+
+    void copy_from(const impl& other) {
+        copy_from(&other.ctx_);
+    }
+
+}; // struct mpi::impl
+
+///////////////////////////////////////////////////////////////////////////////
 /// deep copy
-void operator<<(mpi&, const mbedtls_mpi&);
+template<> inline void
+mpi::operator<<(const mbedtls_mpi& other) {
+    pimpl->copy_from(&other);
+}
+
 /// deep copy
-void operator>>(const mpi&, mbedtls_mpi&);
+template<> inline void
+mpi::operator>>(mbedtls_mpi& other)const {
+    pimpl->copy_to(&other);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto

@@ -216,8 +216,7 @@ TEST_CASE("rsa key params", "[pk]") {
         rsa pri_key;
         pri_key.import_key(test::rsa_private_key());
 
-        rsa::key_info ki;
-        pri_key >> ki;
+        auto ki = pri_key.key_info();
         mpi_checker("N", ki.N);
         mpi_checker("E", ki.E);
         mpi_checker("D", ki.D);
@@ -232,8 +231,7 @@ TEST_CASE("rsa key params", "[pk]") {
         rsa pub_key;
         pub_key.import_public_key(test::rsa_public_key());
 
-        rsa::key_info ki;
-        pub_key >> ki;
+        auto ki = pub_key.key_info();
         mpi_checker("N", ki.N);
         mpi_checker("E", ki.E);
 

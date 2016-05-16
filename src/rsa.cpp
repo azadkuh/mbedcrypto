@@ -33,7 +33,7 @@ rsa::context() const {
 }
 
 void
-rsa::operator>>(rsa::key_info& ki)const {
+rsa::operator>>(struct rsa::key_info& ki)const {
     auto* rsa_ctx = mbedtls_pk_rsa(pimpl->pk_);
     ki.N << rsa_ctx->N;
     ki.E << rsa_ctx->E;

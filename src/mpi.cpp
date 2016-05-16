@@ -4,46 +4,38 @@
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
 ///////////////////////////////////////////////////////////////////////////////
-static_assert(std::is_copy_constructible<mpi>::value == false, "");
-static_assert(std::is_move_constructible<mpi>::value == true,  "");
+static_assert(std::is_copy_constructible<mpi>::value == true, "");
+static_assert(std::is_move_constructible<mpi>::value == true, "");
 ///////////////////////////////////////////////////////////////////////////////
 
-struct mpi::impl
-{
-    mbedtls_mpi ctx_;
+mpi::mpi() : pimpl{std::make_unique<impl>()} {
+}
 
-public:
-    explicit impl() {
-        mbedtls_mpi_init(&ctx_);
-    }
+mpi::mpi(const mpi& other) : mpi() {
+    pimpl->copy_from(*other.pimpl);
+}
 
-    ~impl() {
-        mbedtls_mpi_free(&ctx_);
-    }
-
-}; // struct mpi::impl
-
-///////////////////////////////////////////////////////////////////////////////
-
-mpi::mpi() : pimpl(std::make_unique<impl>()) {
+mpi::mpi(mpi&& other) : pimpl{std::move(other.pimpl)} {
 }
 
 mpi::~mpi() {
 }
 
+mpi&
+mpi::operator=(const mpi& other) {
+    pimpl->copy_from(*other.pimpl);
+    return *this;
+}
+
+mpi&
+mpi::operator=(mpi&& other) {
+    pimpl.swap(other.pimpl);
+    return *this;
+}
+
 void
 mpi::reset() {
     mbedtls_mpi_free(&pimpl->ctx_);
-}
-
-const mpi::impl&
-mpi::context()const {
-    return *pimpl;
-}
-
-mpi::impl&
-mpi::context() {
-    return *pimpl;
 }
 
 size_t
@@ -94,22 +86,10 @@ mpi::dump()const {
     return buffer;
 }
 
-void
-operator<<(mpi& m, const mbedtls_mpi& p) {
-    mbedcrypto_c_call(mbedtls_mpi_copy,
-            &m.context().ctx_,
-            &p
-            );
+int
+mpi::compare(const mpi& a, const mpi& b) noexcept {
+    return mbedtls_mpi_cmp_mpi(&a.pimpl->ctx_, &b.pimpl->ctx_);
 }
-
-void
-operator>>(const mpi& m, mbedtls_mpi& p) {
-    mbedcrypto_c_call(mbedtls_mpi_copy,
-            &p,
-            &m.context().ctx_
-            );
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto

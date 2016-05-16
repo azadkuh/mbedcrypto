@@ -46,7 +46,7 @@ ecp::context()const {
 }
 
 void
-ecp::operator>>(ecp::key_info& ki)const {
+ecp::operator>>(struct ecp::key_info& ki)const {
 #if defined(MBEDTLS_ECP_C)
     const auto* ec_ctx = mbedtls_pk_ec(pimpl->pk_);
     ki.Qx << ec_ctx->Q.X;

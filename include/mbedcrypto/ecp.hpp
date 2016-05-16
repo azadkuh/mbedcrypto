@@ -49,6 +49,12 @@ public: // key information
     // exports info of current key
     void operator>>(key_info&)const;
 
+    auto key_info()const {
+        struct key_info ki;
+        *this >> ki;
+        return ki;
+    }
+
 public: // move only
     ecp(const ecp&) = delete;
     ecp(ecp&&)      = default;
