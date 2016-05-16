@@ -4,45 +4,6 @@
  * @date 2016.04.25
  * @version 1.0.0
  * @author amir zamani <azadkuh@live.com>
- *
- * a light RAII wrapper utility for mbedtls high level functions.
- * by using this tool, you do not need to manually free mbedtls
- * contexes as the dtor of mbedtls::wrapper<> will do the job.
- *
- * @warning this wrapper is not used in mbedcrypto directly, only
- * provided for helping low level programming with mbedtls safer and
- * cleaner.
- *
- * usage:
- * @code
- * mbedtls::md md;
- *
- * int err = mbedtls_md_setup(md, mbedtls_md_info_from_type(MBEDTLS_MD_SHA1), 0);
- * if ( err != 0 ) {
- *   // handle error
- *   return;
- * }
- *
- * err = mbedtls_md_starts(md);
- * if ( err != 0 ) {
- *   // handle error
- *   return;
- * }
- *
- * ...
- * @endcode
- *
- * or
- * @code
- * try {
- *   mbedtls::md md;
- *   mbedtls_c_call(mbedtls_md_setup, md,
- *                  mbedtls_md_info_from_type(MBEDTLS_MD_SHA256), 0);
- *   mbedtls_c_call(mbedtls_md_starts, md);
- *   ...
- * } catch ( std::exception& cerr ) {
- *   std::cerr << cerr.what() << std::endl;
- * }
  */
 
 #ifndef __MBEDTLS_WRAPPER_HXX__
@@ -59,37 +20,44 @@
 #include "mbedtls/pk.h"
 
 ///////////////////////////////////////////////////////////////////////////////
+/** helper c++ utils for adding RAII and exceptions to mbedtls's c api.
+ * @sa wrapper for usage example
+ */
 namespace mbedtls {
 
     namespace details { // forward declarations
+        /// mbedtls_xxx_init() wrapper
         template<class T, class... Args> inline
         void initializer(T*, Args&&...) noexcept;
 
+        /// mbedtls_xxx_free() wraper
         template<class T> inline
         void cleanup(T*) noexcept;
     } // namespace details
 
+    /// a light RAII wrapper utility for mbedtls high level functions.
     template<class T>
     class wrapper final
     {
-        T      data;
+        T      ctx_;
 
     public:
         template<class... Args>
         explicit wrapper(Args&&... args) {
             using namespace details;
-            initializer(&data, std::forward<Args&&>(args)...);
+            initializer(&ctx_, std::forward<Args&&>(args)...);
         }
 
         ~wrapper() {
             using namespace details;
-            cleanup(&data);
+            cleanup(&ctx_);
         }
 
-        T&  ref() noexcept     { return data;  }
-        T*  ptr() noexcept     { return &data; }
-        operator T*() noexcept { return &data; }
+        T&  ref() noexcept     { return ctx_;  }
+        T*  ptr() noexcept     { return &ctx_; }
+        operator T*() noexcept { return &ctx_; }
 
+        // move only
         wrapper(const wrapper&)            = delete;
         wrapper(wrapper&&)                 = default;
         wrapper& operator=(const wrapper&) = delete;
@@ -145,13 +113,17 @@ namespace mbedtls {
             mbedtls_pk_free(p);
         }
 
+        /** calls the mbedtls function with given arguments.
+         * throws a std::runtime_error{} if there is any error
+         * @sa wrapper
+         */
         template<class Func, class... Args> inline
         void c_call_impl(const char* func_name, Func&& c_func, Args&&... args) {
 
                 auto err = c_func(std::forward<Args&&>(args)...);
 
-                if ( err != 0 ) {
-                    constexpr size_t KMaxSize = 160;
+                if ( err != 0 ) { // oops! an error
+                    constexpr size_t KMaxSize = 160; // max size of error message
                     char buffer[KMaxSize+1] = {0};
                     mbedtls_strerror(err, buffer, KMaxSize);
 
@@ -168,6 +140,76 @@ namespace mbedtls {
 } // namespace mbedtls
 
 ///////////////////////////////////////////////////////////////////////////////
+/// helper macro, prepends function name as an string
 #define mbedtls_c_call(FUNC, ...) mbedtls::details::c_call_impl(#FUNC, FUNC, __VA_ARGS__)
 ///////////////////////////////////////////////////////////////////////////////
+/** @class mbedtls::wrapper
+ * a light RAII wrapper utility for mbedtls high level functions.
+ * by using this tool, you do not need to manually free mbedtls
+ * contexes as the dtor of mbedtls::wrapper<> will do the job.
+ *
+ * @warning this wrapper is not used in mbedcrypto directly, only
+ * provided for helping low level programming with mbedtls safer and
+ * cleaner.
+ *
+ * usage:
+ * @code
+ * mbedtls::md md;
+ *
+ * int err = mbedtls_md_setup(md,
+ *                            mbedtls_md_info_from_type(MBEDTLS_MD_SHA1),
+ *                            0);
+ * if ( err != 0 ) {
+ *   // handle error
+ *   return;
+ * }
+ *
+ * err = mbedtls_md_starts(md);
+ * if ( err != 0 ) {
+ *   // handle error
+ *   return;
+ * }
+ *
+ * ...
+ * @endcode
+ *
+ * or to use std::exceptions:
+ * @code
+ * try {
+ *   mbedtls::md md;
+ *
+ *   mbedtls_c_call(mbedtls_md_setup,
+ *                  md,
+ *                  mbedtls_md_info_from_type(MBEDTLS_MD_SHA256),
+ *                  0);
+ *
+ *   mbedtls_c_call(mbedtls_md_starts,
+ *                  md);
+ *   // and so on
+ *
+ * } catch ( std::exception& cerr ) {
+ *   // full mbedtls error code and message
+ *   std::cerr << cerr.what() << std::endl;
+ * }
+ * @endcode
+ *
+ * for other types simply add following lines to your hpp or cpp code:
+ * @code
+ * // add RAII for ecdsa:
+ * namespace mbedtls {
+ * namespace details {
+ * template<> inline void initializer(mbedtls_ecdsa_context* ctx) noexcept{
+ *     mbedtls_ecdsa_init(ctx);
+ * }
+ * template<> inline void cleanup(mbedtls_ecdsa_context* ctx) noexcept{
+ *     mbedtls_ecdsa_free(ctx);
+ * }
+ * } // namespace details
+ *
+ * using ecdsa = wrapper<mbedtls_ecdsa_context>;
+ *
+ * } // namespace mbedtls
+ * @endcode
+ */
+
 #endif // __MBEDTLS_WRAPPER_HXX__
