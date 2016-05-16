@@ -329,7 +329,7 @@ export_key(context& d, key_format fmt) {
     return output;
 
 #else // MBEDTLS_PK_WRITE_C
-    throw pk_export_exception{};
+    throw exceptions::pk_export_missed{};
 #endif // MBEDTLS_PK_WRITE_C
 }
 
@@ -365,7 +365,7 @@ export_public_key(context& d, key_format fmt) {
     return output;
 
 #else // MBEDTLS_PK_WRITE_C
-    throw pk_export_exception{};
+    throw exceptions::pk_export_missed{};
 #endif // MBEDTLS_PK_WRITE_C
 }
 
@@ -414,7 +414,7 @@ generate_rsa_key(context& d, size_t key_bitlen, size_t exponent) {
 
 
 #else // MBEDTLS_GENPRIME
-    throw rsa_keygen_exception{};
+    throw exceptions::rsa_keygen_missed{};
 #endif // MBEDTLS_GENPRIME
 }
 
@@ -434,7 +434,7 @@ generate_ec_key(context& d, curve_t ctype) {
     d.key_is_private_ = true;
 
 #else // MBEDTLS_ECP_C
-    throw ecp_exception{};
+    throw exceptions::ecp_missed{};
 #endif // MBEDTLS_ECP_C
 }
 
