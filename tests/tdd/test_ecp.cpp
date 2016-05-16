@@ -1,6 +1,11 @@
 #include <catch.hpp>
 
 #include "pk_common.hpp"
+#include "mbedcrypto/mbedtls_wrapper.hxx"
+#include "mbedcrypto/hash.hpp"
+#include "../../src/pk_private.hpp"
+
+#include "mbedtls/ecdsa.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 namespace {
@@ -165,3 +170,128 @@ TEST_CASE("ec key tests", "[pk]") {
         }
     }
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// test ecdsa
+#if defined(MBEDTLS_ECDSA_C)  &&  defined(MBEDTLS_ECP_C)
+namespace mbedtls {
+namespace details {
+    template<> inline void initializer(mbedtls_ecdsa_context* ctx) noexcept{
+        mbedtls_ecdsa_init(ctx);
+    }
+
+    template<> inline void cleanup(mbedtls_ecdsa_context* ctx) noexcept{
+        mbedtls_ecdsa_free(ctx);
+    }
+} // namespace details
+using ecdsa = wrapper<mbedtls_ecdsa_context>;
+} // namespace mbedtls
+///////////////////////////////////////////////////////////////////////////////
+TEST_CASE("ecdsa c_api tests", "[pk]") {
+    mbedcrypto::ecp ec_;
+    ec_.generate_key(mbedcrypto::curve_t::secp192r1);
+
+    auto hash_ = mbedcrypto::make_hash(
+            mbedcrypto::hash_t::sha256,
+            mbedcrypto::test::long_text()
+            );
+
+    auto c_sign = [&]() -> std::string {
+        const auto* ec_ctx = mbedtls_pk_ec(ec_.context().pk_);
+        mbedtls::ecdsa signer;
+
+        // private key copy
+        mbedtls_c_call(mbedtls_ecp_group_copy,
+                &signer->grp,
+                &ec_ctx->grp
+                );
+        mbedtls_c_call(mbedtls_ecp_copy,
+                &signer->Q,
+                &ec_ctx->Q
+                );
+        mbedtls_c_call(mbedtls_mpi_copy,
+                &signer->d,
+                &ec_ctx->d
+                );
+
+        std::string signature((size_t)MBEDTLS_ECDSA_MAX_LEN, '\0');
+        size_t sig_len = signature.size();
+        mbedtls_c_call(mbedtls_ecdsa_write_signature,
+                signer,
+                MBEDTLS_MD_SHA256,
+                mbedcrypto::to_const_ptr(hash_),
+                hash_.size(),
+                mbedcrypto::to_ptr(signature),
+                &sig_len,
+                mbedcrypto::rnd_generator::maker,
+                &ec_.context().rnd_
+                );
+
+        signature.resize(sig_len);
+        return signature;
+    };
+
+    auto c_verify = [&](const std::string& signature) -> bool {
+        const auto* ec_ctx = mbedtls_pk_ec(ec_.context().pk_);
+        mbedtls::ecdsa verifier;
+
+        // public key copy
+        mbedtls_c_call(mbedtls_ecp_group_copy,
+                &verifier->grp,
+                &ec_ctx->grp
+                );
+        mbedtls_c_call(mbedtls_ecp_copy,
+                &verifier->Q,
+                &ec_ctx->Q
+                );
+
+        int ret = mbedtls_ecdsa_read_signature(verifier,
+                mbedcrypto::to_const_ptr(hash_),
+                hash_.size(),
+                mbedcrypto::to_const_ptr(signature),
+                signature.size()
+                );
+
+        if ( ret == 0 )
+            return true;
+
+        std::cout << mbedcrypto::mbedtls_error_string(ret) << std::endl;
+        return false;
+    };
+
+    auto cpp_sign = [&]() -> std::string {
+        return mbedcrypto::pk::sign(ec_.context(), hash_);
+    };
+
+    auto cpp_verify = [&](const std::string& signature) -> bool {
+        return mbedcrypto::pk::verify(ec_.context(), signature, hash_);
+    };
+
+    // sign by c_api
+    auto sig = c_sign();
+    REQUIRE( c_verify(sig) );
+    REQUIRE( cpp_verify(sig) );
+
+    sig = cpp_sign();
+    REQUIRE( c_verify(sig) );
+    REQUIRE( cpp_verify(sig) );
+
+}
+
+TEST_CASE("ecdsa tests", "[pk]") {
+    using namespace mbedcrypto;
+    auto message_ = test::long_text();
+
+    ecp ec_(pk_t::ecdsa);
+    ec_.generate_key(curve_t::secp192k1);
+    auto sig = pk::sign(ec_.context(), message_, hash_t::sha256);
+
+    ecp dsa_(pk_t::ecdsa);
+    dsa_.import_public_key(ec_.export_public_key(pk::pem_format));
+
+    REQUIRE( pk::verify(dsa_.context(), sig, message_, hash_t::sha256) );
+}
+
+///////////////////////////////////////////////////////////////////////////////
+#endif // MBEDTLS_ECDSA_C && MBEDTLS_ECP_C
+///////////////////////////////////////////////////////////////////////////////
