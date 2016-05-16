@@ -53,9 +53,14 @@ namespace mbedtls {
             cleanup(&ctx_);
         }
 
-        T&  ref() noexcept     { return ctx_;  }
-        T*  ptr() noexcept     { return &ctx_; }
-        operator T*() noexcept { return &ctx_; }
+        const T& ref()const noexcept        { return ctx_;  }
+        const T* ptr()const noexcept        { return &ctx_; }
+        const T* operator->()const noexcept { return &ctx_; }
+        operator const T*()const noexcept   { return &ctx_; }
+        T& ref() noexcept        { return ctx_;  }
+        T* ptr() noexcept        { return &ctx_; }
+        T* operator->() noexcept { return &ctx_; }
+        operator T*() noexcept   { return &ctx_; }
 
         // move only
         wrapper(const wrapper&)            = delete;
