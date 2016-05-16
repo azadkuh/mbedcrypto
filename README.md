@@ -552,6 +552,24 @@ if ( supports(features::pk_export)  &&  supports(pk_t::eckey) ) {
 }
 ```
 
+to sign and verify by `ecdsa`:
+```cpp
+using namespace mbedcrypto;
+
+if ( supports(pk_t::ecdsa)  &&  supports(features::ec_keygen) ) {
+    ecp pri_key; // both pk_t::eckey and pk_t::ecdsa works
+    pri_key.generate_key(curve_t::secp192k1);
+    auto sig = pk::sign(pri_key.context(), message, hash_t::sha384);
+
+    ecp pub_key(pk_t::ecdsa);
+    pub_key.import_public_key(
+            pri_key.export_public_key(pk::pem_format)
+            );
+
+    REQUIRE( pk::verify(pub_key.context(), sig, message, hash_t::sha384) );
+}
+```
+
 see [ecp.hpp](./include/mbedcrypto/ecp.hpp)
 
 ---
@@ -591,7 +609,7 @@ supports 12 elliptic curves: SECP192R1 , SECP224R1 , SECP256R1 , SECP384R1 ,
          BP512R1 , CURVE25519 ,
 
 ===============================================================================
-All tests passed (944 assertions in 14 test cases)
+All tests passed (948 assertions in 14 test cases)
 
 ```
 ---
