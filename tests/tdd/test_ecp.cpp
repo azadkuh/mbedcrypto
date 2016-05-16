@@ -8,7 +8,7 @@ using namespace mbedcrypto;
 ///////////////////////////////////////////////////////////////////////////////
 
 void
-mpi_checker(const char*, const pk::mpi& mpi) {
+mpi_checker(const char*, const mpi& mpi) {
     REQUIRE( mpi == true );
     REQUIRE( mpi.size() > 0 );
     REQUIRE( mpi.bitlen() <= (mpi.size() << 3) );
@@ -125,7 +125,8 @@ TEST_CASE("ec key tests", "[pk]") {
             pri.import_key(pri_data);
             REQUIRE( pri.type() == gen.type() );
             REQUIRE( (pub_data == pri.export_public_key(pk::pem_format)) );
-            auto ki = pri.key_info();
+            ecp::key_info ki;
+            pri >> ki;
             mpi_checker("Qx: ", ki.Qx);
             mpi_checker("Qy: ", ki.Qy);
             mpi_checker("Qz: ", ki.Qz);
@@ -134,7 +135,7 @@ TEST_CASE("ec key tests", "[pk]") {
             ecp pub;
             pub.import_public_key(pub_data);
             REQUIRE( pub.type() == gen.type() );
-            ki = pub.key_info();
+            pub >> ki;
             mpi_checker("Qx: ", ki.Qx);
             mpi_checker("Qy: ", ki.Qy);
             mpi_checker("Qz: ", ki.Qz);

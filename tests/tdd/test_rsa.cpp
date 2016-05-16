@@ -12,7 +12,7 @@ using namespace mbedcrypto;
 ///////////////////////////////////////////////////////////////////////////////
 
 void
-mpi_checker(const char*, const pk::mpi& mpi) {
+mpi_checker(const char*, const mpi& mpi) {
     REQUIRE( mpi == true );
     REQUIRE( mpi.size() > 0 );
     REQUIRE( mpi.bitlen() <= (mpi.size() << 3) );
@@ -204,7 +204,7 @@ TEST_CASE("rsa key tests", "[pk]") {
 TEST_CASE("rsa key params", "[pk]") {
     using namespace mbedcrypto;
 
-    auto dumper = [](const char* name, const pk::mpi& mpi) {
+    auto dumper = [](const char* name, const mpi& mpi) {
         std::cout << name << ": (size = "
             << mpi.size() << " , " << mpi.bitlen()
             << ")\n" << mpi.to_string(16)
@@ -216,7 +216,8 @@ TEST_CASE("rsa key params", "[pk]") {
         rsa pri_key;
         pri_key.import_key(test::rsa_private_key());
 
-        auto ki = pri_key.key_info();
+        rsa::key_info ki;
+        pri_key >> ki;
         mpi_checker("N", ki.N);
         mpi_checker("E", ki.E);
         mpi_checker("D", ki.D);
@@ -231,7 +232,8 @@ TEST_CASE("rsa key params", "[pk]") {
         rsa pub_key;
         pub_key.import_public_key(test::rsa_public_key());
 
-        auto ki = pub_key.key_info();
+        rsa::key_info ki;
+        pub_key >> ki;
         mpi_checker("N", ki.N);
         mpi_checker("E", ki.E);
 
