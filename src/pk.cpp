@@ -145,11 +145,14 @@ key_bitlen(const context& d) noexcept {
 
 size_t
 max_crypt_size(const context& d) {
-    if ( type_of(d) != pk_t::rsa )
-        throw exceptions::support_error{};
-
     // padding / header data (11 bytes for PKCS#1 v1.5 padding).
-    return key_length(d) - 11;
+    if ( type_of(d) == pk_t::rsa )
+        return key_length(d) - 11;
+
+    else if ( can_do(d, pk_t::ecdsa) )
+            return (size_t) MBEDTLS_ECDSA_MAX_LEN;
+
+    throw exceptions::support_error{};
 }
 
 bool
@@ -435,7 +438,7 @@ generate_ec_key(context& d, curve_t ctype) {
 
 buffer_t
 sign(context& d, const buffer_t& hmvalue, hash_t halgo) {
-    if ( type_of(d) != pk_t::rsa )
+    if ( type_of(d) != pk_t::rsa && !can_do(d, pk_t::ecdsa) )
         throw exceptions::support_error{};
 
     hm_prepare hm;
@@ -462,7 +465,7 @@ bool
 verify(context& d,
         const buffer_t& signature,
         const buffer_t& hm_value, hash_t halgo) {
-    if ( type_of(d) != pk_t::rsa )
+    if ( type_of(d) != pk_t::rsa && !can_do(d, pk_t::ecdsa) )
         throw exceptions::support_error{};
 
     hm_prepare hm;
