@@ -188,7 +188,7 @@ using ecdsa = wrapper<mbedtls_ecdsa_context>;
 } // namespace mbedtls
 ///////////////////////////////////////////////////////////////////////////////
 TEST_CASE("ecdsa c_api tests", "[pk]") {
-    mbedcrypto::ecp ec_;
+    mbedcrypto::ecdsa ec_;
     ec_.generate_key(mbedcrypto::curve_t::secp192r1);
 
     auto hash_ = mbedcrypto::make_hash(
@@ -260,11 +260,11 @@ TEST_CASE("ecdsa c_api tests", "[pk]") {
     };
 
     auto cpp_sign = [&]() -> std::string {
-        return mbedcrypto::pk::sign(ec_.context(), hash_);
+        return ec_.sign(hash_);
     };
 
     auto cpp_verify = [&](const std::string& signature) -> bool {
-        return mbedcrypto::pk::verify(ec_.context(), signature, hash_);
+        return ec_.verify(signature, hash_);
     };
 
     // sign by c_api
@@ -282,14 +282,16 @@ TEST_CASE("ecdsa tests", "[pk]") {
     using namespace mbedcrypto;
     auto message_ = test::long_text();
 
-    ecp ec_(pk_t::ecdsa);
-    ec_.generate_key(curve_t::secp192k1);
-    auto sig = pk::sign(ec_.context(), message_, hash_t::sha256);
+    ecdsa signer;
+    signer.generate_key(curve_t::secp192k1);
+    auto sig = signer.sign(message_, hash_t::sha256);
 
-    ecp dsa_(pk_t::ecdsa);
-    dsa_.import_public_key(ec_.export_public_key(pk::pem_format));
+    ecdsa verifier;
+    verifier.import_public_key(
+            signer.export_public_key(pk::pem_format)
+            );
 
-    REQUIRE( pk::verify(dsa_.context(), sig, message_, hash_t::sha256) );
+    REQUIRE( verifier.verify(sig, message_, hash_t::sha256) );
 }
 
 ///////////////////////////////////////////////////////////////////////////////

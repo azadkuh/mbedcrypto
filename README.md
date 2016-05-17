@@ -557,16 +557,16 @@ to sign and verify by `ecdsa`:
 using namespace mbedcrypto;
 
 if ( supports(pk_t::ecdsa)  &&  supports(features::ec_keygen) ) {
-    ecp pri_key; // both pk_t::eckey and pk_t::ecdsa works
+    ecdsa pri_key; // both pk_t::eckey and pk_t::ecdsa works
     pri_key.generate_key(curve_t::secp192k1);
-    auto sig = pk::sign(pri_key.context(), message, hash_t::sha384);
+    auto sig = pri_key.sign(message, hash_t::sha384);
 
-    ecp pub_key(pk_t::ecdsa);
+    ecdsa pub_key;
     pub_key.import_public_key(
             pri_key.export_public_key(pk::pem_format)
             );
 
-    REQUIRE( pk::verify(pub_key.context(), sig, message, hash_t::sha384) );
+    REQUIRE( pub_key.verify(sig, message, hash_t::sha384) );
 }
 ```
 

@@ -69,7 +69,22 @@ protected:
     std::unique_ptr<impl> pimpl;
 }; // ecp
 ///////////////////////////////////////////////////////////////////////////////
+/// ECDSA specialized class
+struct ecdsa : public ecp {
+    explicit ecdsa() : ecp(pk_t::ecdsa) {}
 
+    auto sign(const buffer_t& hash_or_message,
+            hash_t hash_algo = hash_t::none) -> buffer_t {
+        return pk::sign(context(), hash_or_message, hash_algo);
+    }
+
+    bool verify(const buffer_t& signature,
+            const buffer_t& hash_or_message,
+            hash_t hash_algo = hash_t::none) {
+        return pk::verify(context(), signature, hash_or_message, hash_algo);
+    }
+}; // struct ecdsa
+///////////////////////////////////////////////////////////////////////////////
 /// helper function, @sa pk::check_pair()
 inline bool
 check_pair(const ecp& pub, const ecp& pri) {
