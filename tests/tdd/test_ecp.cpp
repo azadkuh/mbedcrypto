@@ -135,7 +135,7 @@ TEST_CASE("ec key tests", "[pk]") {
             mpi_checker("Qx: ", ki.Qx);
             mpi_checker("Qy: ", ki.Qy);
             mpi_checker("Qz: ", ki.Qz);
-            mpi_checker("D: ",  ki.D);
+            mpi_checker("d: ",  ki.d);
 
             ecp pub;
             pub.import_public_key(pub_data);
@@ -144,7 +144,7 @@ TEST_CASE("ec key tests", "[pk]") {
             mpi_checker("Qx: ", ki.Qx);
             mpi_checker("Qy: ", ki.Qy);
             mpi_checker("Qz: ", ki.Qz);
-            REQUIRE( ki.D == false );
+            REQUIRE( ki.d == false );
 
             REQUIRE( check_pair(pub, pri) );
 

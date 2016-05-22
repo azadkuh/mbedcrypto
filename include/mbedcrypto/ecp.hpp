@@ -43,7 +43,7 @@ public: // key information
         mpi Qz;  ///< z of public point
 
         // only valid if the key is a private key
-        mpi D;   ///< secret value
+        mpi d;   ///< secret value
     }; // struct key_info
 
     // exports info of current key
@@ -91,7 +91,7 @@ struct ecdsa : public ecp
  * to calculate the shared secret when the curve type is predefined on both
  * ends:
  * @code
- * // const auto ctype = curve_t::...; // both knows the curve type
+ * // const auto ctype = curve_t::...; // both know the curve type
  *
  * ecdh server;
  * auto srv_pub = server.make_peer_key(ctype);
@@ -107,11 +107,11 @@ struct ecdsa : public ecp
  * REQUIRE( (sss == css) );
  * @endcode
  *
- * to calculare the shared secret by RFC 4492 (when server defines the curve
+ * to calculate the shared secret by RFC 4492 (when server defines the curve
  * parameters and the client follows the server):
  * @code
  * ecdh server;
- * // server decides the curve type
+ * // server defines the curve type
  * auto skex = server.make_server_key_exchange(curve_t::...);
  * // send server's key exchange params to client
  *

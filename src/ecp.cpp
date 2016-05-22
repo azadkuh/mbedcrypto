@@ -228,7 +228,7 @@ ecp::operator>>(struct ecp::key_info& ki)const {
     ki.Qz << ec_ctx->Q.Z;
 
     // copies a an empty value if the key is not private
-    ki.D << ec_ctx->d;
+    ki.d << ec_ctx->d;
 
 #else
     throw exceptions::ecp_missed{};
