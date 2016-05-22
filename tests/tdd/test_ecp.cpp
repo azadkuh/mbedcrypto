@@ -382,9 +382,10 @@ struct peer : public ecdh_base
 ///////////////////////////////////////////////////////////////////////////////
 TEST_CASE("ecdh tests", "[ecdh]") {
     using namespace mbedcrypto;
-    const auto ctype = curve_t::secp192k1;
 
     SECTION("calculate shared secret") {
+        const auto ctype = curve_t::secp192k1;
+
         ecdh server;
         auto srv_pub = server.make_peer_key(ctype);
 
@@ -415,6 +416,19 @@ TEST_CASE("ecdh tests", "[ecdh]") {
             css = clone.shared_secret(srv_pub);
             REQUIRE( (sss == css) );
         }
+    }
+
+    SECTION("RFC 4492") {
+        const auto ctype = curve_t::secp224r1;
+        ecdh server;
+        auto skex = server.make_server_key_exchange(ctype);
+
+        ecdh client;
+        auto cli_pub = client.make_client_peer_key(skex);
+        auto css     = client.shared_secret();
+
+        auto sss     = server.shared_secret(cli_pub);
+        REQUIRE( (sss == css) );
     }
 
 }
