@@ -547,7 +547,7 @@ if ( supports(features::pk_export)  &&  supports(pk_t::eckey) ) {
         << "\nQx (" << kinfo.Qx.bitlen() << "): " << kinfo.Qx.to_string()
         << "\nQy (" << kinfo.Qy.bitlen() << "): " << kinfo.Qy.to_string()
         << "\nQz (" << kinfo.Qz.bitlen() << "): " << kinfo.Qz.to_string()
-        << "\nD  (" << kinfo.D.bitlen()  << "): " << kinfo.D.to_string()
+        << "\nd  (" << kinfo.D.bitlen()  << "): " << kinfo.d.to_string()
         << std::endl;
 }
 ```
@@ -568,6 +568,47 @@ if ( supports(pk_t::ecdsa)  &&  supports(features::ec_keygen) ) {
 
     REQUIRE( pub_key.verify(sig, message, hash_t::sha384) );
 }
+```
+
+to create a shared secret by `ECDH(E)` when both ends know the curve type:
+```cpp
+using namespace mbedcrypto;
+// const auto ctype = curve_t::secp224r1 // both know the curve type
+
+ecdh server;
+auto srv_pub = server.make_peer_key(ctype);
+// send srv_pub to client
+
+ecdh client;
+client.generate_key(ctype); // alternative approach to make_peer_key()
+auto cli_pub = client.peer_key();
+// send cli_pub to server
+
+auto sss = server.shared_secret(cli_pub); // on server
+auto css = client.shared_secret(srv_pub); // on client
+
+REQUIRE( (sss == css) );
+```
+
+or if the curve parameters are defined by server at runtime as defined in
+[RFC 4492: Elliptic Curve Cryptography (ECC) Cipher Suites for Transport Layer
+Security (TLS)](https://tools.ietf.org/html/rfc4492) do:
+```cpp
+using namespace mbedcrypto;
+
+ecdh server;
+// (only) server defines the curve type
+auto skex = server.make_server_key_exchange(curve_t::secp192k1);
+// send server's key exchange params to client
+
+ecdh client;
+auto cli_pub = client.make_client_peer_key(skex);
+auto css     = client.shared_secret();
+// send cli_pub to server
+
+auto sss     = server.shared_secret(cli_pub); // on server
+
+REQUIRE( (sss == css) );
 ```
 
 see [ecp.hpp](./include/mbedcrypto/ecp.hpp)
@@ -609,7 +650,7 @@ supports 12 elliptic curves: SECP192R1 , SECP224R1 , SECP256R1 , SECP384R1 ,
          BP512R1 , CURVE25519 ,
 
 ===============================================================================
-All tests passed (948 assertions in 14 test cases)
+All tests passed (952 assertions in 17 test cases)
 
 ```
 ---
