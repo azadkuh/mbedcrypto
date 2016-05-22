@@ -67,6 +67,21 @@ write_ecp_point(const mbedtls_ecdh_context* ecdh,
     return olen;
 }
 
+size_t
+write_ecp_group(const mbedtls_ecp_group* grp,
+        unsigned char* buffer, size_t buffer_length) {
+    size_t olen = 0;
+
+    mbedcrypto_c_call(mbedtls_ecp_tls_write_group,
+            grp,
+            &olen,
+            buffer,
+            buffer_length
+            );
+
+    return olen;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace anon
 ///////////////////////////////////////////////////////////////////////////////
@@ -81,25 +96,12 @@ struct ecp::impl : public pk::context
     }
 
     void ecdh_generate_keys(curve_t ctype) {
-        if ( key_is_private_ ) { // if there is a key
-            pk::reset_as(*this, pk_t::eckey_dh);
-        }
-
         mbedcrypto_c_call(mbedtls_ecp_group_load,
                 &ecdh_->grp,
                 to_native(ctype)
                 );
-        mbedcrypto_c_call(mbedtls_ecdh_gen_public,
-                &ecdh_->grp,
-                &ecdh_->d,
-                &ecdh_->Q,
-                mbedcrypto::rnd_generator::maker,
-                &rnd_
-                );
 
-        // the private key has been built
-        copy_from(*this, ecdh_.get()); // copy keypair to pk_ context
-        key_is_private_ = true;
+        ecdh_gen_public();
     }
 
     auto ecdh_public_point() {
@@ -109,15 +111,34 @@ struct ecp::impl : public pk::context
         return mypub;
     }
 
-    auto ecdh_calc_secret(const buffer_t& otherpub) {
-        const auto* p = to_const_ptr(otherpub);
-        mbedcrypto_c_call(mbedtls_ecp_tls_read_point,
-                &ecdh_->grp,
-                &ecdh_->Qp,
+    auto ecdh_server_key_exchange() {
+        buffer_t skex(psk_length, '\0');
+        auto* buf  = to_ptr(skex);
+        size_t cap = psk_length;
+
+        auto glen = write_ecp_group(&ecdh_->grp, buf, cap);
+        buf += glen;
+        cap -= glen;
+
+        auto plen = write_ecp_point(ecdh_.get(), buf, cap);
+
+        skex.resize(glen + plen);
+        return skex;
+    }
+
+    auto ecdh_client_peer_key(const buffer_t& skex) {
+        const unsigned char* p = to_const_ptr(skex);
+        mbedcrypto_c_call(mbedtls_ecdh_read_params,
+                ecdh_.get(),
                 &p,
-                otherpub.size()
+                p + skex.size()
                 );
 
+        ecdh_gen_public();
+    }
+
+    // the peer's public key is already loaded
+    auto ecdh_calc_secret() {
         buffer_t secret(psk_length, '\0');
         size_t olen = 0;
         mbedcrypto_c_call(mbedtls_ecdh_calc_secret,
@@ -131,6 +152,35 @@ struct ecp::impl : public pk::context
 
         secret.resize(olen);
         return secret;
+    }
+
+    auto ecdh_calc_secret(const buffer_t& otherpub) {
+        mbedcrypto_c_call(mbedtls_ecdh_read_public,
+                ecdh_.get(),
+                to_const_ptr(otherpub),
+                otherpub.size()
+                );
+
+        return ecdh_calc_secret();
+    }
+
+private:
+    void ecdh_gen_public() {
+        if ( key_is_private_ ) { // if there is a key
+            pk::reset_as(*this, pk_t::eckey_dh);
+        }
+
+        mbedcrypto_c_call(mbedtls_ecdh_gen_public,
+                &ecdh_->grp,
+                &ecdh_->d,
+                &ecdh_->Q,
+                mbedcrypto::rnd_generator::maker,
+                &rnd_
+                );
+
+        // the private key has been built
+        copy_from(*this, ecdh_.get()); // copy keypair to pk_ context
+        key_is_private_ = true;
     }
 
 }; // ecp::impl
@@ -205,6 +255,24 @@ buffer_t
 ecdh::shared_secret(const buffer_t& peer_pub) {
     return pimpl->ecdh_calc_secret(peer_pub);
 }
+
+buffer_t
+ecdh::shared_secret() {
+    return pimpl->ecdh_calc_secret();
+}
+
+buffer_t
+ecdh::make_server_key_exchange(curve_t ctype) {
+    pimpl->ecdh_generate_keys(ctype);
+    return pimpl->ecdh_server_key_exchange();
+}
+
+buffer_t
+ecdh::make_client_peer_key(const buffer_t& server_key_exchange) {
+    pimpl->ecdh_client_peer_key(server_key_exchange);
+    return pimpl->ecdh_public_point();
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
 ///////////////////////////////////////////////////////////////////////////////

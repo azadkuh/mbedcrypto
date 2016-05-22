@@ -88,19 +88,39 @@ struct ecdsa : public ecp
 ///////////////////////////////////////////////////////////////////////////////
 /** ECDH(E) TLS compatible implementation.
  *
- * to calculate the shared secret:
+ * to calculate the shared secret when the curve type is predefined on both
+ * ends:
  * @code
- * // const auto ctype = curve_t::...;
+ * // const auto ctype = curve_t::...; // both knows the curve type
  *
  * ecdh server;
  * auto srv_pub = server.make_peer_key(ctype);
+ * // send srv_pub to client
  *
  * ecdh client;
  * client.generate_key(ctype); // alternative approach to make_peer_key()
  * auto cli_pub = client.peer_key();
+ * // send cli_pub to server
  *
- * auto sss = server.shared_secret(cli_pub);
- * auto css = client.shared_secret(srv_pub);
+ * auto sss = server.shared_secret(cli_pub); // on server
+ * auto css = client.shared_secret(srv_pub); // on client
+ * REQUIRE( (sss == css) );
+ * @endcode
+ *
+ * to calculare the shared secret by RFC 4492 (when server defines the curve
+ * parameters and the client follows the server):
+ * @code
+ * ecdh server;
+ * // server decides the curve type
+ * auto skex = server.make_server_key_exchange(curve_t::...);
+ * // send server's key exchange params to client
+ *
+ * ecdh client;
+ * auto cli_pub = client.make_client_peer_key(skex);
+ * auto css     = client.shared_secret();
+ * // send cli_pub to server
+ *
+ * auto sss     = server.shared_secret(cli_pub); // on server
  * REQUIRE( (sss == css) );
  * @endcode
  */
@@ -126,6 +146,19 @@ public:
     /// calculates the shared secret by the peer (other endpoint) public key
     auto shared_secret(const buffer_t& peer_key) -> buffer_t;
 
+    /// calculates the shared secret if peer's public has been loaded before
+    auto shared_secret() -> buffer_t;
+
+public: // RFC 4492 implementation ServerKeyExchange parameters
+    /** server makes its own key pair and returns ServerKeyExchange as RFC4492.
+     * both curve parameters and public key (point) are returned
+     */
+    auto make_server_key_exchange(curve_t) -> buffer_t;
+
+    /** client loads curve parameters and server's public key
+     * returns client public key
+     */
+    auto make_client_peer_key(const buffer_t& server_key_exchange) -> buffer_t;
 }; // class ecdhe
 
 ///////////////////////////////////////////////////////////////////////////////
