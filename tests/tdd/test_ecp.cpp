@@ -380,7 +380,7 @@ struct peer : public ecdh_base
 
 } // namespace mbedtls
 ///////////////////////////////////////////////////////////////////////////////
-TEST_CASE("ecdh tests", "[ecdh]") {
+TEST_CASE("ecdh tests", "[pk]") {
     using namespace mbedcrypto;
 
     SECTION("calculate shared secret") {
