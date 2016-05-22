@@ -7,7 +7,6 @@
  *
  */
 
-
 #ifndef MBEDCRYPTO_EXCEPTION_HPP
 #define MBEDCRYPTO_EXCEPTION_HPP
 
@@ -18,27 +17,35 @@
 namespace mbedcrypto {
 ///////////////////////////////////////////////////////////////////////////////
 
-/// returns as: message(code): error string of err
+/// returns as: message(code): error string of err.
 /// if err == 0, just returns the message
 auto mbedtls_error_string(int err, const char* message = nullptr) -> std::string;
 
 ///////////////////////////////////////////////////////////////////////////////
-/// the exception used in entire library
+/** the exception used in entire library.
+ * reports the exceptional or underlying mbedtls errors.
+ */
 struct exception : public std::runtime_error
 {
     using std::runtime_error::runtime_error;
 
+    /// constructs by mbedtls's error code and optional message
     explicit exception(int code, const char* message = "")
         : std::runtime_error(mer(code, message)), code_(code) {}
 
+    /// constructs by mbedtls's error code and a message
     explicit exception(int code, const std::string& message)
         : std::runtime_error(mer(code, message.c_str())), code_(code) {}
 
+    /// converts the error content into readable string
     auto to_string()const { return what(); }
 
+    /// returns the mbedtls error code
     int  code()const noexcept { return code_;}
 
-    /// mbedtls error string for code_, empty if code_ is not available (0)
+    /** the error string by mbledtls for the current code_ or an empty string
+     * if there is no error (code_ = 0).
+     */
     auto error_string()const { return mbedtls_error_string(code_); }
 
 protected:
@@ -127,6 +134,8 @@ c_call_impl(const char* error_tag, Func&& c_func, Args&&... args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
+
+/// helper macro for calling c api of mbedtls in a managed fashion
 #define mbedcrypto_c_call(FUNC, ...) \
     mbedcrypto::c_call_impl(#FUNC, FUNC, __VA_ARGS__)
 ///////////////////////////////////////////////////////////////////////////////

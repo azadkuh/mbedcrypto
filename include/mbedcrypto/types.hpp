@@ -24,8 +24,8 @@ namespace mbedcrypto {
 
 /** all possible supported hash (message-digest) types in mbedcrypto.
  * hints:
- * @warning md2 is unsecure and deprecated, md4 is no much better.
- * @warning using md5 and sha1 are insecure for password hashing,
+ * - @warning md2 is unsecure and deprecated, md4 is no much better.
+ * - @warning using md5 and sha1 are insecure for password hashing,
  * and more susceptible to hardware-accelerated attacks.
  */
 enum class hash_t {
@@ -50,21 +50,21 @@ enum class padding_t {
     zeros,            ///< zero padding (not reversible!)
 };
 
-/** block mode: https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation
+/** block mode: https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation.
  * hints:
- * ebc so fast, not cryptographically strong
+ * - ebc so fast, not cryptographically strong
  * input size must be = N * block_size, so no padding is required
- * cbc is slow and cryptographically strong
+ * - cbc is slow and cryptographically strong
  * needs iv and padding
- * cfb needs iv, no padding
- * ctr is fast and strong only with ciphers that have block_size() >= 128bits
+ * - cfb needs iv, no padding
+ * - ctr is fast and strong only with ciphers that have block_size() >= 128bits
  * needs iv, does not require padding, transforms a block to stream
  * @warning in ctr and all other counter based modes,
  * the iv should be used only once per operation to be secure
- * gcm is fast and strong if tag size is not smaller than 96bits
+ * - gcm is fast and strong if tag size is not smaller than 96bits
  * also used in aead (authenticated encryption with additional data)
  * needs iv, does not require padding
- * ccm is fast, strong if the iv never be used more than once for a given key
+ * - ccm is fast, strong if the iv never be used more than once for a given key
  * only used in aead (authenticated encryption with additional data)
  * needs iv, does not require padding
  */
@@ -81,9 +81,9 @@ enum class cipher_bm {
 
 /** all possible supported cipher types in mbedcrypto.
  * hints:
- * @warning blowfish is known to be susceptible to attacks when using weak keys,
+ * - @warning blowfish is known to be susceptible to attacks when using weak keys,
  * you'd be better to use aes or twofish instead.
- * @warning arc4 is a stream cipher with serious weaknesses in its initial stream output,
+ * - @warning arc4 is a stream cipher with serious weaknesses in its initial stream output,
  * Its use is strongly discouraged. arc4 does not use mode constructions.
  */
 enum class cipher_t {
@@ -169,7 +169,7 @@ enum class curve_t {
     bp256r1,    ///< 256-bits Brainpool curve
     bp384r1,    ///< 384-bits Brainpool curve
     bp512r1,    ///< 512-bits Brainpool curve
-    curve25519, ///< Curve25519
+    curve25519, ///< Curve25519. limited support (only for ecdh)
 };
 
 /** additional features which the mbedcrypto provieds.
@@ -180,9 +180,9 @@ enum class curve_t {
 enum class features {
     aes_ni,     ///< hardware accelerated AES. @sa cipher::supports_aes_ni()
     aead,       ///< authenticated encryption by additional data. @sa cipher::supports_aead()
-    pk_export,  ///< pem/der export of pri/pub keys. @sa pki::supports_pk_export()
-    rsa_keygen, ///< RSA key generator. @sa pki::supports_rsa_keygen()
-    ec_keygen,  ///< EC key generator. @sa pki::supports_ec_keygen()
+    pk_export,  ///< pem/der export of pri/pub keys. @sa pk::supports_key_export()
+    rsa_keygen, ///< RSA key generator. @sa pk::supports_rsa_keygen()
+    ec_keygen,  ///< EC key generator. @sa pk::supports_ec_keygen()
 };
 ///////////////////////////////////////////////////////////////////////////////
 

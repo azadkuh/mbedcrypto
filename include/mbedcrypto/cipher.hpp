@@ -20,19 +20,19 @@ namespace mbedcrypto {
  *
  * related cmake build options:
  * paddings:
- *   BUILD_ALL_CIPHER_PADDINGS
+ *  - BUILD_ALL_CIPHER_PADDINGS
  *
  * block mdoes:
- *   BUILD_CFB
- *   BUILD_CTR
- *   BUILD_GCM
- *   BUILD_CCM
+ *  - BUILD_CFB
+ *  - BUILD_CTR
+ *  - BUILD_GCM
+ *  - BUILD_CCM
  *
  * cipher types:
- *   BUILD_DES
- *   BUILD_BLOWFISH
- *   BUILD_CAMELLIA
- *   BUILD_ARC4
+ *  - BUILD_DES
+ *  - BUILD_BLOWFISH
+ *  - BUILD_CAMELLIA
+ *  - BUILD_ARC4
  *
  */
 class cipher
@@ -71,7 +71,7 @@ public:
             const buffer_t& iv, const buffer_t& key,
             const buffer_t& input) -> buffer_t;
 
-    /** decrypts the input in single shot
+    /** decrypts the input in single shot.
      * input can be in any size for cipher modes except ecb.
      * for ecb the size = block_size * N, where N >= 1
      */
@@ -80,7 +80,7 @@ public:
             const buffer_t& input) -> buffer_t;
 
 public: // aead methods require BUILD_CCM or BUILD_GCM
-    /** returns true if any of BUILD_GCM or BUILD_CCM has been activated
+    /** returns true if any of BUILD_GCM or BUILD_CCM has been activated.
      * @sa features::aead
      */
     static bool supports_aead();
@@ -88,6 +88,7 @@ public: // aead methods require BUILD_CCM or BUILD_GCM
     /** encrypts (AEAD cipher) the input and authenticate by additional data.
      * only cipher_t::gcm and cipher_t::ccm support aead.
      * input and additional_data could be in any size.
+     *
      * returns the computed tag (16bytes) as the first member of tuple,
      * the second one is the encrypted buffer.
      */
@@ -100,6 +101,7 @@ public: // aead methods require BUILD_CCM or BUILD_GCM
      * only cipher_t::gcm and cipher_t::ccm support aead.
      * additional_data could be in any size, input and tag are computed by
      * encrypt_aead().
+     *
      * returns the authentication status as the first member of tuple,
      * the second one is the decrypted buffer.
      */
@@ -130,7 +132,7 @@ public:
 
     /// cipher operation mode
     enum mode {encrypt_mode, decrypt_mode};
-    /** key length depends on cipher_t type
+    /** key length depends on cipher_t type.
      * @sa key_bitlen()
      */
     auto key(const buffer_t& key_data, mode) -> cipher&;
@@ -156,7 +158,7 @@ public: // general encryption / decryption
     /// resets and makes cipher ready for update() iterations
     void start();
 
-    /** ciphers (encrypts/decrypts) chunks of data between start()/finish() pair.
+    /** ciphers (encrypts/decrypts) chunks of data between start() / finish() pair.
      * input size is arbitrary except for ecb ciphers where the size must
      * be N * block_size
      */
@@ -164,31 +166,38 @@ public: // general encryption / decryption
     /// returns the final chunk (w/ padding)
     auto finish() -> buffer_t;
 
-    /** overload. reads count bytes from in_index of input and write into
-     * out_index of output. returns the actual size of bytes written into output.
+    /** overload.
+     * reads count bytes from in_index of input and write into out_index of
+     * output.
+     *
+     * returns the actual size of bytes written into output.
      */
     size_t update(size_t count,
             const buffer_t& input, size_t in_index,
             buffer_t& output, size_t out_index);
-    /** overload, writes into out_index of output
+    /** overload, writes into out_index of output.
      * returns the actual size of bytes written into output.
      */
     size_t finish(buffer_t& output, size_t out_index);
 
-    /** low level overload. the output buffer must be at least input_size + block_size()
+    /** low level overload.
+     * the output buffer must be at least input_size + block_size()
      * for the selected cipher_t.
      * output_size the size of output, also will be updated by actual size.
      */
     int  update(const unsigned char* input, size_t input_size,
             unsigned char* output, size_t& output_size) noexcept;
 
-    /** low level overload. the output size must be block_size() + 32.
+    /** low level overload.
+     * the output size must be block_size() + 32
      * output_size the size of output, also will be updated by actual size.
      */
     int  finish(unsigned char* output, size_t& output_size) noexcept;
 
 
-    /// helper function, runs start()/update()/finish() in a single call, single allocation
+    /** helper function, runs start() / update() / finish() in a single call,
+     * single allocation
+     */
     auto crypt(const buffer_t& input) -> buffer_t;
 
 public: // gcm features: requires BUILD_GCM
