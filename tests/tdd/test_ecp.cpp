@@ -6,6 +6,7 @@
 #include "../../src/pk_private.hpp"
 
 #include "mbedtls/ecdsa.h"
+#include "mbedtls/ecdh.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 namespace {
@@ -176,13 +177,13 @@ TEST_CASE("ec key tests", "[pk]") {
 #if defined(MBEDTLS_ECDSA_C)  &&  defined(MBEDTLS_ECP_C)
 namespace mbedtls {
 namespace details {
-    template<> inline void initializer(mbedtls_ecdsa_context* ctx) noexcept{
-        mbedtls_ecdsa_init(ctx);
-    }
+template<> inline void initializer(mbedtls_ecdsa_context* ctx) noexcept{
+    mbedtls_ecdsa_init(ctx);
+}
 
-    template<> inline void cleanup(mbedtls_ecdsa_context* ctx) noexcept{
-        mbedtls_ecdsa_free(ctx);
-    }
+template<> inline void cleanup(mbedtls_ecdsa_context* ctx) noexcept{
+    mbedtls_ecdsa_free(ctx);
+}
 } // namespace details
 using ecdsa = wrapper<mbedtls_ecdsa_context>;
 } // namespace mbedtls
@@ -297,3 +298,127 @@ TEST_CASE("ecdsa tests", "[pk]") {
 ///////////////////////////////////////////////////////////////////////////////
 #endif // MBEDTLS_ECDSA_C && MBEDTLS_ECP_C
 ///////////////////////////////////////////////////////////////////////////////
+
+// test ecdh
+#if defined(MBEDTLS_ECDH_C)
+namespace mbedtls {
+namespace details {
+template<> inline void initializer(mbedtls_ecdh_context* ctx) noexcept{
+    mbedtls_ecdh_init(ctx);
+}
+
+template<> inline void cleanup(mbedtls_ecdh_context* ctx) noexcept{
+    mbedtls_ecdh_free(ctx);
+}
+} // namespace details
+using ecdh = wrapper<mbedtls_ecdh_context>;
+
+struct ecdh_base {
+    enum K {
+        psk_length = 150,
+    };
+
+    mbedcrypto::rnd_generator rnd_{"ecdh generator"};
+    mbedtls::ecdh    ecdh_;
+}; // struct ecdh_base
+
+struct peer : public ecdh_base
+{
+    auto make_peer_key(mbedcrypto::curve_t ctype) {
+        mbedtls_c_call(mbedtls_ecp_group_load,
+                &ecdh_->grp,
+                mbedcrypto::to_native(ctype)
+                );
+        mbedtls_c_call(mbedtls_ecdh_gen_public,
+                &ecdh_->grp,
+                &ecdh_->d,
+                &ecdh_->Q,
+                mbedcrypto::rnd_generator::maker,
+                &rnd_
+                );
+
+        std::string mypub(psk_length, '\0');
+        size_t olen = 0;
+        mbedtls_c_call(mbedtls_ecp_tls_write_point,
+                &ecdh_->grp,
+                &ecdh_->Q,
+                ecdh_->point_format,
+                &olen,
+                mbedcrypto::to_ptr(mypub),
+                psk_length
+                );
+
+        mypub.resize(olen);
+        return mypub;
+    }
+
+    auto shared_secret(const std::string& otherpub) {
+        const auto* p = mbedcrypto::to_const_ptr(otherpub);
+        mbedtls_c_call(mbedtls_ecp_tls_read_point,
+                &ecdh_->grp,
+                &ecdh_->Qp,
+                &p,
+                otherpub.size()
+                );
+
+        std::string secret(psk_length, '\0');
+        size_t olen = 0;
+        mbedtls_c_call(mbedtls_ecdh_calc_secret,
+                ecdh_,
+                &olen,
+                mbedcrypto::to_ptr(secret),
+                psk_length,
+                mbedcrypto::rnd_generator::maker,
+                &rnd_
+                );
+
+        secret.resize(olen);
+        return secret;
+    }
+
+}; // struct peer
+
+} // namespace mbedtls
+///////////////////////////////////////////////////////////////////////////////
+TEST_CASE("ecdh tests", "[ecdh]") {
+    using namespace mbedcrypto;
+    const auto ctype = curve_t::secp192k1;
+
+    SECTION("calculate shared secret") {
+        ecdh server;
+        auto srv_pub = server.make_peer_key(ctype);
+
+        ecdh client;
+        client.generate_key(ctype); // alternative approach to make_peer_key()
+        auto cli_pub = client.peer_key();
+
+        auto sss = server.shared_secret(cli_pub); // server shared secret
+        auto css = client.shared_secret(srv_pub); // client shared secret
+        REQUIRE( (sss == css) );
+
+        {
+            mbedtls::peer c_cli;
+            cli_pub = c_cli.make_peer_key(ctype);
+
+            sss = server.shared_secret(cli_pub);
+            css = c_cli.shared_secret(srv_pub);
+            REQUIRE( (sss == css) );
+        }
+
+        if ( supports(features::pk_export) ) {
+            auto pri_key = client.export_key(pk::pem_format);
+            ecdh clone;
+            clone.import_key(pri_key);
+            cli_pub = clone.peer_key();
+
+            sss = server.shared_secret(cli_pub);
+            css = clone.shared_secret(srv_pub);
+            REQUIRE( (sss == css) );
+        }
+    }
+
+}
+///////////////////////////////////////////////////////////////////////////////
+#endif // MBEDTLS_ECDH_C
+///////////////////////////////////////////////////////////////////////////////
+
