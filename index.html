@@ -36,7 +36,7 @@ and has more features with smaller footprint.</p>
 
 <ul>
 <li>
-<em>small size</em>: the <code>mbedcrypto</code> is less than <code>250KB</code> in size (under Linux and
+<em>small size</em>: the <code>mbedcrypto</code> is less than <code>250KB</code> in size (stripped under Linux and
 OS X) with all <em>predefined</em> algorithms. it can be easily embedded into
 your service or application.</li>
 <li>
@@ -50,10 +50,10 @@ compiled and tested by:
 
 <ul>
 <li>
-<code>gcc 5.x</code> under <code>linux</code>
+<code>gcc 5.x+</code> under <code>linux</code>
 </li>
 <li>
-<code>clang</code> under <code>os x</code>
+<code>clang 3.6+</code> under <code>os x</code>
 </li>
 <li>
 <code>msvc 2015</code> community edition under <code>windows 7</code>
@@ -175,6 +175,8 @@ Diffie–Hellman, <code>ecdsa</code> elliptic key digital signature algorithm, <
 and <code>rsassa_pss</code> RSA standard signature algorithm, probabilistic signature
 scheme</li>
 <li>optional <code>rsa</code> key generator</li>
+<li>optional <code>ec curves</code> from well known domain parameters as <code>NIST</code>, <code>Kolbitz</code>,
+<code>brainpool</code> and <code>Curve25519</code>.</li>
 </ul>
 </li>
 </ul>
@@ -368,7 +370,7 @@ shared library as:</p>
 <p>is widely used in <code>mbedcrypto</code> api as main data container for input / output
 methods.</p>
 
-<p>current <code>std::string</code> implementations are known to be contiguous, so I prefer
+<p>current <code>std::string</code> implementations are known to be <em>contiguous</em>, so I prefer
 <code>std::string</code> over <code>std::vector&lt;unsigned char&gt;</code> because it helps users to
 easily feed both text and binary buffers into <code>mbedtls</code> api without any cast or
 conversion.</p>
@@ -466,7 +468,7 @@ std::cout &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>supports <spa
 <h3>
 <a id="text-binary-conversion" class="anchor" href="#text-binary-conversion" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>text-binary conversion</h3>
 
-<p>handy utility to convert binary into (from) text:</p>
+<p>handy utility to convert binary into (or from) text:</p>
 
 <div class="highlight highlight-source-c++"><pre><span class="pl-k">using</span> <span class="pl-k">namespace</span> <span class="pl-en">mbedcrypto</span><span class="pl-k">;</span>
 
@@ -492,13 +494,15 @@ png_b64 = base64::encode(bin_data);
 <h3>
 <a id="hashes" class="anchor" href="#hashes" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>hashes</h3>
 
+<p>(cryptographic hashes also known as message digests)</p>
+
 <div class="highlight highlight-source-c++"><pre><span class="pl-k">using</span> <span class="pl-k">namespace</span> <span class="pl-en">mbedcrypto</span><span class="pl-k">;</span>
 
 <span class="pl-c">// by single shot functions</span>
-<span class="pl-k">auto</span> hvalue = make_hash(<span class="pl-c1">hash_t</span>::sha256, source_data);
-std::cout &lt;&lt; to_base64(hvalue) &lt;&lt; std::endl;
+<span class="pl-k">auto</span> hash_value = make_hash(<span class="pl-c1">hash_t</span>::sha256, source_data);
+<span class="pl-k">auto</span> hmac_value = hmac::make(<span class="pl-c1">hash_t</span>::sha1, key_data, source_data);
 
-<span class="pl-k">auto</span> hmac_value = hmac::make(<span class="pl-c1">hash_t</span>::md5, key_data, source_data);</pre></div>
+std::cout &lt;&lt; to_base64(hash_value) &lt;&lt; std::endl;</pre></div>
 
 <p>or</p>
 
@@ -509,12 +513,12 @@ h1.start();
 <span class="pl-k">while</span> ( ... ) {
   h1.<span class="pl-c1">update</span>(<span class="pl-c1">read_some_data</span>());
 }
-<span class="pl-k">auto</span> hvalue = h1.finish();
+<span class="pl-k">auto</span> hash_value = h1.finish();
 
 <span class="pl-c">// re-use</span>
 h1.start();
-h1.update(...);
-hvalue = h1.finish();</pre></div>
+h1.update(...); <span class="pl-c">// single or multiple updates</span>
+hash_value = h1.finish();</pre></div>
 
 <p>see <a href="./include/mbedcrypto/hash.hpp">hash.hpp</a></p>
 
@@ -567,8 +571,7 @@ aead)</a>:</p>
     iv_data,
     key_data,
     the_additional_data,
-    std::get&lt;<span class="pl-c1">1</span>&gt;(encr), <span class="pl-c">// encrypted input</span>
-    std::get&lt;<span class="pl-c1">0</span>&gt;(encr)  <span class="pl-c">// authentication tag</span>
+    encr
     );  <span class="pl-c">///&lt; returns a std::tuple&lt; authentication_status, decrypted_data &gt;</span>
 
 
@@ -606,68 +609,170 @@ decrypted_data = cipdec.crypt(encrypted_data);</pre></div>
 <h3>
 <a id="random-byte-generator" class="anchor" href="#random-byte-generator" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>random byte generator</h3>
 
-<div class="highlight highlight-source-c++"><pre>mbedcrypto::random rnd_generator;
-<span class="pl-k">auto</span> random_data1 = rnd_generator.make(<span class="pl-c1">256</span>); <span class="pl-c">// in bytes</span>
-<span class="pl-k">auto</span> random_data2 = rnd_generator.make(<span class="pl-c1">32</span>);  <span class="pl-c">// in bytes</span>
-<span class="pl-c">//</span></pre></div>
+<p>to make cryptographically secure psuedo random bytes:</p>
 
-<p>see <a href="./include/mbedcrypto/random.hpp">random.hpp</a></p>
+<div class="highlight highlight-source-c++"><pre>rnd_generator rgen;
+<span class="pl-k">auto</span> random_data1 = rgen.make(<span class="pl-c1">256</span>); <span class="pl-c">// in bytes</span>
+<span class="pl-c">// entropy and ctr_drbg are not so cheap, reuse them:</span>
+<span class="pl-k">auto</span> random_data2 = rgen.make(<span class="pl-c1">32</span>);  <span class="pl-c">// in bytes</span>
+
+<span class="pl-c">// update internal state with custom data (may helps entropy)</span>
+rgen.update(some_random_volatile_data);
+<span class="pl-k">auto</span> nonce = rgen.make(<span class="pl-c1">64</span>);</pre></div>
+
+<p>see <a href="./include/mbedcrypto/rnd_generator.hpp">rnd_generator.hpp</a></p>
 
 <h3>
 <a id="pks" class="anchor" href="#pks" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>pks</h3>
 
-<p>loading or exporting keys:</p>
+<p>playing with <code>rsa</code> keys:</p>
 
 <div class="highlight highlight-source-c++"><pre><span class="pl-k">using</span> <span class="pl-k">namespace</span> <span class="pl-en">mbedcrypto</span><span class="pl-k">;</span>
 
-pki pri;
-pri.parse_key(private_key_data, optional_password);
-<span class="pl-c">// or load from by a file name</span>
-<span class="pl-c">// pri.load_key("private_key.pem");</span>
+rsa pri_key;
+<span class="pl-c">// import from data buffer</span>
+pri_key.import_key(private_key_data, optional_password);
+<span class="pl-c">// or load from a file by file-name</span>
+pri_key.load_key(<span class="pl-s"><span class="pl-pds">"</span>private_key.pem<span class="pl-pds">"</span></span>);
 
-pki pub;
-pub.parse_public_key(public_key_data);
+rsa pub_key;
+pub_key.import_public_key(public_key_data);
 
 <span class="pl-c">// [optional] check matching public/private pair</span>
-<span class="pl-en">REQUIRE</span>( pki::check_pair(pub, pri) == true );
+<span class="pl-en">REQUIRE</span>( check_pair(pub_key, pri_key) == true );
 
 <span class="pl-c">// export keys</span>
 <span class="pl-k">if</span> ( supports(features::pk_export) ) {
-    <span class="pl-k">auto</span> der_data = pri.<span class="pl-c1">export_key</span>(pki::der_format);
-    <span class="pl-c">// write or send</span>
+    <span class="pl-k">auto</span> der_data = pub_key.<span class="pl-c1">export_public_key</span>(pk::der_format);
+    <span class="pl-c">// write or share</span>
 }
 
 <span class="pl-c">// key generation</span>
 <span class="pl-k">if</span> ( supports(features::rsa_keygen) ) {
-    pki <span class="pl-smi">rg</span>(<span class="pl-c1">pk_t</span>::rsa);
-    rg.<span class="pl-c1">rsa_generate_key</span>(<span class="pl-c1">2048</span>);
+    rsa pri_key;
+    pri_key.<span class="pl-c1">generate_key</span>(<span class="pl-c1">2048</span>); <span class="pl-c">// a 2048bit key</span>
     <span class="pl-c">// do stuff</span>
-}</pre></div>
+}
 
-<p>sign and verify:</p>
+<span class="pl-k">auto</span> af = pub_key.what_can_do(); <span class="pl-c">// what can i do with this key?</span>
+<span class="pl-c">// returns pk::action_flags (key capabilities) with following data:</span>
+<span class="pl-c">// af.encrypt = true</span>
+<span class="pl-c">// af.decrypt = false</span>
+<span class="pl-c">// af.sign    = false</span>
+<span class="pl-c">// af.verify  = true</span>
+<span class="pl-c">// because pub_key is a valid rsa public-key</span>
+
+<span class="pl-k">auto</span> kinfo = pri_key.key_info();
+<span class="pl-c">// kinfo.N  :  public modulus</span>
+<span class="pl-c">// kinfo.E  :  public exponent</span>
+<span class="pl-c">// only valid if the key is a private key</span>
+<span class="pl-c">// kinfo.D  :  private exponent</span>
+<span class="pl-c">// kinfo.P  :  1st prime factor</span>
+<span class="pl-c">// kinfo.Q  :  2nd prime factor</span>
+<span class="pl-c">// kinfo.DP  : D % (P - 1)</span>
+<span class="pl-c">// kinfo.DQ  : D % (Q - 1)</span>
+<span class="pl-c">// kinfo.QP  : 1 / (Q % P)</span></pre></div>
+
+<p>to sign and verify by <code>rsa</code>:</p>
 
 <div class="highlight highlight-source-c++"><pre><span class="pl-c">// signature &amp; verification</span>
 std::string message = read_message_from_somewhere();
-<span class="pl-k">auto</span> signature      = pri.sign(message, <span class="pl-c1">hash_t</span>::sha256);
-<span class="pl-en">REQUIRE</span>( pub.verify(signature, message, <span class="pl-c1">hash_t</span>::sha256);</pre></div>
+<span class="pl-k">auto</span> signature      = pri_key.sign(message, <span class="pl-c1">hash_t</span>::sha256);
+<span class="pl-en">REQUIRE</span>( pub_key.verify(signature, message, <span class="pl-c1">hash_t</span>::sha256);</pre></div>
 
-<p>to encrypt and decrypt by pki:</p>
+<p>to encrypt and decrypt by <code>rsa</code>:</p>
 
 <div class="highlight highlight-source-c++"><pre><span class="pl-k">const</span> <span class="pl-k">auto</span> hvalue = hash::make(<span class="pl-c1">hash_t</span>::sha256, message);
 
-pki pub;
-pub.parse_public_key(public_key_data);
+<span class="pl-k">auto</span> encv = pub_key.encrypt(hvalue);
+<span class="pl-k">auto</span> decv = pri_key.decrypt(encv);
+<span class="pl-en">REQUIRE</span>( decv == hvalue );
 
-<span class="pl-k">auto</span> encv = pub.encrypt(message, <span class="pl-c1">hash_t</span>::sha256);
 <span class="pl-c">// or</span>
-<span class="pl-c">// auto encv = pub.encrypt(hvalue);</span>
+<span class="pl-k">auto</span> encv = pub_key.encrypt(message, <span class="pl-c1">hash_t</span>::sha256);
+<span class="pl-k">auto</span> decv = pri_key.decrypt(encv);
+<span class="pl-en">REQUIRE</span>( decv == hash::make(<span class="pl-c1">hash_t</span>::sha256, message) );
+</pre></div>
 
-pki pri;
-pri.parse_key(private_key_data);
-<span class="pl-k">auto</span> decv = pri.decrypt(encv);
-<span class="pl-en">REQUIRE</span>( decv == hvalue );</pre></div>
+<p>see <a href="./include/mbedcrypto/rsa.hpp">rsa.hpp</a></p>
 
-<p>see <a href="./include/mbedcrypto/pki.hpp">pki.hpp</a></p>
+<p>to create <code>ec</code> keys from curves:</p>
+
+<div class="highlight highlight-source-c++"><pre><span class="pl-k">using</span> <span class="pl-k">namespace</span> <span class="pl-en">mbedcrypto</span><span class="pl-k">;</span>
+
+<span class="pl-k">if</span> ( supports(features::pk_export)  &amp;&amp;  supports(<span class="pl-c1">pk_t</span>::eckey) ) {
+    ecp gen; <span class="pl-c">// elliptic curve public key infrastructure</span>
+    gen.<span class="pl-c1">generate_key</span>(<span class="pl-c1">curve_t</span>::secp224k1); <span class="pl-c">// or any other supported curves</span>
+    <span class="pl-k">auto</span> pri_data = gen.<span class="pl-c1">export_key</span>(pk::pem_format);
+    <span class="pl-k">auto</span> pub_data = gen.<span class="pl-c1">export_public_key</span>(pk::pem_format);
+    <span class="pl-c">// do stuff</span>
+
+    <span class="pl-k">auto</span> kinfo = gen.<span class="pl-c1">key_info</span>(); <span class="pl-c">// ecurve points and secret</span>
+    std::cout
+        &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\n</span>Qx (<span class="pl-pds">"</span></span> &lt;&lt; kinfo.<span class="pl-smi">Qx</span>.<span class="pl-c1">bitlen</span>() &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>): <span class="pl-pds">"</span></span> &lt;&lt; kinfo.<span class="pl-smi">Qx</span>.<span class="pl-c1">to_string</span>()
+        &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\n</span>Qy (<span class="pl-pds">"</span></span> &lt;&lt; kinfo.<span class="pl-smi">Qy</span>.<span class="pl-c1">bitlen</span>() &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>): <span class="pl-pds">"</span></span> &lt;&lt; kinfo.<span class="pl-smi">Qy</span>.<span class="pl-c1">to_string</span>()
+        &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\n</span>Qz (<span class="pl-pds">"</span></span> &lt;&lt; kinfo.<span class="pl-smi">Qz</span>.<span class="pl-c1">bitlen</span>() &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>): <span class="pl-pds">"</span></span> &lt;&lt; kinfo.<span class="pl-smi">Qz</span>.<span class="pl-c1">to_string</span>()
+        &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\n</span>d  (<span class="pl-pds">"</span></span> &lt;&lt; kinfo.<span class="pl-smi">D</span>.<span class="pl-c1">bitlen</span>()  &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>): <span class="pl-pds">"</span></span> &lt;&lt; kinfo.<span class="pl-smi">d</span>.<span class="pl-c1">to_string</span>()
+        &lt;&lt; std::endl;
+}</pre></div>
+
+<p>to sign and verify by <code>ecdsa</code>:</p>
+
+<div class="highlight highlight-source-c++"><pre><span class="pl-k">using</span> <span class="pl-k">namespace</span> <span class="pl-en">mbedcrypto</span><span class="pl-k">;</span>
+
+<span class="pl-k">if</span> ( supports(<span class="pl-c1">pk_t</span>::ecdsa)  &amp;&amp;  supports(features::ec_keygen) ) {
+    ecdsa pri_key; <span class="pl-c">// both pk_t::eckey and pk_t::ecdsa works</span>
+    pri_key.<span class="pl-c1">generate_key</span>(<span class="pl-c1">curve_t</span>::secp192k1);
+    <span class="pl-k">auto</span> sig = pri_key.<span class="pl-c1">sign</span>(message, <span class="pl-c1">hash_t</span>::sha384);
+
+    ecdsa pub_key;
+    pub_key.<span class="pl-c1">import_public_key</span>(
+            pri_key.<span class="pl-c1">export_public_key</span>(pk::pem_format)
+            );
+
+    <span class="pl-c1">REQUIRE</span>( pub_key.<span class="pl-c1">verify</span>(sig, message, <span class="pl-c1">hash_t</span>::sha384) );
+}</pre></div>
+
+<p>to create a shared secret by <code>ECDH(E)</code> when both ends know the curve type:</p>
+
+<div class="highlight highlight-source-c++"><pre><span class="pl-k">using</span> <span class="pl-k">namespace</span> <span class="pl-en">mbedcrypto</span><span class="pl-k">;</span>
+<span class="pl-c">// const auto ctype = curve_t::secp224r1 // both know the curve type</span>
+
+ecdh server;
+<span class="pl-k">auto</span> srv_pub = server.make_peer_key(ctype);
+<span class="pl-c">// send srv_pub to client</span>
+
+ecdh client;
+client.generate_key(ctype); <span class="pl-c">// alternative approach to make_peer_key()</span>
+<span class="pl-k">auto</span> cli_pub = client.peer_key();
+<span class="pl-c">// send cli_pub to server</span>
+
+<span class="pl-k">auto</span> sss = server.shared_secret(cli_pub); <span class="pl-c">// on server</span>
+<span class="pl-k">auto</span> css = client.shared_secret(srv_pub); <span class="pl-c">// on client</span>
+
+<span class="pl-en">REQUIRE</span>( (sss == css) );</pre></div>
+
+<p>or if the curve parameters are defined by server at runtime as defined in
+<a href="https://tools.ietf.org/html/rfc4492">RFC 4492: Elliptic Curve Cryptography (ECC) Cipher Suites for Transport Layer
+Security (TLS)</a> do:</p>
+
+<div class="highlight highlight-source-c++"><pre><span class="pl-k">using</span> <span class="pl-k">namespace</span> <span class="pl-en">mbedcrypto</span><span class="pl-k">;</span>
+
+ecdh server;
+<span class="pl-c">// (only) server defines the curve type</span>
+<span class="pl-k">auto</span> skex = server.make_server_key_exchange(<span class="pl-c1">curve_t</span>::secp192k1);
+<span class="pl-c">// send server's key exchange params to client</span>
+
+ecdh client;
+<span class="pl-k">auto</span> cli_pub = client.make_client_peer_key(skex);
+<span class="pl-k">auto</span> css     = client.shared_secret();
+<span class="pl-c">// send cli_pub to server</span>
+
+<span class="pl-k">auto</span> sss     = server.shared_secret(cli_pub); <span class="pl-c">// on server</span>
+
+<span class="pl-en">REQUIRE</span>( (sss == css) );</pre></div>
+
+<p>see <a href="./include/mbedcrypto/ecp.hpp">ecp.hpp</a></p>
 
 <hr>
 
@@ -679,17 +784,37 @@ pri.parse_key(private_key_data);
 <p>the test application has been built by
 <a href="https://github.com/philsquared/Catch">catch</a>:</p>
 
-<div class="highlight highlight-source-shell"><pre><span class="pl-smi">$xbin</span>/<span class="pl-k">&gt;</span> ./tests -t
-All available tags:
-   1  [base64]
-   2  [cipher]
-   1  [exception]
-   1  [<span class="pl-c1">hash</span>]
-   1  [hex]
-   2  [pki]
-   1  [random]
-   4  [types]
-8 tags</pre></div>
+<div class="highlight highlight-source-shell"><pre><span class="pl-c"># to list all available test tags:</span>
+<span class="pl-smi">$xbin</span>/<span class="pl-k">&gt;</span> ./tests -t
+
+<span class="pl-c"># run the tests</span>
+<span class="pl-smi">$xbin</span>/<span class="pl-k">&gt;</span> ./tests</pre></div>
+
+<p>possible output:</p>
+
+<pre lang="text"><code>supports 6 hash algorithms: MD5 , SHA1 , SHA224 , SHA256 , SHA384 , SHA512 ,
+supports 5 padding algorithms: PKCS7 , ONE_AND_ZEROS , ZEROS_AND_LEN , ZEROS ,
+         NONE ,
+supports 6 block modes: NONE , ECB , CBC , CTR , GCM , CCM ,
+supports 21 cipher algorithms: AES-128-ECB , AES-192-ECB , AES-256-ECB ,
+         AES-128-CBC , AES-192-CBC , AES-256-CBC , AES-128-CTR , AES-192-CTR ,
+         AES-256-CTR , AES-128-GCM , AES-192-GCM , AES-256-GCM , DES-ECB ,
+         DES-CBC , DES-EDE-ECB , DES-EDE-CBC , DES-EDE3-ECB , DES-EDE3-CBC ,
+         AES-128-CCM , AES-192-CCM , AES-256-CCM ,
+ this system supports AESNI (hardware accelerated AES)
+ this build supports AEAD (authenticated encryption with additional data)
+supports 4 pk (public key) algorithms: RSA , EC , EC_DH , ECDSA ,
+ this build supports PK export (*.pem, *.der) facility
+ this build supports RSA key generation
+ this build supports EC (elliptic curve) key generation
+supports 12 elliptic curves: SECP192R1 , SECP224R1 , SECP256R1 , SECP384R1 ,
+         SECP521R1 , SECP192K1 , SECP224K1 , SECP256K1 , BP256R1 , BP384R1 ,
+         BP512R1 , CURVE25519 ,
+
+===============================================================================
+All tests passed (952 assertions in 17 test cases)
+
+</code></pre>
 
 <hr>
 
