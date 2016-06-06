@@ -12,6 +12,7 @@
 #include "mbedcrypto/types.hpp"
 #include "mbedcrypto/mpi.hpp"
 
+#include <tuple>
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
 // forward declarations
