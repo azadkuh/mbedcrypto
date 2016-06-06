@@ -31,7 +31,8 @@ public:
 
 public:
     /// returns true only if the mpi has a valid value
-    operator bool()const noexcept { return bitlen() > 0; }
+    explicit operator bool()const noexcept { return bitlen() > 0; }
+    bool operator==(bool b)const noexcept { return static_cast<bool>(*this) == b; }
     /// returns the integer size in byte (ex: 512 for a 4096bit integer)
     size_t size()const noexcept;
     /// returns the integer bitsize

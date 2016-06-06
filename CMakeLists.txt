@@ -29,8 +29,7 @@ option(BUILD_ARC4     "enable arc4 cipher (unsecure)" OFF)
 # optional pk algorithm
 option(BUILD_PK_EXPORT  "enable export keys in pem or der format" ON)
 option(BUILD_RSA_KEYGEN "enable rsa key generator" ON)
-option(BUILD_EC         "enable eckey and eckey_dh public key algorithms " OFF)
-option(BUILD_ECDSA      "enable ecdsa algorithms" OFF)
+option(BUILD_EC         "enable eckey, eckey_dh, ecdsa algorithms " OFF)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING

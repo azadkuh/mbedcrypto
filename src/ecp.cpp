@@ -1,6 +1,8 @@
 #include "mbedcrypto/ecp.hpp"
 #include "pk_private.hpp"
 
+#if defined(MBEDTLS_ECP_C)
+
 #include "mbedtls/ecdh.h"
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -12,8 +14,8 @@ static_assert(std::is_move_constructible<ecp>::value == true,  "");
 
 static_assert(std::is_copy_constructible<ecdsa>::value == false, "");
 static_assert(std::is_move_constructible<ecdsa>::value == true,  "");
-static_assert(std::is_copy_constructible<ecdh>::value == false, "");
-static_assert(std::is_move_constructible<ecdh>::value == true,  "");
+static_assert(std::is_copy_constructible<ecdh>::value  == false, "");
+static_assert(std::is_move_constructible<ecdh>::value  == true,  "");
 
 enum K {
     psk_length = 150,
@@ -221,7 +223,6 @@ ecp::context()const {
 
 void
 ecp::operator>>(struct ecp::key_info& ki)const {
-#if defined(MBEDTLS_ECP_C)
     const auto* ec_ctx = mbedtls_pk_ec(pimpl->pk_);
     ki.Qx << ec_ctx->Q.X;
     ki.Qy << ec_ctx->Q.Y;
@@ -229,10 +230,6 @@ ecp::operator>>(struct ecp::key_info& ki)const {
 
     // copies a an empty value if the key is not private
     ki.d << ec_ctx->d;
-
-#else
-    throw exceptions::ecp_missed{};
-#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -276,4 +273,5 @@ ecdh::make_client_peer_key(const buffer_t& server_key_exchange) {
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
 ///////////////////////////////////////////////////////////////////////////////
-
+#else // MBEDTLS_ECP_C
+#endif // MBEDTLS_ECP_C

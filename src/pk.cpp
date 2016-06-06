@@ -149,8 +149,10 @@ max_crypt_size(const context& d) {
     if ( type_of(d) == pk_t::rsa )
         return key_length(d) - 11;
 
+#if defined(MBEDTLS_ECDSA_C)
     else if ( can_do(d, pk_t::ecdsa) )
             return (size_t) MBEDTLS_ECDSA_MAX_LEN;
+#endif
 
     throw exceptions::support_error{};
 }

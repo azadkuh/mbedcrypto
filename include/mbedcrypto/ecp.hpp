@@ -18,7 +18,6 @@ namespace mbedcrypto {
 /** elliptic curve (ec) for public key cryptography.
  * to use this ec you must build mbedcrypto with:
  *  - BUILD_EC
- *  - BUILD_ECDSA
  *  other related options:
  *  - BUILD_PK_EXPORT
  * @sa cmake options

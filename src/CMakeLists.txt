@@ -112,6 +112,9 @@ if(BUILD_RSA_KEYGEN)
 endif()
 if(BUILD_EC)
     set(MBEDTLS_ECP_C ON)
+    SET(MBEDTLS_ECDH_C ON)
+    set(MBEDTLS_DHM_C ON)
+    set(MBEDTLS_ECDSA_C ON)
     set(MBEDTLS_ECP_DP_SECP192R1_ENABLED ON)
     set(MBEDTLS_ECP_DP_SECP224R1_ENABLED ON)
     set(MBEDTLS_ECP_DP_SECP256R1_ENABLED ON)
@@ -124,18 +127,11 @@ if(BUILD_EC)
     set(MBEDTLS_ECP_DP_BP384R1_ENABLED ON)
     set(MBEDTLS_ECP_DP_BP512R1_ENABLED ON)
     set(MBEDTLS_ECP_DP_CURVE25519_ENABLED ON)
-    SET(MBEDTLS_ECDH_C ON)
-    set(MBEDTLS_DHM_C ON)
     target_sources(mbedcrypto PRIVATE
         ${MBEDTLS_PATH}/ecp.c
         ${MBEDTLS_PATH}/ecp_curves.c
         ${MBEDTLS_PATH}/dhm.c
         ${MBEDTLS_PATH}/ecdh.c
-        )
-endif()
-if(BUILD_ECDSA)
-    set(MBEDTLS_ECDSA_C ON)
-    target_sources(mbedcrypto PRIVATE
         ${MBEDTLS_PATH}/ecdsa.c
         )
 endif()

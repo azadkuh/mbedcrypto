@@ -26,7 +26,6 @@ namespace pk {
  *   BUILD_PK_EXPORT
  *   BUILD_RSA_KEYGEN
  *   BUILD_EC
- *   BUILD_ECDSA
  *
  */
 struct context;

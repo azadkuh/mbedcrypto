@@ -5,6 +5,8 @@
 #include "mbedcrypto/hash.hpp"
 #include "../../src/pk_private.hpp"
 
+#if defined(MBEDTLS_ECP_C)
+
 #include "mbedtls/ecdsa.h"
 #include "mbedtls/ecdh.h"
 
@@ -174,7 +176,7 @@ TEST_CASE("ec key tests", "[pk]") {
 
 ///////////////////////////////////////////////////////////////////////////////
 // test ecdsa
-#if defined(MBEDTLS_ECDSA_C)  &&  defined(MBEDTLS_ECP_C)
+#if defined(MBEDTLS_ECDSA_C)
 namespace mbedtls {
 namespace details {
 template<> inline void initializer(mbedtls_ecdsa_context* ctx) noexcept{
@@ -296,7 +298,7 @@ TEST_CASE("ecdsa tests", "[pk]") {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-#endif // MBEDTLS_ECDSA_C && MBEDTLS_ECP_C
+#endif // MBEDTLS_ECDSA_C
 ///////////////////////////////////////////////////////////////////////////////
 
 // test ecdh
@@ -435,4 +437,4 @@ TEST_CASE("ecdh tests", "[pk]") {
 ///////////////////////////////////////////////////////////////////////////////
 #endif // MBEDTLS_ECDH_C
 ///////////////////////////////////////////////////////////////////////////////
-
+#endif // MBEDTLS_ECP_C

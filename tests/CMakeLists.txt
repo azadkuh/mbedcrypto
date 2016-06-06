@@ -16,7 +16,7 @@ if(BUILD_TESTS_IDEA)
     add_executable(c_raii ./other/c_raii.cpp)
     target_link_libraries(c_raii mbedcrypto)
 
-    if(BUILD_EC AND BUILD_ECDSA AND BUILD_PK_EXPORT)
+    if(BUILD_EC AND BUILD_PK_EXPORT)
         add_executable(ec_keygen ./other/ec_keygen.cpp)
         target_link_libraries(ec_keygen mbedcrypto)
     endif()

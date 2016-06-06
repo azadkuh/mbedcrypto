@@ -157,8 +157,7 @@ these are the most important build options:
 | BUILD_ARC4       | OFF     | enable arc4 cipher (unsecure)                                   |
 | BUILD_PK_EXPORT  | ON      | enable export keys in pem or der format                         |
 | BUILD_RSA_KEYGEN | ON      | enable rsa key generator                                        |
-| BUILD_EC         | OFF     | enable eckey and eckey_dh public key algorithms                 |
-| BUILD_ECDSA      | OFF     | enable ecdsa algorithms                                         |
+| BUILD_EC         | OFF     | enable eckey, eckey_dh and ecdsa algorithms                     |
 
 please see [CMakeLists.txt](./CMakeLists.txt) for the full list.
 
