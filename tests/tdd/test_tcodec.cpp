@@ -1,33 +1,34 @@
 #include <catch.hpp>
-#include <iostream>
 
 #include "generator.hpp"
 #include "mbedcrypto/tcodec.hpp"
+
+#include <iostream>
 ///////////////////////////////////////////////////////////////////////////////
 namespace {
 using namespace mbedcrypto;
 ///////////////////////////////////////////////////////////////////////////////
-template<class Func> void
+template <class Func>
+void
 try_func(Func&& f) {
     try {
         f();
 
-    } catch ( exception& err ) {
+    } catch (exception& err) {
         std::cerr << err.what() << "\n";
         FAIL("throws");
 
-    } catch ( std::exception& err ) {
+    } catch (std::exception& err) {
         std::cerr << err.what() << "\n";
         FAIL("throws");
     }
 }
 
 // of test::short_binary()
-const char Hex[] =
-    "68404c76377188143ae9673f9413dadd"
-    "03809d3100ffd778baac90f0a30ec0ca"
-    "714fe42348f23e5d8563fb626708f577"
-    "0025f62c74107759dfb218";
+const char Hex[] = "68404c76377188143ae9673f9413dadd"
+                   "03809d3100ffd778baac90f0a30ec0ca"
+                   "714fe42348f23e5d8563fb626708f577"
+                   "0025f62c74107759dfb218";
 
 const char*
 short_text_base64() { // test::short_text()
@@ -37,14 +38,14 @@ short_text_base64() { // test::short_text()
 const char*
 long_text_base64() { // of test::long_text()
     return "TG9yZW0gaXBzdW0gZG9sb3Igc2l0IGFtZXQsIGNvbnNlY3RldHVyIGFkaXBpc2Np"
-        "bmcgZWxpdCwgc2VkIGRvIGVpdXNtb2QgdGVtcG9yIGluY2lkaWR1bnQgdXQgbGFib3J"
-        "lIGV0IGRvbG9yZSBtYWduYSBhbGlxdWEuIFV0IGVuaW0gYWQgbWluaW0gdmVuaWFtLC"
-        "BxdWlzIG5vc3RydWQgZXhlcmNpdGF0aW9uIHVsbGFtY28gbGFib3JpcyBuaXNpIHV0I"
-        "GFsaXF1aXAgZXggZWEgY29tbW9kbyBjb25zZXF1YXQuIER1aXMgYXV0ZSBpcnVyZSBk"
-        "b2xvciBpbiByZXByZWhlbmRlcml0IGluIHZvbHVwdGF0ZSB2ZWxpdCBlc3NlIGNpbGx"
-        "1bSBkb2xvcmUgZXUgZnVnaWF0IG51bGxhIHBhcmlhdHVyLiBFeGNlcHRldXIgc2ludC"
-        "BvY2NhZWNhdCBjdXBpZGF0YXQgbm9uIHByb2lkZW50LCBzdW50IGluIGN1bHBhIHF1a"
-        "SBvZmZpY2lhIGRlc2VydW50IG1vbGxpdCBhbmltIGlkIGVzdCBsYWJvcnVtLg==";
+           "bmcgZWxpdCwgc2VkIGRvIGVpdXNtb2QgdGVtcG9yIGluY2lkaWR1bnQgdXQgbGFib3J"
+           "lIGV0IGRvbG9yZSBtYWduYSBhbGlxdWEuIFV0IGVuaW0gYWQgbWluaW0gdmVuaWFtLC"
+           "BxdWlzIG5vc3RydWQgZXhlcmNpdGF0aW9uIHVsbGFtY28gbGFib3JpcyBuaXNpIHV0I"
+           "GFsaXF1aXAgZXggZWEgY29tbW9kbyBjb25zZXF1YXQuIER1aXMgYXV0ZSBpcnVyZSBk"
+           "b2xvciBpbiByZXByZWhlbmRlcml0IGluIHZvbHVwdGF0ZSB2ZWxpdCBlc3NlIGNpbGx"
+           "1bSBkb2xvcmUgZXUgZnVnaWF0IG51bGxhIHBhcmlhdHVyLiBFeGNlcHRldXIgc2ludC"
+           "BvY2NhZWNhdCBjdXBpZGF0YXQgbm9uIHByb2lkZW50LCBzdW50IGluIGN1bHBhIHF1a"
+           "SBvZmZpY2lhIGRlc2VydW50IG1vbGxpdCBhbmltIGlkIGVzdCBsYWJvcnVtLg==";
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -58,20 +59,20 @@ TEST_CASE("hex tests", "[hex]") {
         const buffer_t binary = test::short_binary();
         const buffer_t hex(Hex);
 
-        REQUIRE ( to_hex(binary) == hex );
+        REQUIRE(to_hex(binary) == hex);
     }
 
     SECTION("from hex") {
         const buffer_t binary = test::short_binary();
         const buffer_t hex(Hex);
 
-        REQUIRE( from_hex(hex) == binary );
+        REQUIRE(from_hex(hex) == binary);
 
         const buffer_t inv_char("03fe65ds35"); // s is invalid
-        REQUIRE_THROWS( from_hex(inv_char) );
+        REQUIRE_THROWS(from_hex(inv_char));
 
         const buffer_t inv_size("0a347535fa1"); // size is invalid
-        REQUIRE_THROWS( from_hex(inv_size) );
+        REQUIRE_THROWS(from_hex(inv_size));
     }
 }
 
@@ -85,11 +86,11 @@ TEST_CASE("base64 test cases", "[base64]") {
 
             size_t size = base64::encode_size(src);
             INFO("endoce size: " << size << " != " << predef.size());
-            REQUIRE( (size - 1 == predef.size()) );
+            REQUIRE((size - 1 == predef.size()));
 
             size = base64::decode_size(predef);
             INFO("decode size: " << size << " != " << src.size());
-            REQUIRE( size == src.size() );
+            REQUIRE(size == src.size());
         });
     }
 
@@ -99,16 +100,16 @@ TEST_CASE("base64 test cases", "[base64]") {
             const buffer_t predef(short_text_base64());
 
             auto encoded = to_base64(src);
-            REQUIRE( encoded == predef );
+            REQUIRE(encoded == predef);
 
             auto decoded = from_base64(encoded);
-            REQUIRE( decoded == src );
+            REQUIRE(decoded == src);
         });
     }
 
     SECTION("invalid base64") {
         const buffer_t invalid_base64("2K=fZhduM2LEg2LLZhdin2YbbjA==");
-        REQUIRE_THROWS( base64::decode(invalid_base64) );
+        REQUIRE_THROWS(base64::decode(invalid_base64));
     }
 
     SECTION("reuse") {
@@ -121,39 +122,39 @@ TEST_CASE("base64 test cases", "[base64]") {
             buffer_t encoded, decoded;
 
             base64::encode(src_short, encoded);
-            REQUIRE( encoded == predef_short );
+            REQUIRE(encoded == predef_short);
             base64::decode(encoded, decoded);
-            REQUIRE( decoded == src_short );
+            REQUIRE(decoded == src_short);
             auto cap_enc1 = encoded.capacity();
             auto cap_dec1 = decoded.capacity();
 
             base64::encode(src_long, encoded);
-            REQUIRE( encoded == predef_long );
+            REQUIRE(encoded == predef_long);
             base64::decode(encoded, decoded);
-            REQUIRE( decoded == src_long );
+            REQUIRE(decoded == src_long);
             auto cap_enc2 = encoded.capacity();
             auto cap_dec2 = decoded.capacity();
-            REQUIRE( (cap_enc1 < cap_enc2  &&  cap_dec1 < cap_dec2) );
+            REQUIRE((cap_enc1 < cap_enc2 && cap_dec1 < cap_dec2));
 
             base64::encode(src_short, encoded);
-            REQUIRE( encoded == predef_short );
+            REQUIRE(encoded == predef_short);
             base64::decode(encoded, decoded);
-            REQUIRE( decoded == src_short );
+            REQUIRE(decoded == src_short);
             auto cap_enc3 = encoded.capacity();
             auto cap_dec3 = decoded.capacity();
-            REQUIRE( (cap_enc2 == cap_enc3  &&  cap_dec2 == cap_dec3) );
+            REQUIRE((cap_enc2 == cap_enc3 && cap_dec2 == cap_dec3));
         });
     }
 
     SECTION("binary tests") {
-        const buffer_t src = test::long_binary();
-        size_t bin_length  = src.size();
+        const buffer_t src        = test::long_binary();
+        size_t         bin_length = src.size();
 
         auto encoded = to_base64(src);
-        REQUIRE( encoded.size() > bin_length );
+        REQUIRE(encoded.size() > bin_length);
 
         auto decoded = from_base64(encoded);
-        REQUIRE( decoded.size() == src.size() );
-        REQUIRE( decoded == src );
+        REQUIRE(decoded.size() == src.size());
+        REQUIRE(decoded == src);
     }
 }

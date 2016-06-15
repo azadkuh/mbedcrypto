@@ -1,11 +1,11 @@
 #include "mbedcrypto/mbedtls_wrapper.hxx"
 
-#include <memory>
 #include <iostream>
+#include <memory>
 
 ///////////////////////////////////////////////////////////////////////////////
 int
-main(int, char **) {
+main(int, char**) {
 
     try {
         mbedtls::md      md1;
@@ -16,11 +16,10 @@ main(int, char **) {
 
         mbedtls_c_call(mbedtls_md_starts, md1);
 
-    } catch ( std::exception& cerr ) {
-        std::cerr << "the desired error message:\n  "
-            << cerr.what() << std::endl;
+    } catch (std::exception& cerr) {
+        std::cerr << "the desired error message:\n  " << cerr.what()
+                  << std::endl;
     }
 
     return 0;
 }
-

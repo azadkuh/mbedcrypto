@@ -67,17 +67,23 @@ public:
      * input can be in any size for cipher modes except ecb.
      * for ecb the size = block_size * N, where N >= 1
      */
-    static auto encrypt(cipher_t, padding_t,
-            const buffer_t& iv, const buffer_t& key,
-            const buffer_t& input) -> buffer_t;
+    static auto encrypt(
+        cipher_t,
+        padding_t,
+        const buffer_t& iv,
+        const buffer_t& key,
+        const buffer_t& input) -> buffer_t;
 
     /** decrypts the input in single shot.
      * input can be in any size for cipher modes except ecb.
      * for ecb the size = block_size * N, where N >= 1
      */
-    static auto decrypt(cipher_t, padding_t,
-            const buffer_t& iv, const buffer_t& key,
-            const buffer_t& input) -> buffer_t;
+    static auto decrypt(
+        cipher_t,
+        padding_t,
+        const buffer_t& iv,
+        const buffer_t& key,
+        const buffer_t& input) -> buffer_t;
 
 public: // aead methods require BUILD_CCM or BUILD_GCM
     /** returns true if any of BUILD_GCM or BUILD_CCM has been activated.
@@ -92,12 +98,15 @@ public: // aead methods require BUILD_CCM or BUILD_GCM
      * returns the computed tag (16bytes) as the first member of tuple,
      * the second one is the encrypted buffer.
      */
-    static auto encrypt_aead(cipher_t,
-            const buffer_t& iv, const buffer_t& key,
-            const buffer_t& additional_data,
-            const buffer_t& input) -> std::tuple<buffer_t, buffer_t>;
+    static auto encrypt_aead(
+        cipher_t,
+        const buffer_t& iv,
+        const buffer_t& key,
+        const buffer_t& additional_data,
+        const buffer_t& input) -> std::tuple<buffer_t, buffer_t>;
 
-    /** decrypts (AEAD cipher) the input and authenticate by additional data and the tag.
+    /** decrypts (AEAD cipher) the input and authenticate by additional data and
+     * the tag.
      * only cipher_t::gcm and cipher_t::ccm support aead.
      * additional_data could be in any size, input and tag are computed by
      * encrypt_aead().
@@ -105,25 +114,30 @@ public: // aead methods require BUILD_CCM or BUILD_GCM
      * returns the authentication status as the first member of tuple,
      * the second one is the decrypted buffer.
      */
-    static auto decrypt_aead(cipher_t,
-            const buffer_t& iv, const buffer_t& key,
-            const buffer_t& additional_data,
-            const buffer_t& tag,
-            const buffer_t& input) -> std::tuple<bool, buffer_t>;
+    static auto decrypt_aead(
+        cipher_t,
+        const buffer_t& iv,
+        const buffer_t& key,
+        const buffer_t& additional_data,
+        const buffer_t& tag,
+        const buffer_t& input) -> std::tuple<bool, buffer_t>;
 
     /// helper
-    template<class Tuple>
-    static auto decrypt_aead(cipher_t ctype,
-            const buffer_t& iv, const buffer_t& key,
-            const buffer_t& additional_data,
-            const Tuple& tuple_aead) {
-                return decrypt_aead(ctype,
-                        iv, key,
-                        additional_data,
-                        std::get<0>(tuple_aead),
-                        std::get<1>(tuple_aead)
-                        );
-            }
+    template <class Tuple>
+    static auto decrypt_aead(
+        cipher_t        ctype,
+        const buffer_t& iv,
+        const buffer_t& key,
+        const buffer_t& additional_data,
+        const Tuple&    tuple_aead) {
+        return decrypt_aead(
+            ctype,
+            iv,
+            key,
+            additional_data,
+            std::get<0>(tuple_aead),
+            std::get<1>(tuple_aead));
+    }
 
 
 public:
@@ -131,7 +145,7 @@ public:
     ~cipher();
 
     /// cipher operation mode
-    enum mode {encrypt_mode, decrypt_mode};
+    enum mode { encrypt_mode, decrypt_mode };
     /** key length depends on cipher_t type.
      * @sa key_bitlen()
      */
@@ -149,7 +163,7 @@ public:
 
 public: // properties
     size_t block_size() const noexcept;
-    size_t iv_size()    const noexcept;
+    size_t iv_size() const noexcept;
     size_t key_bitlen() const noexcept;
     auto   block_mode() const noexcept -> cipher_bm;
 
@@ -158,7 +172,8 @@ public: // general encryption / decryption
     /// resets and makes cipher ready for update() iterations
     void start();
 
-    /** ciphers (encrypts/decrypts) chunks of data between start() / finish() pair.
+    /** ciphers (encrypts/decrypts) chunks of data between start() / finish()
+     * pair.
      * input size is arbitrary except for ecb ciphers where the size must
      * be N * block_size
      */
@@ -172,9 +187,12 @@ public: // general encryption / decryption
      *
      * returns the actual size of bytes written into output.
      */
-    size_t update(size_t count,
-            const buffer_t& input, size_t in_index,
-            buffer_t& output, size_t out_index);
+    size_t update(
+        size_t          count,
+        const buffer_t& input,
+        size_t          in_index,
+        buffer_t&       output,
+        size_t          out_index);
     /** overload, writes into out_index of output.
      * returns the actual size of bytes written into output.
      */
@@ -185,14 +203,17 @@ public: // general encryption / decryption
      * for the selected cipher_t.
      * output_size the size of output, also will be updated by actual size.
      */
-    int  update(const unsigned char* input, size_t input_size,
-            unsigned char* output, size_t& output_size) noexcept;
+    int update(
+        const unsigned char* input,
+        size_t               input_size,
+        unsigned char*       output,
+        size_t&              output_size) noexcept;
 
     /** low level overload.
      * the output size must be block_size() + 32
      * output_size the size of output, also will be updated by actual size.
      */
-    int  finish(unsigned char* output, size_t& output_size) noexcept;
+    int finish(unsigned char* output, size_t& output_size) noexcept;
 
 
     /** helper function, runs start() / update() / finish() in a single call,
@@ -208,13 +229,15 @@ public: // gcm features: requires BUILD_GCM
      */
     void gcm_additional_data(const buffer_t& ad);
 
-    /** returns the tag computed by gcm encryption, or throws for non gcm encryption.
+    /** returns the tag computed by gcm encryption, or throws for non gcm
+     * encryption.
      * length <= 16bytes.
      * @warning must be called exactly after finish() of encryption.
      */
     auto gcm_encryption_tag(size_t length) -> buffer_t;
 
-    /** checks (authenticate) a gcm decryption tag, or throws for non gcm decryption.
+    /** checks (authenticate) a gcm decryption tag, or throws for non gcm
+     * decryption.
      * tag previously computed by gcm encryption, <= 16bytes.
      * @warning must be called exactly after finish() of decryption.
      */
@@ -222,8 +245,8 @@ public: // gcm features: requires BUILD_GCM
 
 public:
     // move only
-    cipher(const cipher&)            = delete;
-    cipher(cipher&&)                 = default;
+    cipher(const cipher&) = delete;
+    cipher(cipher&&)      = default;
     cipher& operator=(const cipher&) = delete;
     cipher& operator=(cipher&&)      = default;
 

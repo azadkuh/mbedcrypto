@@ -11,15 +11,17 @@
 #define MBEDCRYPTO_CONVERSIONS_HPP
 
 #include "mbedcrypto_mbedtls_config.h"
-#include "mbedtls/md.h"
-#include "mbedtls/cipher.h"
-#include "mbedtls/pk.h"
-#include "mbedtls/ecp.h"
 #include "mbedcrypto/types.hpp"
+
+#include "mbedtls/cipher.h"
+#include "mbedtls/ecp.h"
+#include "mbedtls/md.h"
+#include "mbedtls/pk.h"
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
 enum class cipher_bm;
 ///////////////////////////////////////////////////////////////////////////////
+// clang-format off
 
 auto to_native(hash_t)    -> mbedtls_md_type_t;
 auto to_native(cipher_t)  -> mbedtls_cipher_type_t;
@@ -35,6 +37,7 @@ auto from_native(mbedtls_cipher_padding_t) -> padding_t;
 auto from_native(mbedtls_pk_type_t)        -> pk_t;
 auto from_native(mbedtls_ecp_group_id)     -> curve_t;
 
+// clang-format on
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
 ///////////////////////////////////////////////////////////////////////////////

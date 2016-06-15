@@ -53,33 +53,31 @@ copy_from(mbedtls_ecdh_context* ecdh, const pk::context& ctx) {
 }
 
 size_t
-write_ecp_point(const mbedtls_ecdh_context* ecdh,
-        unsigned char* buffer, size_t buffer_length) {
+write_ecp_point(
+    const mbedtls_ecdh_context* ecdh,
+    unsigned char*              buffer,
+    size_t                      buffer_length) {
     size_t olen = 0;
 
-    mbedcrypto_c_call(mbedtls_ecp_tls_write_point,
-            &ecdh->grp,
-            &ecdh->Q,
-            ecdh->point_format,
-            &olen,
-            buffer,
-            buffer_length
-            );
+    mbedcrypto_c_call(
+        mbedtls_ecp_tls_write_point,
+        &ecdh->grp,
+        &ecdh->Q,
+        ecdh->point_format,
+        &olen,
+        buffer,
+        buffer_length);
 
     return olen;
 }
 
 size_t
-write_ecp_group(const mbedtls_ecp_group* grp,
-        unsigned char* buffer, size_t buffer_length) {
+write_ecp_group(
+    const mbedtls_ecp_group* grp, unsigned char* buffer, size_t buffer_length) {
     size_t olen = 0;
 
-    mbedcrypto_c_call(mbedtls_ecp_tls_write_group,
-            grp,
-            &olen,
-            buffer,
-            buffer_length
-            );
+    mbedcrypto_c_call(
+        mbedtls_ecp_tls_write_group, grp, &olen, buffer, buffer_length);
 
     return olen;
 }
@@ -87,36 +85,33 @@ write_ecp_group(const mbedtls_ecp_group* grp,
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace anon
 ///////////////////////////////////////////////////////////////////////////////
-struct ecp::impl : public pk::context
-{
+struct ecp::impl : public pk::context {
     // only if the ecp is an eckey_dh
     std::unique_ptr<mbedtls_ecdh_context> ecdh_{nullptr};
 
     ~impl() {
-        if ( ecdh_ ) // only if ecdh_ is valid
+        if (ecdh_) // only if ecdh_ is valid
             mbedtls_ecdh_free(ecdh_.get());
     }
 
     void ecdh_generate_keys(curve_t ctype) {
-        mbedcrypto_c_call(mbedtls_ecp_group_load,
-                &ecdh_->grp,
-                to_native(ctype)
-                );
+        mbedcrypto_c_call(
+            mbedtls_ecp_group_load, &ecdh_->grp, to_native(ctype));
 
         ecdh_gen_public();
     }
 
     auto ecdh_public_point() {
         buffer_t mypub(psk_length, '\0');
-        size_t olen = write_ecp_point(ecdh_.get(), to_ptr(mypub), psk_length);
+        size_t   olen = write_ecp_point(ecdh_.get(), to_ptr(mypub), psk_length);
         mypub.resize(olen);
         return mypub;
     }
 
     auto ecdh_server_key_exchange() {
         buffer_t skex(psk_length, '\0');
-        auto* buf  = to_ptr(skex);
-        size_t cap = psk_length;
+        auto*    buf = to_ptr(skex);
+        size_t   cap = psk_length;
 
         auto glen = write_ecp_group(&ecdh_->grp, buf, cap);
         buf += glen;
@@ -130,11 +125,8 @@ struct ecp::impl : public pk::context
 
     auto ecdh_client_peer_key(const buffer_t& skex) {
         const unsigned char* p = to_const_ptr(skex);
-        mbedcrypto_c_call(mbedtls_ecdh_read_params,
-                ecdh_.get(),
-                &p,
-                p + skex.size()
-                );
+        mbedcrypto_c_call(
+            mbedtls_ecdh_read_params, ecdh_.get(), &p, p + skex.size());
 
         ecdh_gen_public();
     }
@@ -142,43 +134,43 @@ struct ecp::impl : public pk::context
     // the peer's public key is already loaded
     auto ecdh_calc_secret() {
         buffer_t secret(psk_length, '\0');
-        size_t olen = 0;
-        mbedcrypto_c_call(mbedtls_ecdh_calc_secret,
-                ecdh_.get(),
-                &olen,
-                to_ptr(secret),
-                psk_length,
-                rnd_generator::maker,
-                &rnd_
-                );
+        size_t   olen = 0;
+        mbedcrypto_c_call(
+            mbedtls_ecdh_calc_secret,
+            ecdh_.get(),
+            &olen,
+            to_ptr(secret),
+            psk_length,
+            rnd_generator::maker,
+            &rnd_);
 
         secret.resize(olen);
         return secret;
     }
 
     auto ecdh_calc_secret(const buffer_t& otherpub) {
-        mbedcrypto_c_call(mbedtls_ecdh_read_public,
-                ecdh_.get(),
-                to_const_ptr(otherpub),
-                otherpub.size()
-                );
+        mbedcrypto_c_call(
+            mbedtls_ecdh_read_public,
+            ecdh_.get(),
+            to_const_ptr(otherpub),
+            otherpub.size());
 
         return ecdh_calc_secret();
     }
 
 private:
     void ecdh_gen_public() {
-        if ( key_is_private_ ) { // if there is a key
+        if (key_is_private_) { // if there is a key
             pk::reset_as(*this, pk_t::eckey_dh);
         }
 
-        mbedcrypto_c_call(mbedtls_ecdh_gen_public,
-                &ecdh_->grp,
-                &ecdh_->d,
-                &ecdh_->Q,
-                mbedcrypto::rnd_generator::maker,
-                &rnd_
-                );
+        mbedcrypto_c_call(
+            mbedtls_ecdh_gen_public,
+            &ecdh_->grp,
+            &ecdh_->d,
+            &ecdh_->Q,
+            mbedcrypto::rnd_generator::maker,
+            &rnd_);
 
         // the private key has been built
         copy_from(*this, ecdh_.get()); // copy keypair to pk_ context
@@ -188,28 +180,25 @@ private:
 }; // ecp::impl
 ///////////////////////////////////////////////////////////////////////////////
 ecp::ecp(pk_t ptype) : pimpl(std::make_unique<impl>()) {
-    switch ( ptype ) {
-        case pk_t::eckey:
-        case pk_t::ecdsa:
-            pk::reset_as(*pimpl, ptype);
-            break;
+    switch (ptype) {
+    case pk_t::eckey:
+    case pk_t::ecdsa:
+        pk::reset_as(*pimpl, ptype);
+        break;
 
-        case pk_t::eckey_dh:
-            pimpl->ecdh_ = std::make_unique<mbedtls_ecdh_context>();
-            mbedtls_ecdh_init(pimpl->ecdh_.get());
-            pk::reset_as(*pimpl, ptype);
-            break;
+    case pk_t::eckey_dh:
+        pimpl->ecdh_ = std::make_unique<mbedtls_ecdh_context>();
+        mbedtls_ecdh_init(pimpl->ecdh_.get());
+        pk::reset_as(*pimpl, ptype);
+        break;
 
-        default:
-            throw exceptions::usage_error{
-                "invalid or unsupported ec type"
-            };
-            break;
+    default:
+        throw exceptions::usage_error{"invalid or unsupported ec type"};
+        break;
     }
 }
 
-ecp::~ecp() {
-}
+ecp::~ecp() {}
 
 pk::context&
 ecp::context() {
@@ -217,12 +206,12 @@ ecp::context() {
 }
 
 const pk::context&
-ecp::context()const {
+ecp::context() const {
     return *pimpl;
 }
 
 void
-ecp::operator>>(struct ecp::key_info& ki)const {
+ecp::operator>>(struct ecp::key_info& ki) const {
     const auto* ec_ctx = mbedtls_pk_ec(pimpl->pk_);
     ki.Qx << ec_ctx->Q.X;
     ki.Qy << ec_ctx->Q.Y;
@@ -241,7 +230,7 @@ ecdh::make_peer_key(curve_t ctype) {
 
 buffer_t
 ecdh::peer_key() {
-    if ( !has_private_key() )
+    if (!has_private_key())
         throw exceptions::usage_error{"ecdh has no key"};
 
     copy_from(pimpl->ecdh_.get(), *pimpl);
@@ -273,5 +262,5 @@ ecdh::make_client_peer_key(const buffer_t& server_key_exchange) {
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
 ///////////////////////////////////////////////////////////////////////////////
-#else // MBEDTLS_ECP_C
+#else  // MBEDTLS_ECP_C
 #endif // MBEDTLS_ECP_C

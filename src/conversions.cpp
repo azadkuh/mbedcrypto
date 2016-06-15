@@ -1,10 +1,12 @@
 #include "conversions.hpp"
 #include "enumerator.hxx"
+
 #include "mbedcrypto/cipher.hpp"
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
 namespace {
 ///////////////////////////////////////////////////////////////////////////////
+// clang-format off
 
 const enum_map<hash_t, mbedtls_md_type_t> gHashes[] = {
     {hash_t::none,      MBEDTLS_MD_NONE},
@@ -116,6 +118,7 @@ const enum_map<curve_t, mbedtls_ecp_group_id> gCurves[] = {
     {curve_t::curve25519, MBEDTLS_ECP_DP_CURVE25519},
 };
 
+// clang-format on
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace anon
 ///////////////////////////////////////////////////////////////////////////////
@@ -186,8 +189,8 @@ std::vector<hash_t>
 installed_hashes() {
     std::vector<hash_t> my;
 
-    for ( const auto& i : gHashes ) {
-        if ( supports(i.e) )
+    for (const auto& i : gHashes) {
+        if (supports(i.e))
             my.push_back(i.e);
     }
 
@@ -198,8 +201,8 @@ std::vector<cipher_t>
 installed_ciphers() {
     std::vector<cipher_t> my;
 
-    for ( const auto& i : gCiphers ) {
-        if ( supports(i.e) )
+    for (const auto& i : gCiphers) {
+        if (supports(i.e))
             my.push_back(i.e);
     }
 
@@ -210,9 +213,9 @@ std::vector<padding_t>
 installed_paddings() {
     std::vector<padding_t> my;
 
-    for ( const auto& i : gPaddings ) {
-       if ( supports(i.e) )
-           my.push_back(i.e);
+    for (const auto& i : gPaddings) {
+        if (supports(i.e))
+            my.push_back(i.e);
     }
 
     return my;
@@ -222,9 +225,9 @@ std::vector<pk_t>
 installed_pks() {
     std::vector<pk_t> my;
 
-    for ( const auto& i : gPks ) {
-       if ( supports(i.e) )
-           my.push_back(i.e);
+    for (const auto& i : gPks) {
+        if (supports(i.e))
+            my.push_back(i.e);
     }
 
     return my;
@@ -234,8 +237,8 @@ std::vector<curve_t>
 installed_curves() {
     std::vector<curve_t> my;
 
-    for ( const auto& i : gCurves ) {
-        if ( supports(i.e) )
+    for (const auto& i : gCurves) {
+        if (supports(i.e))
             my.push_back(i.e);
     }
 

@@ -27,14 +27,13 @@ class hm_prepare
     buffer_t hash_;
 
 public:
-    const buffer_t operator()(const context& pk,
-            const buffer_t& hmvalue, hash_t halgo) {
+    const buffer_t
+    operator()(const context& pk, const buffer_t& hmvalue, hash_t halgo) {
 
-        if ( halgo == hash_t::none ) {
-            if ( hmvalue.size() > max_crypt_size(pk) )
+        if (halgo == hash_t::none) {
+            if (hmvalue.size() > max_crypt_size(pk))
                 throw exceptions::usage_error{
-                    "the message is larger than max_crypt_size()"
-                };
+                    "the message is larger than max_crypt_size()"};
 
             return hmvalue;
         }
@@ -47,61 +46,58 @@ public:
 void
 reset_as_impl(context& d, pk_t ptype) {
     reset(d);
-    mbedcrypto_c_call(mbedtls_pk_setup,
-            &d.pk_,
-            native_info(ptype)
-            );
+    mbedcrypto_c_call(mbedtls_pk_setup, &d.pk_, native_info(ptype));
 }
 
 bool
 check_rsa_conversion(pk_t ptype) {
-    switch ( ptype ) {
-        case pk_t::rsa:
-        case pk_t::rsa_alt:
-        case pk_t::rsassa_pss:
-            return true;
+    switch (ptype) {
+    case pk_t::rsa:
+    case pk_t::rsa_alt:
+    case pk_t::rsassa_pss:
+        return true;
 
-        default:
-            return false;
+    default:
+        return false;
     }
 }
 
 bool
 check_ec_conversion(pk_t ptype) {
-    switch ( ptype ) {
-        case pk_t::eckey:
-        case pk_t::eckey_dh:
-        case pk_t::ecdsa:
-            return true;
+    switch (ptype) {
+    case pk_t::eckey:
+    case pk_t::eckey_dh:
+    case pk_t::ecdsa:
+        return true;
 
-        default:
-            return false;
+    default:
+        return false;
     }
 }
 
 void
 ensure_type_match(context& d, pk_t old_type, pk_t new_type) {
-    switch ( old_type ) {
-        case pk_t::rsa:
-        case pk_t::rsa_alt:
-        case pk_t::rsassa_pss:
-            if ( !check_rsa_conversion(new_type) ) {
-                reset_as_impl(d, old_type);
-                throw exceptions::type_error{};
-            }
-            break;
+    switch (old_type) {
+    case pk_t::rsa:
+    case pk_t::rsa_alt:
+    case pk_t::rsassa_pss:
+        if (!check_rsa_conversion(new_type)) {
+            reset_as_impl(d, old_type);
+            throw exceptions::type_error{};
+        }
+        break;
 
-        case pk_t::eckey:
-        case pk_t::eckey_dh:
-        case pk_t::ecdsa:
-            if ( !check_ec_conversion(new_type) ) {
-                reset_as_impl(d, old_type);
-                throw exceptions::type_error{};
-            }
-            break;
+    case pk_t::eckey:
+    case pk_t::eckey_dh:
+    case pk_t::ecdsa:
+        if (!check_ec_conversion(new_type)) {
+            reset_as_impl(d, old_type);
+            throw exceptions::type_error{};
+        }
+        break;
 
-        default:
-            break;
+    default:
+        break;
     }
 }
 
@@ -135,23 +131,23 @@ name_of(const context& d) noexcept {
 
 size_t
 key_length(const context& d) noexcept {
-    return (size_t) mbedtls_pk_get_len(&d.pk_);
+    return (size_t)mbedtls_pk_get_len(&d.pk_);
 }
 
 size_t
 key_bitlen(const context& d) noexcept {
-    return (size_t) mbedtls_pk_get_bitlen(&d.pk_);
+    return (size_t)mbedtls_pk_get_bitlen(&d.pk_);
 }
 
 size_t
 max_crypt_size(const context& d) {
     // padding / header data (11 bytes for PKCS#1 v1.5 padding).
-    if ( type_of(d) == pk_t::rsa )
+    if (type_of(d) == pk_t::rsa)
         return key_length(d) - 11;
 
 #if defined(MBEDTLS_ECDSA_C)
-    else if ( can_do(d, pk_t::ecdsa) )
-            return (size_t) MBEDTLS_ECDSA_MAX_LEN;
+    else if (can_do(d, pk_t::ecdsa))
+        return (size_t)MBEDTLS_ECDSA_MAX_LEN;
 #endif
 
     throw exceptions::support_error{};
@@ -167,8 +163,8 @@ can_do(const context& d, pk_t ptype) {
     int ret = mbedtls_pk_can_do(&d.pk_, to_native(ptype));
 
     // refinement due to build options
-    if ( type_of(d) == pk_t::eckey  &&  ptype == pk_t::ecdsa ) {
-        if ( !supports(pk_t::ecdsa) )
+    if (type_of(d) == pk_t::eckey && ptype == pk_t::ecdsa) {
+        if (!supports(pk_t::ecdsa))
             ret = 0;
     }
 
@@ -179,7 +175,7 @@ action_flags
 what_can_do(const context& d) {
     pk::action_flags f{false, false, false, false};
 
-    if ( d.pk_.pk_info != nullptr   &&   key_bitlen(d) > 0 ) {
+    if (d.pk_.pk_info != nullptr && key_bitlen(d) > 0) {
         const auto* info = d.pk_.pk_info;
 
         f.encrypt = info->encrypt_func != nullptr;
@@ -189,20 +185,20 @@ what_can_do(const context& d) {
 
         // refine due to pub/priv key
         // pub keys can not sign, nor decrypt
-        switch ( type_of(d) ) {
-            case pk_t::rsa:
-                if ( !d.key_is_private_ )
-                    f.decrypt = f.sign = false;
-                break;
+        switch (type_of(d)) {
+        case pk_t::rsa:
+            if (!d.key_is_private_)
+                f.decrypt = f.sign = false;
+            break;
 
-            case pk_t::eckey:
-            case pk_t::ecdsa:
-                if ( !d.key_is_private_ )
-                    f.sign = false;
-                break;
+        case pk_t::eckey:
+        case pk_t::ecdsa:
+            if (!d.key_is_private_)
+                f.sign = false;
+            break;
 
-            default:
-                break;
+        default:
+            break;
         }
     }
 
@@ -213,18 +209,18 @@ bool
 check_pair(const context& pub, const context& priv) {
     int ret = mbedtls_pk_check_pair(&pub.pk_, &priv.pk_);
 
-    switch ( ret ) {
-        case 0:
-            return true;
+    switch (ret) {
+    case 0:
+        return true;
 
-        case MBEDTLS_ERR_PK_BAD_INPUT_DATA:
-        case MBEDTLS_ERR_PK_TYPE_MISMATCH:
-            throw exception{ret, __FUNCTION__};
-            break;
+    case MBEDTLS_ERR_PK_BAD_INPUT_DATA:
+    case MBEDTLS_ERR_PK_TYPE_MISMATCH:
+        throw exception{ret, __FUNCTION__};
+        break;
 
-        default:
-            return false;
-            break;
+    default:
+        return false;
+        break;
     }
 }
 
@@ -235,13 +231,13 @@ import_key(context& d, const buffer_t& priv_data, const buffer_t& pass) {
 
     const auto* ppass = (pass.size() != 0) ? to_const_ptr(pass) : nullptr;
 
-    mbedcrypto_c_call(mbedtls_pk_parse_key,
-            &d.pk_,
-            to_const_ptr(priv_data),
-            priv_data.size(),
-            ppass,
-            pass.size()
-          );
+    mbedcrypto_c_call(
+        mbedtls_pk_parse_key,
+        &d.pk_,
+        to_const_ptr(priv_data),
+        priv_data.size(),
+        ppass,
+        pass.size());
     // check the key type
     ensure_type_match(d, old_type, type_of(d));
 
@@ -253,11 +249,11 @@ import_public_key(context& d, const buffer_t& pub_data) {
     auto old_type = type_of(d);
     reset(d);
 
-    mbedcrypto_c_call(mbedtls_pk_parse_public_key,
+    mbedcrypto_c_call(
+        mbedtls_pk_parse_public_key,
         &d.pk_,
         to_const_ptr(pub_data),
-        pub_data.size()
-        );
+        pub_data.size());
     // check the key type
     ensure_type_match(d, old_type, type_of(d));
 
@@ -271,11 +267,7 @@ load_key(context& d, const char* fpath, const buffer_t& pass) {
 
     const auto* ppass = (pass.size() != 0) ? pass.data() : nullptr;
 
-    mbedcrypto_c_call(mbedtls_pk_parse_keyfile,
-            &d.pk_,
-            fpath,
-            ppass
-          );
+    mbedcrypto_c_call(mbedtls_pk_parse_keyfile, &d.pk_, fpath, ppass);
     // check the key type
     ensure_type_match(d, old_type, type_of(d));
 
@@ -287,10 +279,7 @@ load_public_key(context& d, const char* fpath) {
     auto old_type = type_of(d);
     reset(d);
 
-    mbedcrypto_c_call(mbedtls_pk_parse_public_keyfile,
-            &d.pk_,
-            fpath
-          );
+    mbedcrypto_c_call(mbedtls_pk_parse_public_keyfile, &d.pk_, fpath);
     // check the key type
     ensure_type_match(d, old_type, type_of(d));
 
@@ -302,23 +291,20 @@ export_key(context& d, key_format fmt) {
 #if defined(MBEDTLS_PK_WRITE_C)
     buffer_t output(K::DefaultExportBufferSize, '\0');
 
-    if ( fmt == pem_format ) {
-        mbedcrypto_c_call(mbedtls_pk_write_key_pem,
-                &d.pk_,
-                to_ptr(output),
-                K::DefaultExportBufferSize
-                );
+    if (fmt == pem_format) {
+        mbedcrypto_c_call(
+            mbedtls_pk_write_key_pem,
+            &d.pk_,
+            to_ptr(output),
+            K::DefaultExportBufferSize);
 
         output.resize(std::strlen(output.c_str()));
         finalize_pem(output);
 
-    } else if ( fmt == pk::der_format ) {
+    } else if (fmt == pk::der_format) {
         int ret = mbedtls_pk_write_key_der(
-                &d.pk_,
-                to_ptr(output),
-                K::DefaultExportBufferSize
-                );
-        if ( ret < 0 )
+            &d.pk_, to_ptr(output), K::DefaultExportBufferSize);
+        if (ret < 0)
             throw exception{ret, __FUNCTION__};
 
         size_t length = ret;
@@ -328,7 +314,7 @@ export_key(context& d, key_format fmt) {
 
     return output;
 
-#else // MBEDTLS_PK_WRITE_C
+#else  // MBEDTLS_PK_WRITE_C
     throw exceptions::pk_export_missed{};
 #endif // MBEDTLS_PK_WRITE_C
 }
@@ -338,23 +324,20 @@ export_public_key(context& d, key_format fmt) {
 #if defined(MBEDTLS_PK_WRITE_C)
     buffer_t output(K::DefaultExportBufferSize, '\0');
 
-    if ( fmt == pk::pem_format ) {
-        mbedcrypto_c_call(mbedtls_pk_write_pubkey_pem,
-                &d.pk_,
-                to_ptr(output),
-                K::DefaultExportBufferSize
-                );
+    if (fmt == pk::pem_format) {
+        mbedcrypto_c_call(
+            mbedtls_pk_write_pubkey_pem,
+            &d.pk_,
+            to_ptr(output),
+            K::DefaultExportBufferSize);
 
         output.resize(std::strlen(output.c_str()));
         finalize_pem(output);
 
-    } else if ( fmt == pk::der_format ) {
+    } else if (fmt == pk::der_format) {
         int ret = mbedtls_pk_write_pubkey_der(
-                &d.pk_,
-                to_ptr(output),
-                K::DefaultExportBufferSize
-                );
-        if ( ret < 0 )
+            &d.pk_, to_ptr(output), K::DefaultExportBufferSize);
+        if (ret < 0)
             throw exception{ret, __FUNCTION__};
 
         size_t length = ret;
@@ -364,7 +347,7 @@ export_public_key(context& d, key_format fmt) {
 
     return output;
 
-#else // MBEDTLS_PK_WRITE_C
+#else  // MBEDTLS_PK_WRITE_C
     throw exceptions::pk_export_missed{};
 #endif // MBEDTLS_PK_WRITE_C
 }
@@ -373,7 +356,7 @@ bool
 supports_key_export() noexcept {
 #if defined(MBEDTLS_PK_WRITE_C)
     return true;
-#else // MBEDTLS_PK_WRITE_C
+#else  // MBEDTLS_PK_WRITE_C
     return false;
 #endif // MBEDTLS_PK_WRITE_C
 }
@@ -402,18 +385,18 @@ generate_rsa_key(context& d, size_t key_bitlen, size_t exponent) {
     // resets previous states
     pk::reset_as(d, pk_t::rsa);
 
-    mbedcrypto_c_call(mbedtls_rsa_gen_key,
-            mbedtls_pk_rsa(d.pk_),
-            rnd_generator::maker,
-            &d.rnd_,
-            key_bitlen,
-            exponent
-            );
+    mbedcrypto_c_call(
+        mbedtls_rsa_gen_key,
+        mbedtls_pk_rsa(d.pk_),
+        rnd_generator::maker,
+        &d.rnd_,
+        key_bitlen,
+        exponent);
     // set the key type
     d.key_is_private_ = true;
 
 
-#else // MBEDTLS_GENPRIME
+#else  // MBEDTLS_GENPRIME
     throw exceptions::rsa_keygen_missed{};
 #endif // MBEDTLS_GENPRIME
 }
@@ -424,74 +407,76 @@ generate_ec_key(context& d, curve_t ctype) {
     // resets previous states
     pk::reset_as(d, pk_t::eckey);
 
-    mbedcrypto_c_call(mbedtls_ecp_gen_key,
-            to_native(ctype),
-            mbedtls_pk_ec(d.pk_),
-            rnd_generator::maker,
-            &d.rnd_
-            );
+    mbedcrypto_c_call(
+        mbedtls_ecp_gen_key,
+        to_native(ctype),
+        mbedtls_pk_ec(d.pk_),
+        rnd_generator::maker,
+        &d.rnd_);
     // set the key type
     d.key_is_private_ = true;
 
-#else // MBEDTLS_ECP_C
+#else  // MBEDTLS_ECP_C
     throw exceptions::ecp_missed{};
 #endif // MBEDTLS_ECP_C
 }
 
 buffer_t
 sign(context& d, const buffer_t& hmvalue, hash_t halgo) {
-    if ( type_of(d) != pk_t::rsa && !can_do(d, pk_t::ecdsa) )
+    if (type_of(d) != pk_t::rsa && !can_do(d, pk_t::ecdsa))
         throw exceptions::support_error{};
 
-    hm_prepare hm;
+    hm_prepare  hm;
     const auto& hvalue = hm(d, hmvalue, halgo);
 
-    size_t olen = 32 + max_crypt_size(d);
+    size_t   olen = 32 + max_crypt_size(d);
     buffer_t output(olen, '\0');
-    mbedcrypto_c_call(mbedtls_pk_sign,
-            &d.pk_,
-            to_native(halgo),
-            to_const_ptr(hvalue),
-            hvalue.size(),
-            to_ptr(output),
-            &olen,
-            rnd_generator::maker,
-            &d.rnd_
-          );
+    mbedcrypto_c_call(
+        mbedtls_pk_sign,
+        &d.pk_,
+        to_native(halgo),
+        to_const_ptr(hvalue),
+        hvalue.size(),
+        to_ptr(output),
+        &olen,
+        rnd_generator::maker,
+        &d.rnd_);
 
     output.resize(olen);
     return output;
 }
 
 bool
-verify(context& d,
-        const buffer_t& signature,
-        const buffer_t& hm_value, hash_t halgo) {
-    if ( type_of(d) != pk_t::rsa && !can_do(d, pk_t::ecdsa) )
+verify(
+    context&        d,
+    const buffer_t& signature,
+    const buffer_t& hm_value,
+    hash_t          halgo) {
+    if (type_of(d) != pk_t::rsa && !can_do(d, pk_t::ecdsa))
         throw exceptions::support_error{};
 
-    hm_prepare hm;
+    hm_prepare  hm;
     const auto& hvalue = hm(d, hm_value, halgo);
 
-    int ret = mbedtls_pk_verify(&d.pk_,
-            to_native(halgo),
-            to_const_ptr(hvalue),
-            hvalue.size(),
-            to_const_ptr(signature),
-            signature.size()
-            );
+    int ret = mbedtls_pk_verify(
+        &d.pk_,
+        to_native(halgo),
+        to_const_ptr(hvalue),
+        hvalue.size(),
+        to_const_ptr(signature),
+        signature.size());
 
     // TODO: check when to report other errors
-    switch ( ret ) {
-        case 0:
-            return true;
+    switch (ret) {
+    case 0:
+        return true;
 
-        case MBEDTLS_ERR_PK_BAD_INPUT_DATA:
-        case MBEDTLS_ERR_PK_TYPE_MISMATCH:
-                throw exception{ret, "failed to verify the signature"};
-                break;
-        default:
-            break;
+    case MBEDTLS_ERR_PK_BAD_INPUT_DATA:
+    case MBEDTLS_ERR_PK_TYPE_MISMATCH:
+        throw exception{ret, "failed to verify the signature"};
+        break;
+    default:
+        break;
     }
 
     return false;
@@ -499,24 +484,24 @@ verify(context& d,
 
 buffer_t
 encrypt(context& d, const buffer_t& hmvalue, hash_t halgo) {
-    if ( type_of(d) != pk_t::rsa )
+    if (type_of(d) != pk_t::rsa)
         throw exceptions::support_error{};
 
-    hm_prepare hm;
+    hm_prepare  hm;
     const auto& hvalue = hm(d, hmvalue, halgo);
 
-    size_t olen = 32 + max_crypt_size(d);
+    size_t   olen = 32 + max_crypt_size(d);
     buffer_t output(olen, '\0');
-    mbedcrypto_c_call(mbedtls_pk_encrypt,
-            &d.pk_,
-            to_const_ptr(hvalue),
-            hvalue.size(),
-            to_ptr(output),
-            &olen,
-            olen,
-            rnd_generator::maker,
-            &d.rnd_
-          );
+    mbedcrypto_c_call(
+        mbedtls_pk_encrypt,
+        &d.pk_,
+        to_const_ptr(hvalue),
+        hvalue.size(),
+        to_ptr(output),
+        &olen,
+        olen,
+        rnd_generator::maker,
+        &d.rnd_);
 
     output.resize(olen);
     return output;
@@ -524,27 +509,26 @@ encrypt(context& d, const buffer_t& hmvalue, hash_t halgo) {
 
 buffer_t
 decrypt(context& d, const buffer_t& encrypted_value) {
-    if ( type_of(d) != pk_t::rsa )
+    if (type_of(d) != pk_t::rsa)
         throw exceptions::support_error{};
 
-    if ( (encrypted_value.size() << 3) > key_bitlen(d) )
+    if ((encrypted_value.size() << 3) > key_bitlen(d))
         throw exceptions::usage_error{
-            "the encrypted value is larger than the key size"
-        };
+            "the encrypted value is larger than the key size"};
 
-    size_t olen = 32 + max_crypt_size(d);
+    size_t   olen = 32 + max_crypt_size(d);
     buffer_t output(olen, '\0');
 
-    mbedcrypto_c_call(mbedtls_pk_decrypt,
-            &d.pk_,
-            to_const_ptr(encrypted_value),
-            encrypted_value.size(),
-            to_ptr(output),
-            &olen,
-            olen,
-            rnd_generator::maker,
-            &d.rnd_
-          );
+    mbedcrypto_c_call(
+        mbedtls_pk_decrypt,
+        &d.pk_,
+        to_const_ptr(encrypted_value),
+        encrypted_value.size(),
+        to_ptr(output),
+        &olen,
+        olen,
+        rnd_generator::maker,
+        &d.rnd_);
 
     output.resize(olen);
     return output;

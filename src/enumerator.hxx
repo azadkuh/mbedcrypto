@@ -11,32 +11,34 @@
 #define ENUMERATOR_HXX
 
 #include "mbedcrypto/exception.hpp"
+
 #include <algorithm>
 #include <cctype>
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
 ///////////////////////////////////////////////////////////////////////////////
 
-template<typename Enum, typename Native>
-struct enum_map {
-    Enum    e;
-    Native  n;
+template <typename Enum, typename Native> struct enum_map {
+    Enum   e;
+    Native n;
 };
 
-template<typename Enum, class Array>
-auto to_native(Enum e, const Array& items) {
-    for ( const auto& i : items ) {
-        if ( i.e == e )
+template <typename Enum, class Array>
+auto
+to_native(Enum e, const Array& items) {
+    for (const auto& i : items) {
+        if (i.e == e)
             return i.n;
     }
 
     throw exceptions::type_error{};
 }
 
-template<typename Native, class Array>
-auto from_native(Native n, const Array& items) {
-    for ( const auto& i : items ) {
-        if ( i.n == n )
+template <typename Native, class Array>
+auto
+from_native(Native n, const Array& items) {
+    for (const auto& i : items) {
+        if (i.n == n)
             return i.e;
     }
 
@@ -45,8 +47,7 @@ auto from_native(Native n, const Array& items) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-template<typename Enum>
-struct name_map {
+template <typename Enum> struct name_map {
     Enum        e;
     const char* n;
 };
@@ -54,27 +55,29 @@ struct name_map {
 inline std::string
 to_upper(const char* p) {
     std::string s(p);
-    std::transform(s.cbegin(), s.cend(), s.begin(),
-            [](char c) {return std::toupper(c);}
-            );
+    std::transform(s.cbegin(), s.cend(), s.begin(), [](char c) {
+        return std::toupper(c);
+    });
     return s;
 }
 
-template<typename Enum, class Array>
-auto to_string(Enum e, const Array& items) {
-    for ( const auto& i : items ) {
-        if ( i.e == e )
+template <typename Enum, class Array>
+auto
+to_string(Enum e, const Array& items) {
+    for (const auto& i : items) {
+        if (i.e == e)
             return i.n;
     }
 
     throw exceptions::type_error{};
 }
 
-template<typename Enum, class Array>
-Enum from_string(const char* name, const Array& items) {
+template <typename Enum, class Array>
+Enum
+from_string(const char* name, const Array& items) {
     auto uname = to_upper(name);
-    for ( const auto& i : items ) {
-        if ( uname == i.n )
+    for (const auto& i : items) {
+        if (uname == i.n)
             return i.e;
     }
 

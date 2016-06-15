@@ -36,7 +36,8 @@ public:
     /// initializes both entropy collector and CTR_DRBG
     rnd_generator();
 
-    /** optional custom data can be provided in addition to the more generic entropy source.
+    /** optional custom data can be provided in addition to the more generic
+     * entropy source.
      *  useful when using random objects (possibly on different threads).
      *  each thread can have a unique custom byte for better security.
      *  This makes sure that the random generators between the different
@@ -49,11 +50,12 @@ public:
 
     /** returns a random binary buffer with specified length.
      * @note automatically reseeds if reseed_interval is passed.
-     * length can be in any size because underlying class makes random in chunks.
+     * length can be in any size because underlying class makes random in
+     * chunks.
      */
     auto make(size_t length) -> buffer_t;
     /// low level overload
-    int  make(unsigned char* buffer, size_t length)noexcept;
+    int make(unsigned char* buffer, size_t length) noexcept;
 
     /** equivalent for mbedtls_ctr_drbg_random().
      * p_rng must be the address of a rnd_generator instance.
@@ -67,7 +69,7 @@ public:
      * @endcode
      * @sa mbedtls_ctr_drbg_random()
      */
-    static int maker(void* p_rng, unsigned char*, size_t)noexcept;
+    static int maker(void* p_rng, unsigned char*, size_t) noexcept;
 
 public: // auxiliary methods
     /** set entropy read length. default: 32/48 (sha256/sha512).
@@ -89,7 +91,7 @@ public: // auxiliary methods
     /// overload with custom data
     void reseed(const buffer_t& custom);
     /// low level overload, nullptr, 0 are valid
-    int  reseed(const unsigned char* custom, size_t length) noexcept;
+    int reseed(const unsigned char* custom, size_t length) noexcept;
 
     /// updates CTR_DRBG internal state with additional (custom) data
     void update(const buffer_t& additional);
@@ -97,10 +99,10 @@ public: // auxiliary methods
     void update(const unsigned char* additional, size_t length) noexcept;
 
     // move only
-    rnd_generator(const rnd_generator&)            = delete;
-    rnd_generator(rnd_generator&&)                 = default;
-    rnd_generator& operator=(const rnd_generator&) = delete;
-    rnd_generator& operator=(rnd_generator&&)      = default;
+    rnd_generator(const rnd_generator&) = delete;
+    rnd_generator(rnd_generator&&)      = default;
+    rnd_generator& operator = (const rnd_generator&) = delete;
+    rnd_generator& operator = (rnd_generator&&)      = default;
 
 protected:
     struct impl;
@@ -111,4 +113,3 @@ protected:
 } // namespace mbedcrypto
 ///////////////////////////////////////////////////////////////////////////////
 #endif // MBEDCRYPTO_RND_GENERATOR_HPP
-

@@ -9,13 +9,14 @@
 
 #ifndef __PK_PRIVATE_HPP__
 #define __PK_PRIVATE_HPP__
-#include "mbedcrypto/pk.hpp"
 #include "mbedcrypto/mpi.hpp"
+#include "mbedcrypto/pk.hpp"
 #include "mbedcrypto/rnd_generator.hpp"
+
 #include "conversions.hpp"
 
-#include "mbedtls/pk_internal.h"
 #include "mbedtls/bignum.h"
+#include "mbedtls/pk_internal.h"
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
 namespace pk {
@@ -24,7 +25,7 @@ auto native_info(pk_t) -> const mbedtls_pk_info_t*;
 ///////////////////////////////////////////////////////////////////////////////
 
 struct context {
-    bool key_is_private_ = false;
+    bool               key_is_private_ = false;
     rnd_generator      rnd_{"mbedcrypto pki implementation"};
     mbedtls_pk_context pk_;
 
@@ -36,8 +37,8 @@ struct context {
         reset(*this);
     }
 
-    context(const context&)            = delete;
-    context(context&&)                 = default;
+    context(const context&) = delete;
+    context(context&&)      = default;
     context& operator=(const context&) = delete;
     context& operator=(context&&)      = default;
 }; // struct context
@@ -48,7 +49,7 @@ inline const mbedtls_pk_info_t*
 native_info(pk_t type) {
     const auto* pinfot = mbedtls_pk_info_from_type(to_native(type));
 
-    if ( pinfot == nullptr )
+    if (pinfot == nullptr)
         throw exceptions::unknown_pk{};
 
     return pinfot;
@@ -57,8 +58,7 @@ native_info(pk_t type) {
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace pk
 ///////////////////////////////////////////////////////////////////////////////
-struct mpi::impl
-{
+struct mpi::impl {
     mbedtls_mpi ctx_;
 
 public:
@@ -90,14 +90,16 @@ public:
 
 ///////////////////////////////////////////////////////////////////////////////
 /// deep copy
-template<> inline void
+template <>
+inline void
 mpi::operator<<(const mbedtls_mpi& other) {
     pimpl->copy_from(&other);
 }
 
 /// deep copy
-template<> inline void
-mpi::operator>>(mbedtls_mpi& other)const {
+template <>
+inline void
+mpi::operator>>(mbedtls_mpi& other) const {
     pimpl->copy_to(&other);
 }
 

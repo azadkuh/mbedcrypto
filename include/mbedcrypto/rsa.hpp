@@ -27,24 +27,25 @@ public:
     explicit rsa();
     ~rsa();
 
-    size_t max_crypt_size()const {
+    size_t max_crypt_size() const {
         return pk::max_crypt_size(context());
     }
 
 public: // helper functions for rsa functionalities
-    auto sign(const buffer_t& hash_or_message,
-            hash_t hash_algo = hash_t::none) {
+    auto
+    sign(const buffer_t& hash_or_message, hash_t hash_algo = hash_t::none) {
         return pk::sign(context(), hash_or_message, hash_algo);
     }
 
-    bool verify(const buffer_t& signature,
-            const buffer_t& hash_or_message,
-            hash_t hash_algo = hash_t::none) {
+    bool verify(
+        const buffer_t& signature,
+        const buffer_t& hash_or_message,
+        hash_t          hash_algo = hash_t::none) {
         return pk::verify(context(), signature, hash_or_message, hash_algo);
     }
 
-    auto encrypt(const buffer_t& hash_or_message,
-            hash_t hash_algo = hash_t::none) {
+    auto
+    encrypt(const buffer_t& hash_or_message, hash_t hash_algo = hash_t::none) {
         return pk::encrypt(context(), hash_or_message, hash_algo);
     }
 
@@ -58,8 +59,8 @@ public: // helper functions for rsa functionalities
 
 public: // key information
     struct key_info {
-        mpi N;  ///< public modulus
-        mpi E;  ///< public exponent
+        mpi N; ///< public modulus
+        mpi E; ///< public exponent
 
         // only valid if the key is a private key
         mpi D;  ///< private exponent
@@ -71,9 +72,9 @@ public: // key information
     }; // struct key_info
 
     // exports info of current key
-    void operator>>(key_info&)const;
+    void operator>>(key_info&) const;
 
-    auto key_info()const {
+    auto key_info() const {
         struct key_info ki;
         *this >> ki;
         return ki;
@@ -85,8 +86,8 @@ public: // move only
     rsa& operator=(const rsa&) = delete;
     rsa& operator=(rsa&&)      = default;
 
-    virtual pk::context& context() override;
-    virtual const pk::context& context()const override;
+    virtual pk::context&       context() override;
+    virtual const pk::context& context() const override;
 
 protected:
     struct impl;

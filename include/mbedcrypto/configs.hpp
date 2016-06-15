@@ -10,6 +10,7 @@
 #ifndef MBEDCRYPTO_CONFIGS_HPP
 #define MBEDCRYPTO_CONFIGS_HPP
 
+#include <memory>
 #include <string>
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {

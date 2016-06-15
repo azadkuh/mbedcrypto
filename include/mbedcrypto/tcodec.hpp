@@ -48,25 +48,37 @@ struct base64 {
     static buffer_t decode(const buffer_t& src);
 
     /// tries to reuse the dest memory, or resizes if there is not enough room
-    static void     encode(const buffer_t& src, buffer_t& dest);
-    /// tries to reuse the dest memory, or resizes if there is not enough room
-    static void     decode(const buffer_t& src, buffer_t& dest);
+    static void encode(const buffer_t& src, buffer_t& dest);
 
-    /// returns the required result size of encoding to base64, including null-terminating byte
-    static size_t   encode_size(const buffer_t&);
+    /// tries to reuse the dest memory, or resizes if there is not enough room
+    static void decode(const buffer_t& src, buffer_t& dest);
+
+    /// returns the required result size of encoding to base64, including
+    /// null-terminating byte
+    static size_t encode_size(const buffer_t&);
 
     /// returns the required result size of decoding from base64
-    static size_t   decode_size(const buffer_t&);
+    static size_t decode_size(const buffer_t&);
 
     // raw overloads
 
-    static size_t   encode_size(const unsigned char* src, size_t src_length) noexcept;
-    static size_t   decode_size(const unsigned char* src, size_t src_length) noexcept;
+    static size_t
+    encode_size(const unsigned char* src, size_t src_length) noexcept;
 
-    static int      encode(const unsigned char* src, size_t src_length,
-                           unsigned char* dest, size_t& dest_length) noexcept;
-    static int      decode(const unsigned char* src, size_t src_length,
-                           unsigned char* dest, size_t& dest_length) noexcept;
+    static size_t
+    decode_size(const unsigned char* src, size_t src_length) noexcept;
+
+    static int encode(
+        const unsigned char* src,
+        size_t               src_length,
+        unsigned char*       dest,
+        size_t&              dest_length) noexcept;
+
+    static int decode(
+        const unsigned char* src,
+        size_t               src_length,
+        unsigned char*       dest,
+        size_t&              dest_length) noexcept;
 
 }; // struct base64
 

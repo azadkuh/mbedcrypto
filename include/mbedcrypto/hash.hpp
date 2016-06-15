@@ -10,7 +10,6 @@
 #ifndef MBEDCRYPTO_HASH_HPP
 #define MBEDCRYPTO_HASH_HPP
 
-#include <memory>
 #include "mbedcrypto/types.hpp"
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
@@ -40,17 +39,15 @@ class hash
 {
 public: // single-shot hash computation
     /// returns the length of a hash algorithm in byte.
-    static size_t   length(hash_t type);
+    static size_t length(hash_t type);
 
     /// makes the hash value for a buffer in single operation
-    static buffer_t make(hash_t type, const unsigned char* src, size_t src_length);
+    static buffer_t
+    make(hash_t type, const unsigned char* src, size_t src_length);
 
     /// overload
     static buffer_t make(hash_t type, const buffer_t& src) {
-        return make(type,
-                to_const_ptr(src),
-                src.size()
-                );
+        return make(type, to_const_ptr(src), src.size());
     }
 
     /// makes the hash value of a file content
@@ -112,16 +109,19 @@ public: // single-shot hamc computation
     /** makes a generic HMAC checksum by custom key.
      * HMAC key could be of any size
      */
-    static buffer_t make(hash_t type, const buffer_t& key,
-            const unsigned char* src, size_t src_length);
+    static buffer_t make(
+        hash_t               type,
+        const buffer_t&      key,
+        const unsigned char* src,
+        size_t               src_length);
 
     /// overload
-    static buffer_t make(hash_t type, const buffer_t& key, const buffer_t& src) {
+    static buffer_t
+    make(hash_t type, const buffer_t& key, const buffer_t& src) {
         return make(type, key, to_const_ptr(src), src.size());
     }
 
 public: // iterative or reuse
-
     explicit hmac(hash_t type);
     ~hmac();
 
@@ -156,16 +156,18 @@ protected:
 
 ///////////////////////////////////////////////////////////////////////////////
 
-inline size_t   hash_size(hash_t type) {
+inline size_t
+hash_size(hash_t type) {
     return hash::length(type);
 }
 
-inline buffer_t make_hash(hash_t type, const buffer_t& src) {
+inline buffer_t
+make_hash(hash_t type, const buffer_t& src) {
     return hash::make(type, src);
 }
 
-inline buffer_t make_hmac(hash_t type, const buffer_t& key,
-        const buffer_t& src) {
+inline buffer_t
+make_hmac(hash_t type, const buffer_t& key, const buffer_t& src) {
     return hmac::make(type, key, src);
 }
 

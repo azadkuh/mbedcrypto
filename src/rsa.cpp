@@ -10,17 +10,14 @@ static_assert(std::is_move_constructible<rsa>::value == true,  "");
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace anon
 ///////////////////////////////////////////////////////////////////////////////
-struct rsa::impl : public pk::context
-{
-}; // rsa::impl
+struct rsa::impl : public pk::context {}; // rsa::impl
 
 ///////////////////////////////////////////////////////////////////////////////
 rsa::rsa() : pimpl(std::make_unique<impl>()) {
     pk::reset_as(*pimpl, pk_t::rsa);
 }
 
-rsa::~rsa() {
-}
+rsa::~rsa() {}
 
 pk::context&
 rsa::context() {
@@ -33,7 +30,7 @@ rsa::context() const {
 }
 
 void
-rsa::operator>>(struct rsa::key_info& ki)const {
+rsa::operator>>(struct rsa::key_info& ki) const {
     auto* rsa_ctx = mbedtls_pk_rsa(pimpl->pk_);
     ki.N << rsa_ctx->N;
     ki.E << rsa_ctx->E;

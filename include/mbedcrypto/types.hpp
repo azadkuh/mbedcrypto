@@ -11,13 +11,14 @@
 #define MBEDCRYPTO_TYPES_HPP
 
 #include "exception.hpp"
+
 #include <vector>
-#include <memory>
 ///////////////////////////////////////////////////////////////////////////////
-/** the availability of the following types depends on configuration and build options.
+/** the availability of the following types depends on configuration and build
+ * options.
  * types can be added or removed from compilation to optimize final binary size.
- * for each type there is a utility function to check the availability at runtime.
- * @sa supports()
+ * for each type there is a utility function to check the availability at
+ * runtime.  @sa supports()
  */
 namespace mbedcrypto {
 ///////////////////////////////////////////////////////////////////////////////
@@ -29,25 +30,26 @@ namespace mbedcrypto {
  * and more susceptible to hardware-accelerated attacks.
  */
 enum class hash_t {
-    none,        ///< invalid or unknown
-    md2,         ///< unsecure and unacceptable
-    md4,         ///< not recommended
-    md5,
-    sha1,
-    sha224,
-    sha256,
-    sha384,
-    sha512,
-    ripemd160,   ///< no publicly known attack, but old and outdated bit size (160)
+    none,      ///< invalid or unknown
+    md2,       ///< unsecure and unacceptable
+    md4,       ///< not recommended
+    md5,       ///<
+    sha1,      ///<
+    sha224,    ///<
+    sha256,    ///<
+    sha384,    ///<
+    sha512,    ///<
+    ripemd160, ///< no publicly known attack, but old and outdated bit size
+               ///(160)
 };
 
 /// all possible paddings, pkcs7 is included in default build.
 enum class padding_t {
-    none,             ///< never pad (full blocks only)
-    pkcs7,            ///< PKCS7 padding (default)
-    one_and_zeros,    ///< ISO/IEC 7816-4 padding
-    zeros_and_len,    ///< ANSI X.923 padding
-    zeros,            ///< zero padding (not reversible!)
+    none,          ///< never pad (full blocks only)
+    pkcs7,         ///< PKCS7 padding (default)
+    one_and_zeros, ///< ISO/IEC 7816-4 padding
+    zeros_and_len, ///< ANSI X.923 padding
+    zeros,         ///< zero padding (not reversible!)
 };
 
 /** block mode: https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation.
@@ -69,25 +71,26 @@ enum class padding_t {
  * needs iv, does not require padding
  */
 enum class cipher_bm {
-    none,       ///< none or unknown
-    ecb,        ///< electronic codebook, input size = N * block_size
-    cbc,        ///< cipher block chaining, custom input size
-    cfb,        ///< cipher feedback, custom input size
-    ctr,        ///< counter, custom input size
-    gcm,        ///< Galois/counter mode
-    ccm,        ///< counter with cbc-mac
-    stream,     ///< as in arc4_128 or null ciphers (unsecure)
+    none,   ///< none or unknown
+    ecb,    ///< electronic codebook, input size = N * block_size
+    cbc,    ///< cipher block chaining, custom input size
+    cfb,    ///< cipher feedback, custom input size
+    ctr,    ///< counter, custom input size
+    gcm,    ///< Galois/counter mode
+    ccm,    ///< counter with cbc-mac
+    stream, ///< as in arc4_128 or null ciphers (unsecure)
 };
 
 /** all possible supported cipher types in mbedcrypto.
  * hints:
- * - @warning blowfish is known to be susceptible to attacks when using weak keys,
- * you'd be better to use aes or twofish instead.
- * - @warning arc4 is a stream cipher with serious weaknesses in its initial stream output,
- * Its use is strongly discouraged. arc4 does not use mode constructions.
+ * - @warning blowfish is known to be susceptible to attacks when using weak
+ * keys, you'd be better to use aes or twofish instead.
+ * - @warning arc4 is a stream cipher with serious weaknesses in its initial
+ * stream output, Its use is strongly discouraged. arc4 does not use mode
+ * constructions.
  */
 enum class cipher_t {
-    none,             ///< invalid or unknown
+    none, ///< invalid or unknown
     null,
     aes_128_ecb,
     aes_192_ecb,
@@ -138,15 +141,17 @@ enum class cipher_t {
     camellia_256_ccm,
 };
 
-/// all possible public key algorithms (PKI types), RSA is included in default build.
+/// all possible public key algorithms (PKI types), RSA is included in default
+/// build.
 enum class pk_t {
-    none,           ///< unknown or invalid
-    rsa,            ///< RSA (default)
-    eckey,          ///< elliptic curve key
-    eckey_dh,       ///< elliptic curve key for Diffie–Hellman key exchange
-    ecdsa,          ///< elliptic curve key for digital signature algorithm
-    rsa_alt,
-    rsassa_pss,     ///< RSA standard signature algorithm, probabilistic signature scheme
+    none,       ///< unknown or invalid
+    rsa,        ///< RSA (default)
+    eckey,      ///< elliptic curve key
+    eckey_dh,   ///< elliptic curve key for Diffie–Hellman key exchange
+    ecdsa,      ///< elliptic curve key for digital signature algorithm
+    rsa_alt,    ///<
+    rsassa_pss, ///< RSA standard signature algorithm, probabilistic signature
+                /// scheme
 };
 
 /** all supported EC curves.
@@ -179,12 +184,15 @@ enum class curve_t {
  */
 enum class features {
     aes_ni,     ///< hardware accelerated AES. @sa cipher::supports_aes_ni()
-    aead,       ///< authenticated encryption by additional data. @sa cipher::supports_aead()
-    pk_export,  ///< pem/der export of pri/pub keys. @sa pk::supports_key_export()
+    aead,       ///< authenticated encryption by additional data. @sa
+                /// cipher::supports_aead()
+    pk_export,  ///< pem/der export of pri/pub keys. @sa
+                /// pk::supports_key_export()
     rsa_keygen, ///< RSA key generator. @sa pk::supports_rsa_keygen()
     ec_keygen,  ///< EC key generator. @sa pk::supports_ec_keygen()
 };
 ///////////////////////////////////////////////////////////////////////////////
+// clang-format off
 
 /// returns true if an algorithm or a type is present at runtime.
 bool supports(hash_t);
@@ -207,8 +215,6 @@ auto installed_curves()      -> std::vector<curve_t>;
 // returns true if an algorithm or a type is present at runtime (by name
 // string).
 // both lower or upper case names are supported.
-
-
 bool supports_hash(const char*);
 bool supports_padding(const char*);
 bool supports_block_mode(const char*);
@@ -230,39 +236,40 @@ auto cipher_from_string(const char*)     -> cipher_t;
 auto pk_from_string(const char*)         -> pk_t;
 auto curve_from_string(const char*)      -> curve_t;
 
-template<typename T>
-T from_string(const char* name, T* = nullptr);
+template <typename T> T
+from_string(const char* name, T* = nullptr);
 
-template<> inline
-auto from_string(const char* name, hash_t*) -> hash_t {
+template <> inline auto
+from_string(const char* name, hash_t*) -> hash_t {
     return hash_from_string(name);
 }
 
-template<> inline
-auto from_string(const char* name, padding_t*) -> padding_t {
+template <> inline auto
+from_string(const char* name, padding_t*) -> padding_t {
     return padding_from_string(name);
 }
 
-template<> inline
-auto from_string(const char* name, cipher_bm*) -> cipher_bm {
+template <> inline auto
+from_string(const char* name, cipher_bm*) -> cipher_bm {
     return block_mode_from_string(name);
 }
 
-template<> inline
-auto from_string(const char* name, cipher_t*) -> cipher_t {
+template <> inline auto
+from_string(const char* name, cipher_t*) -> cipher_t {
     return cipher_from_string(name);
 }
 
-template<> inline
-auto from_string(const char* name, pk_t*) -> pk_t {
+template <> inline auto
+from_string(const char* name, pk_t*) -> pk_t {
     return pk_from_string(name);
 }
 
-template<> inline
-auto from_string(const char* name, curve_t*) -> curve_t {
+template <> inline auto
+from_string(const char* name, curve_t*) -> curve_t {
     return curve_from_string(name);
 }
 
+// clang-format on
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
 ///////////////////////////////////////////////////////////////////////////////
