@@ -43,11 +43,12 @@ Makefile*
 
 # node.js external modules
 node_modules
-# YouCompleteMe
+# neovim, vim, YouCompleteMe
 .vimrc
 .gvimrc
 init.vim
 Session.vim
 .ycm_extra_conf.*
 .color_coded*
-
+# clang-format
+.clang-format*
