@@ -3,21 +3,23 @@ project(mbedcrypto)
 # modify this file to add/remove features and modules from mbedtls
 add_definitions( -DMBEDTLS_CONFIG_FILE=\"mbedcrypto_mbedtls_config.h\" )
 
-file(GLOB mbedcrypto_src
-    ../include/mbedcrypto/**.hpp
-    ../src/**.hpp
-    ../src/**.cpp
+# mbedcrypto main files
+set(MBEDCRYPTO_SRC
+    ../src/exception.cpp
+    ../src/conversions.cpp
+    ../src/types.cpp
+    ../src/tcodec.cpp
+    ../src/hash.cpp
+    ../src/cipher.cpp
+    ../src/mpi.cpp
+    ../src/rnd_generator.cpp
+    ../src/pk.cpp
+    ../src/rsa.cpp
     )
 
-add_library(mbedcrypto ${mbedcrypto_src})
-set_target_properties(mbedcrypto PROPERTIES
-    SOVERSION 1
-    VERSION 1.0.0
-    )
-
-# add mandatory mbedtls sources
+# mandatory mbedtls sources
 set(MBEDTLS_PATH "../3rdparty/mbedtls/library")
-target_sources(mbedcrypto PRIVATE
+set(MBEDTLS_SRC
     ${MBEDTLS_PATH}/error.c
     ${MBEDTLS_PATH}/base64.c
     ${MBEDTLS_PATH}/md5.c
@@ -45,19 +47,19 @@ target_sources(mbedcrypto PRIVATE
     ${MBEDTLS_PATH}/platform.c
     )
 
-#optional mbedtls definitions and sources based on specified options
-
+# optional mbedtls definitions and sources based on specified options
+#  message digests (hashes)
 if(BUILD_MD2)
     set(MBEDTLS_MD2_C ON)
-    target_sources(mbedcrypto PRIVATE ${MBEDTLS_PATH}/md2.c)
+    list(APPEND MBEDTLS_SRC ${MBEDTLS_PATH}/md2.c)
 endif()
 if(BUILD_MD4)
     set(MBEDTLS_MD4_C ON)
-    target_sources(mbedcrypto PRIVATE ${MBEDTLS_PATH}/md4.c)
+    list(APPEND MBEDTLS_SRC ${MBEDTLS_PATH}/md4.c)
 endif()
 if(BUILD_RIPEMD160)
     set(MBEDTLS_RIPEMD160_C ON)
-    target_sources(mbedcrypto PRIVATE ${MBEDTLS_PATH}/ripemd160.c)
+    list(APPEND MBEDTLS_SRC ${MBEDTLS_PATH}/ripemd160.c)
 endif()
 
 if(BUILD_ALL_CIPHER_PADDINGS)
@@ -66,6 +68,7 @@ if(BUILD_ALL_CIPHER_PADDINGS)
     set(MBEDTLS_CIPHER_PADDING_ZEROS ON)
 endif()
 
+#  cipher block modes
 if(BUILD_CFB)
     set(MBEDTLS_CIPHER_MODE_CFB ON)
 endif()
@@ -74,38 +77,39 @@ if(BUILD_CTR)
 endif()
 if(BUILD_GCM)
     set(MBEDTLS_GCM_C ON)
-    target_sources(mbedcrypto PRIVATE ${MBEDTLS_PATH}/gcm.c)
+    list(APPEND MBEDTLS_SRC ${MBEDTLS_PATH}/gcm.c)
 endif()
 if(BUILD_CCM)
     set(MBEDTLS_CCM_C ON)
-    target_sources(mbedcrypto PRIVATE ${MBEDTLS_PATH}/ccm.c)
+    list(APPEND MBEDTLS_SRC ${MBEDTLS_PATH}/ccm.c)
 endif()
 
+#  cipher algorithms
 if(BUILD_DES)
     set(MBEDTLS_DES_C ON)
-    target_sources(mbedcrypto PRIVATE ${MBEDTLS_PATH}/des.c)
+    list(APPEND MBEDTLS_SRC ${MBEDTLS_PATH}/des.c)
 endif()
 if(BUILD_BLOWFISH)
     set(MBEDTLS_BLOWFISH_C ON)
-    target_sources(mbedcrypto PRIVATE ${MBEDTLS_PATH}/blowfish.c)
+    list(APPEND MBEDTLS_SRC ${MBEDTLS_PATH}/blowfish.c)
 endif()
 if(BUILD_CAMELLIA)
     set(MBEDTLS_CAMELLIA_C ON)
-    target_sources(mbedcrypto PRIVATE ${MBEDTLS_PATH}/camellia.c)
+    list(APPEND MBEDTLS_SRC ${MBEDTLS_PATH}/camellia.c)
 endif()
 if(BUILD_ARC4)
     set(MBEDTLS_ARC4_C ON)
-    target_sources(mbedcrypto PRIVATE ${MBEDTLS_PATH}/arc4.c)
+    list(APPEND MBEDTLS_SRC ${MBEDTLS_PATH}/arc4.c)
 endif()
 
+#  public key options
 if(BUILD_PK_EXPORT)
     set(MBEDTLS_ASN1_WRITE_C ON)
     set(MBEDTLS_PK_WRITE_C ON)
     set(MBEDTLS_PEM_WRITE_C ON)
-    target_sources(mbedcrypto PRIVATE
+    list(APPEND MBEDTLS_SRC
         ${MBEDTLS_PATH}/asn1write.c
-        ${MBEDTLS_PATH}/pkwrite.c
-        )
+        ${MBEDTLS_PATH}/pkwrite.c)
 endif()
 if(BUILD_RSA_KEYGEN)
     set(MBEDTLS_GENPRIME ON)
@@ -127,14 +131,34 @@ if(BUILD_EC)
     set(MBEDTLS_ECP_DP_BP384R1_ENABLED ON)
     set(MBEDTLS_ECP_DP_BP512R1_ENABLED ON)
     set(MBEDTLS_ECP_DP_CURVE25519_ENABLED ON)
-    target_sources(mbedcrypto PRIVATE
+    list(APPEND MBEDTLS_SRC
         ${MBEDTLS_PATH}/ecp.c
         ${MBEDTLS_PATH}/ecp_curves.c
         ${MBEDTLS_PATH}/dhm.c
         ${MBEDTLS_PATH}/ecdh.c
         ${MBEDTLS_PATH}/ecdsa.c
         )
+    list(APPEND MBEDCRYPTO_SRC
+        ../src/ecp.cpp
+        )
 endif()
 
-
+# cofig.h file
 configure_file(mbedcrypto_mbedtls_config.h.in ${CMAKE_BINARY_DIR}/mbedcrypto_mbedtls_config.h)
+
+# libraries
+
+add_library(mbedcrypto ${MBEDCRYPTO_SRC})
+set_target_properties(mbedcrypto PROPERTIES
+    SOVERSION 1
+    VERSION 1.0.0
+    )
+
+# mbedtls parts
+if(BUILD_SINGLE_LIB)
+    target_sources(mbedcrypto PRIVATE ${MBEDTLS_SRC})
+else()
+    add_library(mbedtls ${MBEDTLS_SRC})
+    target_link_libraries(mbedcrypto mbedtls)
+endif()
+

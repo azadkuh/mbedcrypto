@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.0)
 project("mbedcrypto" CXX)
 
 option(BUILD_SHARED_LIBS "build mbedcrypto as a unix shared (so/dylib) library" OFF)
+option(BUILD_SINGLE_LIB  "merge mbedcrypto and mbedtls into a single library" ON)
 option(BUILD_TESTS       "build test units and apps" ON)
 
 # optional hash algorithms:
