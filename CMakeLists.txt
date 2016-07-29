@@ -42,19 +42,26 @@ endif()
 include(CheckCXXCompilerFlag)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_STANDARD_REQUIRED ON)
-string(REGEX MATCH "Clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_CXX_COMPILER_ID}")
-string(REGEX MATCH "GNU"   CMAKE_COMPILER_IS_GNUXX "${CMAKE_CXX_COMPILER_ID}")
+string(REGEX MATCH "Clang"  IS_CLANG "${CMAKE_CXX_COMPILER_ID}")
+string(REGEX MATCH "GNU"    IS_GNUXX "${CMAKE_CXX_COMPILER_ID}")
+string(REGEX MATCH "Linux"  IS_LINUX "${CMAKE_SYSTEM_NAME}")
+string(REGEX MATCH "Darwin" IS_MACOS "${CMAKE_SYSTEM_NAME}")
 
-if(CMAKE_COMPILER_IS_CLANG OR CMAKE_COMPILER_IS_GNUXX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -W -Wwrite-strings -Wshadow -pedantic -Wcast-align -Wunused -Wno-unused-parameter -Wpointer-arith")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+if(IS_CLANG OR IS_GNUXX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
+        -Wall -Wextra -W -Wwrite-strings -Wshadow -pedantic -Wcast-align \
+        -Wunused -Wno-unused-parameter -Wpointer-arith")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g0")
     set(CMAKE_CXX_FLAGS_DEBUG   "-O0 -g3")
 
-    if(CMAKE_COMPILER_IS_GNUXX)
-        set(CMAKE_CXX_FLAGS_ASAN   "-Werror -fsanitize=address -fno-common -O3")
-    elseif(CMAKE_COMPILER_IS_CLANG)
-        set(CMAKE_CXX_FLAGS_ASAN   "-Werror -fsanitize=address -fno-common -fno-sanitize-recover -O3")
-        set(CMAKE_CXX_FLAGS_MEMSAN "-Werror -fsanitize=memory -O3")
+    if(IS_GNUXX)
+        set(CMAKE_CXX_FLAGS_ASAN
+            "-Werror -fsanitize=address -fno-common -O3")
+    elseif(IS_CLANG)
+        set(CMAKE_CXX_FLAGS_ASAN
+            "-Werror -fsanitize=address -fno-common -fno-sanitize-recover -O3")
+        set(CMAKE_CXX_FLAGS_MEMSAN
+            "-Werror -fsanitize=memory -fno-omit-frame-pointer -fno-optimize-sibling-calls -g -O1")
     endif()
 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wnon-virtual-dtor -Woverloaded-virtual")
@@ -73,9 +80,9 @@ elseif(MSVC)
 
 endif()
 
-if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+if(IS_LINUX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
-elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin" AND BUILD_SHARED_LIBS)
+elseif(IS_MACOS AND BUILD_SHARED_LIBS)
     message("@warning: rpath is skipped by default under OS X")
     set(CMAKE_SKIP_RPATH TRUE)
 endif()
