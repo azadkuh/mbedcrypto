@@ -347,7 +347,7 @@ cipher::encrypt_aead(
     return std::make_tuple(tag, output);
 
 #else // MBEDTLS_CIPHER_MODE_AEAD
-    throw aead_exception{};
+    throw exceptions::aead_error{};
 #endif
 }
 
@@ -392,7 +392,7 @@ cipher::decrypt_aead(
     throw exception{ret, __FUNCTION__};
 
 #else // MBEDTLS_CIPHER_MODE_AEAD
-    throw aead_exception{};
+    throw exceptions::aead_error{};
 #endif
 }
 
@@ -553,7 +553,7 @@ cipher::gcm_additional_data(const buffer_t& ad) {
         mbedtls_cipher_update_ad, &pimpl->ctx_, to_const_ptr(ad), ad.size());
 
 #else  // MBEDTLS_
-    throw gcm_exception{};
+    throw exceptions::gcm_error{};
 #endif // MBEDTLS_
 }
 
@@ -566,7 +566,7 @@ cipher::gcm_encryption_tag(size_t length) {
 
     return tag;
 #else  // MBEDTLS_
-    throw gcm_exception{};
+    throw exceptions::gcm_error{};
 #endif // MBEDTLS_
 }
 
@@ -587,7 +587,7 @@ cipher::gcm_check_decryption_tag(const buffer_t& tag) {
         break;
     }
 #else  // MBEDTLS_GCM_C
-    throw gcm_exception{};
+    throw exceptions::gcm_error{};
 #endif // MBEDTLS_GCM_C
 }
 ///////////////////////////////////////////////////////////////////////////////
