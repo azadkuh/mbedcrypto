@@ -162,3 +162,6 @@ else()
     target_link_libraries(mbedcrypto mbedtls)
 endif()
 
+if(BUILD_QT5_BIND)
+    qt5_use_modules(mbedcrypto Core)
+endif()
