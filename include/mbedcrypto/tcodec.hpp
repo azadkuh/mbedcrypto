@@ -104,6 +104,27 @@ from_base64(const buffer_t& src) {
     return base64::decode(src);
 }
 
+#if defined(QT_CORE_LIB)
+inline QByteArray
+to_hex(const QByteArray& src) noexcept {
+    return src.toHex();
+}
+
+inline QByteArray
+from_hex(const QByteArray& src) noexcept {
+    return QByteArray::fromHex(src);
+}
+
+inline QByteArray
+to_base64(const QByteArray& src) noexcept {
+    return src.toBase64();
+}
+
+inline QByteArray
+from_base64(const QByteArray& src) noexcept {
+    return QByteArray::fromBase64(src);
+}
+#endif // QT_CORE_LIB
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
 ///////////////////////////////////////////////////////////////////////////////
