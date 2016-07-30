@@ -27,7 +27,7 @@ digest_pair(hash_t type) {
     const auto* cinfot = native_type(type);
     size_t      length = mbedtls_md_get_size(cinfot);
 
-    return std::make_tuple(cinfot, buffer_t(length, '\0'));
+    return std::make_tuple(cinfot, length);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -87,29 +87,31 @@ hash::length(hash_t type) {
 buffer_t
 hash::make(hash_t type, const unsigned char* src, size_t length) {
     auto digest = digest_pair(type);
+    buffer_t buf(std::get<1>(digest), '\0');
 
     mbedcrypto_c_call(
         mbedtls_md,
         std::get<0>(digest),
         src,
         length,
-        to_ptr(std::get<1>(digest)));
+        to_ptr(buf));
 
-    return std::get<1>(digest);
+    return buf;
 }
 
 buffer_t
 hash::of_file(hash_t type, const char* filePath) {
 #if defined(MBEDTLS_FS_IO)
     auto digest = digest_pair(type);
+    buffer_t buf(std::get<1>(digest), '\0');
 
     mbedcrypto_c_call(
         mbedtls_md_file,
         std::get<0>(digest),
         filePath,
-        to_ptr(std::get<1>(digest)));
+        to_ptr(buf));
 
-    return std::get<1>(digest);
+    return buf;
 
 #else
     throw support_exception{};
@@ -121,6 +123,7 @@ buffer_t
 hmac::make(
     hash_t type, const buffer_t& key, const unsigned char* src, size_t length) {
     auto digest = digest_pair(type);
+    buffer_t buf(std::get<1>(digest), '\0');
 
     mbedcrypto_c_call(
         mbedtls_md_hmac,
@@ -129,9 +132,9 @@ hmac::make(
         key.size(),
         src,
         length,
-        to_ptr(std::get<1>(digest)));
+        to_ptr(buf));
 
-    return std::get<1>(digest);
+    return buf;
 }
 
 void
