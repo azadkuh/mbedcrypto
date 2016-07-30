@@ -12,6 +12,10 @@
 
 #include <memory>
 #include <string>
+
+#if defined(QT_CORE_LIB)
+#include <QByteArray>
+#endif // QT_CORE_LIB
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
 
@@ -37,6 +41,17 @@ to_ptr(buffer_t& b) {
     return reinterpret_cast<uchars>(&b.front());
 }
 
+#if defined(QT_CORE_LIB)
+inline auto
+to_const_ptr(const QByteArray& b) {
+    return reinterpret_cast<cuchars>(b.data());
+}
+
+inline auto
+to_ptr(QByteArray& b) {
+    return reinterpret_cast<uchars>(b.data());
+}
+#endif // QT_CORE_LIB
 
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto

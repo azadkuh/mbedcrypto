@@ -32,6 +32,8 @@ option(BUILD_PK_EXPORT  "enable export keys in pem or der format" ON)
 option(BUILD_RSA_KEYGEN "enable rsa key generator" ON)
 option(BUILD_EC         "enable eckey, eckey_dh, ecdsa algorithms " OFF)
 
+option(BUILD_QT5_BIND   "also adds adaptors around Qt5::QByteArray" OFF)
+
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING
         "Choose the type of build: None Release ASan MemSan Debug"
@@ -92,6 +94,10 @@ endif()
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/xbin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/xbin)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/xbin)
+
+if(BUILD_QT5_BIND)
+    find_package(Qt5Core REQUIRED)
+endif()
 
 include_directories(.
     ./include
