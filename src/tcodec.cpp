@@ -17,9 +17,11 @@ hex_lower(unsigned char b) noexcept {
 ///////////////////////////////////////////////////////////////////////////////
 
 buffer_t
-hex::encode(const unsigned char* src, size_t length) {
-    buffer_t       buffer(length << 1, '\0');
-    unsigned char* hexdata = to_ptr(buffer);
+hex::encode(buffer_view_t bsrc) {
+    auto     length = bsrc.length();
+    auto     src    = bsrc.data();
+    buffer_t buffer(length << 1, '\0');
+    uchars   hexdata = to_ptr(buffer);
 
     for (size_t i = 0; i < length; ++i) {
         hexdata[i << 1]       = hex_lower(src[i] >> 4);
@@ -66,47 +68,34 @@ hex::decode(const char* src, size_t length) {
 ///////////////////////////////////////////////////////////////////////////////
 
 size_t
-base64::encode_size(const unsigned char* src, size_t srclen) noexcept {
+base64::encode_size(buffer_view_t src) noexcept {
     size_t olen = 0;
     mbedtls_base64_encode(
         nullptr,
         0, // dest
         &olen,
-        src,
-        srclen);
+        src.data(),
+        src.size());
 
     return olen;
 }
 
 size_t
-base64::decode_size(const unsigned char* src, size_t srclen) noexcept {
+base64::decode_size(buffer_view_t src) noexcept {
     size_t olen = 0;
     mbedtls_base64_decode(
         nullptr,
         0, // dest
         &olen,
-        src,
-        srclen);
+        src.data(),
+        src.size());
 
     return olen;
 }
 
-size_t
-base64::encode_size(const buffer_t& src) {
-    return encode_size(to_const_ptr(src), src.size());
-}
-
-size_t
-base64::decode_size(const buffer_t& src) {
-    return decode_size(to_const_ptr(src), src.size());
-}
-
 int
 base64::encode(
-    const unsigned char* src,
-    size_t               srclen,
-    unsigned char*       dest,
-    size_t&              destlen) noexcept {
+    cuchars src, size_t srclen, uchars dest, size_t& destlen) noexcept {
 
     size_t olen = 0;
     int    ret  = mbedtls_base64_encode(dest, destlen, &olen, src, srclen);
@@ -117,10 +106,7 @@ base64::encode(
 
 int
 base64::decode(
-    const unsigned char* src,
-    size_t               srclen,
-    unsigned char*       dest,
-    size_t&              destlen) noexcept {
+    cuchars src, size_t srclen, uchars dest, size_t& destlen) noexcept {
 
     size_t olen = 0;
     int    ret  = mbedtls_base64_decode(dest, destlen, &olen, src, srclen);
@@ -130,14 +116,14 @@ base64::decode(
 }
 
 void
-base64::encode(const buffer_t& src, buffer_t& dest) {
+base64::encode(buffer_view_t src, buffer_t& dest) {
     size_t requiredSize = encode_size(src);
     if (dest.capacity() <= requiredSize)
         dest.reserve(requiredSize + 1);
 
     dest.resize(requiredSize);
     size_t dsize = requiredSize;
-    int    ret   = encode(to_const_ptr(src), src.size(), to_ptr(dest), dsize);
+    int    ret   = encode(src.data(), src.size(), to_ptr(dest), dsize);
 
     if (ret != 0)
         throw exception{ret, "failed to base64 encode"};
@@ -147,28 +133,28 @@ base64::encode(const buffer_t& src, buffer_t& dest) {
 }
 
 void
-base64::decode(const buffer_t& src, buffer_t& dest) {
+base64::decode(buffer_view_t src, buffer_t& dest) {
     size_t requiredSize = decode_size(src);
     if (dest.capacity() <= requiredSize)
         dest.reserve(requiredSize + 1);
 
     dest.resize(requiredSize);
     size_t dsize = requiredSize;
-    int    ret   = decode(to_const_ptr(src), src.size(), to_ptr(dest), dsize);
+    int    ret   = decode(src.data(), src.size(), to_ptr(dest), dsize);
 
     if (ret != 0)
         throw exception{ret, "failed to base64 decode"};
 }
 
 buffer_t
-base64::encode(const buffer_t& src) {
+base64::encode(buffer_view_t src) {
     buffer_t dest;
     encode(src, dest);
     return dest;
 }
 
 buffer_t
-base64::decode(const buffer_t& src) {
+base64::decode(buffer_view_t src) {
     buffer_t dest;
     decode(src, dest);
     return dest;

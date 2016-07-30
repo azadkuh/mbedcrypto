@@ -20,15 +20,10 @@ namespace mbedcrypto {
 struct hex {
 
     /// encodes a buffer to hex string
-    static buffer_t encode(const unsigned char* src, size_t length);
+    static buffer_t encode(buffer_view_t src);
 
     /// decodes froma a hex string
     static buffer_t decode(const char* src, size_t length = 0);
-
-    /// overload
-    static buffer_t encode(const buffer_t& src) {
-        return encode(to_const_ptr(src), src.size());
-    }
 
     /// overload
     static buffer_t decode(const buffer_t& src) {
@@ -42,32 +37,25 @@ struct hex {
 /// base64 representation
 struct base64 {
     /// encodes a buffer into base64 format
-    static buffer_t encode(const buffer_t& src);
+    static buffer_t encode(buffer_view_t src);
 
     /// decodes a base64-formatted buffer
-    static buffer_t decode(const buffer_t& src);
+    static buffer_t decode(buffer_view_t src);
 
     /// tries to reuse the dest memory, or resizes if there is not enough room
-    static void encode(const buffer_t& src, buffer_t& dest);
+    static void encode(buffer_view_t src, buffer_t& dest);
 
     /// tries to reuse the dest memory, or resizes if there is not enough room
-    static void decode(const buffer_t& src, buffer_t& dest);
+    static void decode(buffer_view_t src, buffer_t& dest);
 
     /// returns the required result size of encoding to base64, including
     /// null-terminating byte
-    static size_t encode_size(const buffer_t&);
+    static size_t encode_size(buffer_view_t) noexcept;
 
     /// returns the required result size of decoding from base64
-    static size_t decode_size(const buffer_t&);
+    static size_t decode_size(buffer_view_t) noexcept;
 
     // raw overloads
-
-    static size_t
-    encode_size(const unsigned char* src, size_t src_length) noexcept;
-
-    static size_t
-    decode_size(const unsigned char* src, size_t src_length) noexcept;
-
     static int encode(
         const unsigned char* src,
         size_t               src_length,
