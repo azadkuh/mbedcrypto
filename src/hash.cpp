@@ -30,6 +30,36 @@ digest_pair(hash_t type) {
     return std::make_tuple(cinfot, length);
 }
 
+template <class T>
+T
+_make(hash_t type, cuchars src, size_t length) {
+    auto digest = digest_pair(type);
+    T    buf(std::get<1>(digest), '\0');
+
+    mbedcrypto_c_call(
+        mbedtls_md, std::get<0>(digest), src, length, to_ptr(buf));
+
+    return buf;
+}
+
+template <class T>
+T
+_make(
+    hash_t type, cuchars key, size_t key_size, cuchars src, size_t length) {
+    auto digest = digest_pair(type);
+    T    buf(std::get<1>(digest), '\0');
+
+    mbedcrypto_c_call(
+        mbedtls_md_hmac,
+        std::get<0>(digest),
+        key,
+        key_size,
+        src,
+        length,
+        to_ptr(buf));
+
+    return buf;
+}
 ///////////////////////////////////////////////////////////////////////////////
 
 struct impl_base {
@@ -48,7 +78,7 @@ struct impl_base {
         mbedcrypto_c_call(mbedtls_md_setup, &ctx_, cinfot, (hmac) ? 1 : 0);
     }
 
-    size_t size() const {
+    size_t size() const noexcept {
         if (ctx_.md_info == nullptr)
             return 0;
 
@@ -84,19 +114,14 @@ hash::length(hash_t type) {
     return mbedtls_md_get_size(cinfot);
 }
 
+size_t
+hash::length() const noexcept {
+    return pimpl->size();
+}
+
 buffer_t
 hash::make(hash_t type, const unsigned char* src, size_t length) {
-    auto digest = digest_pair(type);
-    buffer_t buf(std::get<1>(digest), '\0');
-
-    mbedcrypto_c_call(
-        mbedtls_md,
-        std::get<0>(digest),
-        src,
-        length,
-        to_ptr(buf));
-
-    return buf;
+    return _make<buffer_t>(type, src, length);
 }
 
 buffer_t
@@ -122,19 +147,7 @@ hash::of_file(hash_t type, const char* filePath) {
 buffer_t
 hmac::make(
     hash_t type, const buffer_t& key, const unsigned char* src, size_t length) {
-    auto digest = digest_pair(type);
-    buffer_t buf(std::get<1>(digest), '\0');
-
-    mbedcrypto_c_call(
-        mbedtls_md_hmac,
-        std::get<0>(digest),
-        to_const_ptr(key),
-        key.size(),
-        src,
-        length,
-        to_ptr(buf));
-
-    return buf;
+    return _make<buffer_t>(type, to_const_ptr(key), key.size(), src, length);
 }
 
 void
@@ -179,6 +192,25 @@ hmac::finish() {
     return digest;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+#if defined(QT_CORE_LIB)
+///////////////////////////////////////////////////////////////////////////////
+QByteArray
+hash::make(hash_t type, const QByteArray& src) {
+    return _make<QByteArray>(type, to_const_ptr(src), (size_t)src.length());
+}
+
+QByteArray
+hmac::make(hash_t type, const QByteArray& key, const QByteArray& src) {
+    return _make<QByteArray>(
+        type,
+        to_const_ptr(key),
+        (size_t)key.length(),
+        to_const_ptr(src),
+        (size_t)src.length());
+}
+///////////////////////////////////////////////////////////////////////////////
+#endif // QT_CORE_LIB
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
 ///////////////////////////////////////////////////////////////////////////////

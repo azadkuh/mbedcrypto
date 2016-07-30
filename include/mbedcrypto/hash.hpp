@@ -54,8 +54,10 @@ public: // single-shot hash computation
     static buffer_t of_file(hash_t type, const char* filePath);
 
 public: // iterative usage, reusing the instance
-    explicit hash(hash_t type);
+    explicit hash(hash_t type); ///< throws if type is not supported
     ~hash();
+
+    size_t length() const noexcept;
 
     /// resets and prepares the object to digest a new message.
     void start();
@@ -77,6 +79,10 @@ public: // iterative usage, reusing the instance
     hash(hash&&)      = default;
     hash& operator=(const hash&) = delete;
     hash& operator=(hash&&)      = default;
+
+#if defined(QT_CORE_LIB)
+    static QByteArray make(hash_t type, const QByteArray& src);
+#endif // QT_CORE_LIB
 
 protected:
     struct impl;
@@ -149,6 +155,11 @@ public: // iterative or reuse
     hmac& operator=(const hmac&) = delete;
     hmac& operator=(hmac&&)      = default;
 
+#if defined(QT_CORE_LIB)
+    static QByteArray
+    make(hash_t type, const QByteArray& key, const QByteArray& src);
+#endif // QT_CORE_LIB
+
 protected:
     struct impl;
     std::unique_ptr<impl> pimpl;
@@ -161,14 +172,34 @@ hash_size(hash_t type) {
     return hash::length(type);
 }
 
-inline buffer_t
-make_hash(hash_t type, const buffer_t& src) {
+template <class T>
+inline T
+make_hash(hash_t type, const T& src) {
     return hash::make(type, src);
 }
 
-inline buffer_t
-make_hmac(hash_t type, const buffer_t& key, const buffer_t& src) {
+template<class T>
+inline T
+make_hmac(hash_t type, const T& key, const T& src) {
     return hmac::make(type, key, src);
+}
+
+template <class T>
+inline T
+to_sha1(const T& src) {
+    return hash::make(hash_t::sha1, src);
+}
+
+template <class T>
+inline T
+to_sha256(const T& src) {
+    return hash::make(hash_t::sha256, src);
+}
+
+template <class T>
+inline T
+to_sha512(const T& src) {
+    return hash::make(hash_t::sha512, src);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
