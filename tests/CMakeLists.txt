@@ -9,6 +9,9 @@ file(GLOB tests_src
     )
 add_executable(tests ${tests_src})
 target_link_libraries(tests mbedcrypto)
+if(BUILD_QT5_BIND)
+    qt5_use_modules(tests Core)
+endif()
 
 OPTION(BUILD_TESTS_IDEA "build experimental and dirty test applications, you ain't gonna need it" OFF)
 
