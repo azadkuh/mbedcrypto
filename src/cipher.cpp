@@ -56,23 +56,20 @@ struct cipher_impl {
         return from_native(ctx_.cipher_info->mode);
     }
 
-    void iv() {
+    void reset_last_iv() {
         iv(iv_data_);
     }
 
-    void iv(const buffer_t& iv_data) {
+    void iv(buffer_view_t iv_data) {
         mbedcrypto_c_call(
-            mbedtls_cipher_set_iv,
-            &ctx_,
-            to_const_ptr(iv_data),
-            iv_data.size());
+            mbedtls_cipher_set_iv, &ctx_, iv_data.data(), iv_data.size());
     }
 
-    void key(const buffer_t& key_data, cipher::mode m) {
+    void key(buffer_view_t key_data, cipher::mode m) {
         mbedcrypto_c_call(
             mbedtls_cipher_setkey,
             &ctx_,
-            to_const_ptr(key_data),
+            key_data.data(),
             key_data.size() << 3, // bitlen
             m == cipher::encrypt_mode ? MBEDTLS_ENCRYPT : MBEDTLS_DECRYPT);
     }
@@ -85,24 +82,25 @@ struct cipher_impl {
     }
 
     // updates in chunks
-    int update_chunked(
-        const unsigned char* pinput,
-        size_t               isize,
-        unsigned char*       poutput,
-        size_t&              osize) {
-
+    int update_chunked(buffer_view_t achunk, uchars poutput, size_t& osize) {
         auto bsize = block_size();
-        if (isize % bsize)
+        if (achunk.size() % bsize)
             return MBEDTLS_ERR_CIPHER_FULL_BLOCK_EXPECTED;
 
         size_t i_index = 0;
         size_t o_index = 0;
+        size_t chunks  = achunk.size() / bsize;
 
-        size_t chunks = isize / bsize;
         for (size_t i = 0; i < chunks; ++i) {
             size_t usize = 0;
-            int    ret   = mbedtls_cipher_update(
-                &ctx_, pinput + i_index, bsize, poutput + o_index, &usize);
+
+            int ret = mbedtls_cipher_update(
+                &ctx_,
+                achunk.data() + i_index,
+                bsize,
+                poutput + o_index,
+                &usize);
+
             if (ret < 0)
                 return ret;
 
@@ -120,14 +118,14 @@ struct cipher_impl {
 
 class crypt_engine
 {
-    cipher_t        type_       = cipher_t::none;
-    cipher_bm       block_mode_ = cipher_bm::none;
-    size_t          block_size_ = 0;
-    size_t          input_size_ = 0;
-    size_t          chunks_     = 0;
-    const buffer_t& input_;
+    cipher_t      type_       = cipher_t::none;
+    cipher_bm     block_mode_ = cipher_bm::none;
+    size_t        block_size_ = 0;
+    size_t        input_size_ = 0;
+    size_t        chunks_     = 0;
+    buffer_view_t input_;
 
-    explicit crypt_engine(cipher_t type, const buffer_t& input)
+    explicit crypt_engine(cipher_t type, buffer_view_t input)
         : type_(type),
           block_mode_(cipher::block_mode(type)),
           block_size_(cipher::block_size(type)),
@@ -149,10 +147,7 @@ class crypt_engine
     }
 
     buffer_t compute(
-        padding_t       pad,
-        const buffer_t& iv,
-        const buffer_t& key,
-        cipher::mode    m) {
+        padding_t pad, buffer_view_t iv, buffer_view_t key, cipher::mode m) {
 
         // prepare ciphering parameters
         cipher_impl cim;
@@ -164,15 +159,15 @@ class crypt_engine
         // prepare output size
         size_t   osize = 32 + input_size_ + block_size_;
         buffer_t output(osize, '\0');
+        auto*    pDes = to_ptr(output);
 
-        const auto* pSrc = to_const_ptr(input_);
-        auto*       pDes = to_ptr(output);
+        cuchars  pSrc = input_.data();
 
         if (chunks_ == 1) {
             mbedcrypto_c_call(
                 mbedtls_cipher_crypt,
                 &cim.ctx_,
-                to_const_ptr(iv),
+                iv.data(),
                 iv.size(),
                 pSrc,
                 input_size_,
@@ -187,7 +182,7 @@ class crypt_engine
                 mbedcrypto_c_call(
                     mbedtls_cipher_crypt,
                     &cim.ctx_,
-                    to_const_ptr(iv),
+                    iv.data(),
                     iv.size(),
                     pSrc,
                     block_size_,
@@ -206,12 +201,12 @@ class crypt_engine
 
 public:
     static buffer_t
-    run(cipher_t        type,
-        padding_t       pad,
-        const buffer_t& iv,
-        const buffer_t& key,
-        cipher::mode    m,
-        const buffer_t& input) {
+    run(cipher_t      type,
+        padding_t     pad,
+        buffer_view_t iv,
+        buffer_view_t key,
+        cipher::mode  m,
+        buffer_view_t input) {
 
         // check cipher mode against input size
         crypt_engine cengine(type, input);
@@ -286,21 +281,21 @@ cipher::block_mode() const noexcept {
 
 buffer_t
 cipher::encrypt(
-    cipher_t        type,
-    padding_t       pad,
-    const buffer_t& iv,
-    const buffer_t& key,
-    const buffer_t& input) {
+    cipher_t      type,
+    padding_t     pad,
+    buffer_view_t iv,
+    buffer_view_t key,
+    buffer_view_t input) {
     return crypt_engine::run(type, pad, iv, key, encrypt_mode, input);
 }
 
 buffer_t
 cipher::decrypt(
-    cipher_t        type,
-    padding_t       pad,
-    const buffer_t& iv,
-    const buffer_t& key,
-    const buffer_t& input) {
+    cipher_t      type,
+    padding_t     pad,
+    buffer_view_t iv,
+    buffer_view_t key,
+    buffer_view_t input) {
     return crypt_engine::run(type, pad, iv, key, decrypt_mode, input);
 }
 
@@ -314,11 +309,11 @@ cipher::supports_aead() {
 
 std::tuple<buffer_t, buffer_t>
 cipher::encrypt_aead(
-    cipher_t        type,
-    const buffer_t& iv,
-    const buffer_t& key,
-    const buffer_t& ad,
-    const buffer_t& input) {
+    cipher_t      type,
+    buffer_view_t iv,
+    buffer_view_t key,
+    buffer_view_t ad,
+    buffer_view_t input) {
 #if defined(MBEDTLS_CIPHER_MODE_AEAD)
 
     cipher::impl cip;
@@ -332,11 +327,11 @@ cipher::encrypt_aead(
     mbedcrypto_c_call(
         mbedtls_cipher_auth_encrypt,
         &cip.ctx_,
-        to_const_ptr(iv),
+        iv.data(),
         iv.size(),
-        to_const_ptr(ad),
+        ad.data(),
         ad.size(),
-        to_const_ptr(input),
+        input.data(),
         input.size(),
         to_ptr(output),
         &olen,
@@ -353,12 +348,12 @@ cipher::encrypt_aead(
 
 std::tuple<bool, buffer_t>
 cipher::decrypt_aead(
-    cipher_t        type,
-    const buffer_t& iv,
-    const buffer_t& key,
-    const buffer_t& ad,
-    const buffer_t& tag,
-    const buffer_t& input) {
+    cipher_t      type,
+    buffer_view_t iv,
+    buffer_view_t key,
+    buffer_view_t ad,
+    buffer_view_t tag,
+    buffer_view_t input) {
 #if defined(MBEDTLS_CIPHER_MODE_AEAD)
 
     cipher::impl cip;
@@ -370,15 +365,15 @@ cipher::decrypt_aead(
 
     int ret = mbedtls_cipher_auth_decrypt(
         &cip.ctx_,
-        to_const_ptr(iv),
+        iv.data(),
         iv.size(),
-        to_const_ptr(ad),
+        ad.data(),
         ad.size(),
-        to_const_ptr(input),
+        input.data(),
         input.size(),
         to_ptr(output),
         &olen,
-        to_const_ptr(tag),
+        tag.data(),
         tag.size());
 
     output.resize(olen);
@@ -397,14 +392,14 @@ cipher::decrypt_aead(
 }
 
 cipher&
-cipher::iv(const buffer_t& iv_data) {
+cipher::iv(buffer_view_t iv_data) {
     pimpl->iv(iv_data);
-    pimpl->iv_data_ = iv_data;
+    pimpl->iv_data_ = iv_data.to<buffer_t>();
     return *this;
 }
 
 cipher&
-cipher::key(const buffer_t& key_data, mode m) {
+cipher::key(buffer_view_t key_data, mode m) {
     pimpl->key(key_data, m);
     return *this;
 }
@@ -417,18 +412,17 @@ cipher::padding(padding_t p) {
 
 void
 cipher::start() {
-    pimpl->iv();
+    pimpl->reset_last_iv();
     mbedcrypto_c_call(mbedtls_cipher_reset, &pimpl->ctx_);
 }
 
 buffer_t
-cipher::update(const buffer_t& input) {
+cipher::update(buffer_view_t input) {
     size_t   osize = input.size() + pimpl->block_size() + 32;
     buffer_t output(osize, '\0');
 
     if (block_mode() == cipher_bm::ecb) {
-        int ret = pimpl->update_chunked(
-            to_const_ptr(input), input.size(), to_ptr(output), osize);
+        int ret = pimpl->update_chunked(input, to_ptr(output), osize);
         if (ret != 0)
             throw exception{ret, __FUNCTION__};
 
@@ -436,7 +430,7 @@ cipher::update(const buffer_t& input) {
         mbedcrypto_c_call(
             mbedtls_cipher_update,
             &pimpl->ctx_,
-            to_const_ptr(input),
+            input.data(),
             input.size(),
             to_ptr(output),
             &osize);
@@ -448,19 +442,16 @@ cipher::update(const buffer_t& input) {
 
 size_t
 cipher::update(
-    size_t          count,
-    const buffer_t& input,
-    size_t          in_index,
-    buffer_t&       output,
-    size_t          out_index) {
+    buffer_view_t input,
+    size_t        in_index,
+    size_t        count,
+    buffer_t&     output,
+    size_t        out_index) {
     size_t usize = 0;
 
     if (block_mode() == cipher_bm::ecb) {
         int ret = pimpl->update_chunked(
-            to_const_ptr(input) + in_index,
-            count,
-            to_ptr(output) + out_index,
-            usize);
+            {input.data() + in_index, count}, to_ptr(output) + out_index, usize);
         if (ret != 0)
             throw exception{ret, __FUNCTION__};
 
@@ -468,7 +459,7 @@ cipher::update(
         mbedcrypto_c_call(
             mbedtls_cipher_update,
             &pimpl->ctx_,
-            to_const_ptr(input) + in_index,
+            input.data() + in_index,
             count,
             to_ptr(output) + out_index,
             &usize);
@@ -479,17 +470,14 @@ cipher::update(
 
 int
 cipher::update(
-    const unsigned char* input,
-    size_t               input_size,
-    unsigned char*       output,
-    size_t&              output_size) noexcept {
+    buffer_view_t input, unsigned char* output, size_t& output_size) noexcept {
     if (block_mode() == cipher_bm::ecb) {
-        return pimpl->update_chunked(input, input_size, output, output_size);
+        return pimpl->update_chunked(input, output, output_size);
     }
 
     // for other block modes
     return mbedtls_cipher_update(
-        &pimpl->ctx_, input, input_size, output, &output_size);
+        &pimpl->ctx_, input.data(), input.size(), output, &output_size);
 }
 
 buffer_t
@@ -522,7 +510,7 @@ cipher::finish(unsigned char* output, size_t& output_size) noexcept {
 }
 
 buffer_t
-cipher::crypt(const buffer_t& input) {
+cipher::crypt(buffer_view_t input) {
     start();
 
     const size_t osize = 32 + input.size() + pimpl->block_size();
@@ -533,7 +521,7 @@ cipher::crypt(const buffer_t& input) {
     mbedcrypto_c_call(
         mbedtls_cipher_update,
         &pimpl->ctx_,
-        to_const_ptr(input),
+        input.data(),
         input.size(),
         out_ptr,
         &out_index);
@@ -547,10 +535,10 @@ cipher::crypt(const buffer_t& input) {
 }
 
 void
-cipher::gcm_additional_data(const buffer_t& ad) {
+cipher::gcm_additional_data(buffer_view_t ad) {
 #if defined(MBEDTLS_GCM_C)
     mbedcrypto_c_call(
-        mbedtls_cipher_update_ad, &pimpl->ctx_, to_const_ptr(ad), ad.size());
+        mbedtls_cipher_update_ad, &pimpl->ctx_, ad.data(), ad.size());
 
 #else  // MBEDTLS_
     throw exceptions::gcm_error{};
@@ -571,10 +559,10 @@ cipher::gcm_encryption_tag(size_t length) {
 }
 
 bool
-cipher::gcm_check_decryption_tag(const buffer_t& tag) {
+cipher::gcm_check_decryption_tag(buffer_view_t tag) {
 #if defined(MBEDTLS_GCM_C)
     int ret =
-        mbedtls_cipher_check_tag(&pimpl->ctx_, to_const_ptr(tag), tag.size());
+        mbedtls_cipher_check_tag(&pimpl->ctx_, tag.data(), tag.size());
 
     switch (ret) {
     case 0:
