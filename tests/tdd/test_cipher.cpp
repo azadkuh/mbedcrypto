@@ -105,14 +105,14 @@ chunker_impl(size_t chunk_size, const buffer_t& input, cipher& cip) {
     // blocks
     size_t chunks = isize / chunk_size;
     for (size_t i = 0; i < chunks; ++i) {
-        o_index += cip.update(chunk_size, input, i_index, output, o_index);
+        o_index += cip.update(input, i_index, chunk_size, output, o_index);
         i_index += chunk_size;
     }
 
     // last block
     size_t residue = isize % chunk_size;
     if (residue)
-        o_index += cip.update(residue, input, i_index, output, o_index);
+        o_index += cip.update(input, i_index, residue, output, o_index);
 
     // finalize
     o_index += cip.finish(output, o_index);
@@ -121,7 +121,7 @@ chunker_impl(size_t chunk_size, const buffer_t& input, cipher& cip) {
     return output;
 }
 
-const char*
+std::string
 AdditionalData() {
     return "some additional data!\n"
            "may be transferred in plain text if you like.";
