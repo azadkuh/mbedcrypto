@@ -41,18 +41,6 @@ to_ptr(buffer_t& b) {
     return reinterpret_cast<uchars>(&b.front());
 }
 
-template<class T>
-inline auto
-to_const_ptr(const T& container) {
-    return container.data();
-}
-
-template<class T>
-inline auto
-to_ptr(const T& container) {
-    return &container.front();
-}
-
 #if defined(QT_CORE_LIB)
 inline auto
 to_const_ptr(const QByteArray& b) {
@@ -107,6 +95,11 @@ public:
         return size_ == 0;
     }
 
+    // conversion
+    template<class T>
+    T to() const;
+
+
     // copyalbe, moveable
     ~buffer_view_t() = default;
     buffer_view_t()  = delete;
@@ -116,7 +109,19 @@ public:
     buffer_view_t& operator=(buffer_view_t&&)      = default;
 }; // buffer_view_t
 
+template <>
+inline buffer_t
+buffer_view_t::to<buffer_t>() const {
+    return buffer_t(reinterpret_cast<const char*>(data_), size_);
+}
 
+#if defined(QT_CORE_LIB)
+template <>
+inline QByteArray
+buffer_view_t::to<QByteArray>() const {
+    return QByteArray(reinterpret_cast<const char*>(data_), size_);
+}
+#endif // QT_CORE_LIB
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
 ///////////////////////////////////////////////////////////////////////////////
