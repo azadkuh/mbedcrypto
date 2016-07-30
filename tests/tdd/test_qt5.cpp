@@ -4,7 +4,7 @@
 #include "mbedcrypto/tcodec.hpp"
 #include "mbedcrypto/hash.hpp"
 
-#include <QByteArray>
+#include "generator.hpp"
 ///////////////////////////////////////////////////////////////////////////////
 namespace {
 ///////////////////////////////////////////////////////////////////////////////
@@ -46,6 +46,37 @@ TEST_CASE("test qt5 bindings", "[qt5]") {
         ts = from_base64(sr);
         tq = from_base64(qr);
         REQUIRE( (tq == ts) );
+    }
+
+    SECTION("message digests") {
+        std::string s{test::long_text()};
+        QByteArray  q{test::long_text()};
+
+        auto hs = to_base64(to_sha1(s));
+        auto hq = to_base64(to_sha1(q));
+        REQUIRE( (hq == hs) );
+
+        hs = to_base64(to_sha256(s));
+        hq = to_base64(to_sha256(q));
+        REQUIRE( (hq == hs) );
+
+        hs = to_base64(to_sha512(s));
+        hq = to_base64(to_sha512(q));
+        REQUIRE( (hq == hs) );
+
+        std::string ks{test::short_text()};
+        QByteArray  kq{test::short_text()};
+        auto ms = to_base64(hmac::make(hash_t::sha1, ks, s));
+        auto mq = to_base64(hmac::make(hash_t::sha1, kq, q));
+        REQUIRE( (mq == ms) );
+
+        ms = to_base64(make_hmac(hash_t::sha256, ks, s));
+        mq = to_base64(make_hmac(hash_t::sha256, kq, q));
+        REQUIRE( (mq == ms) );
+
+        ms = to_base64(hmac::make(hash_t::sha512, ks, s));
+        mq = to_base64(hmac::make(hash_t::sha512, kq, q));
+        REQUIRE( (mq == ms) );
     }
 
 }
