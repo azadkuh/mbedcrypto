@@ -43,12 +43,7 @@ public: // single-shot hash computation
 
     /// makes the hash value for a buffer in single operation
     static buffer_t
-    make(hash_t type, const unsigned char* src, size_t src_length);
-
-    /// overload
-    static buffer_t make(hash_t type, const buffer_t& src) {
-        return make(type, to_const_ptr(src), src.size());
-    }
+    make(hash_t type, buffer_view_t src);
 
     /// makes the hash value of a file content
     static buffer_t of_file(hash_t type, const char* filePath);
@@ -67,8 +62,8 @@ public: // iterative usage, reusing the instance
      */
     void update(const unsigned char* chunk, size_t chunk_size);
 
-    void update(const buffer_t& chunk) {
-        return update(to_const_ptr(chunk), chunk.size());
+    void update(buffer_view_t chunk) {
+        return update(chunk.data(), chunk.size());
     }
 
     /// returns the final digest of previous updates.
@@ -115,24 +110,14 @@ public: // single-shot hamc computation
     /** makes a generic HMAC checksum by custom key.
      * HMAC key could be of any size
      */
-    static buffer_t make(
-        hash_t               type,
-        const buffer_t&      key,
-        const unsigned char* src,
-        size_t               src_length);
-
-    /// overload
-    static buffer_t
-    make(hash_t type, const buffer_t& key, const buffer_t& src) {
-        return make(type, key, to_const_ptr(src), src.size());
-    }
+    static buffer_t make(hash_t type, buffer_view_t key, buffer_view_t src);
 
 public: // iterative or reuse
     explicit hmac(hash_t type);
     ~hmac();
 
     /// resets and prepares the object to digest a new message.
-    void start(const buffer_t& key);
+    void start(buffer_view_t key);
     /// same as above, but does not change the previous key.
     void start();
 
@@ -142,8 +127,8 @@ public: // iterative or reuse
      */
     void update(const unsigned char* chunk, size_t chunk_size);
 
-    void update(const buffer_t& chunk) {
-        return update(to_const_ptr(chunk), chunk.size());
+    void update(buffer_view_t chunk) {
+        return update(chunk.data(), chunk.size());
     }
 
     /// returns the final digest of previous updates.

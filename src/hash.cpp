@@ -32,30 +32,29 @@ digest_pair(hash_t type) {
 
 template <class T>
 T
-_make(hash_t type, cuchars src, size_t length) {
+_make(hash_t type, buffer_view_t src) {
     auto digest = digest_pair(type);
     T    buf(std::get<1>(digest), '\0');
 
     mbedcrypto_c_call(
-        mbedtls_md, std::get<0>(digest), src, length, to_ptr(buf));
+        mbedtls_md, std::get<0>(digest), src.data(), src.size(), to_ptr(buf));
 
     return buf;
 }
 
 template <class T>
 T
-_make(
-    hash_t type, cuchars key, size_t key_size, cuchars src, size_t length) {
+_make(hash_t type, buffer_view_t key, buffer_view_t src) {
     auto digest = digest_pair(type);
     T    buf(std::get<1>(digest), '\0');
 
     mbedcrypto_c_call(
         mbedtls_md_hmac,
         std::get<0>(digest),
-        key,
-        key_size,
-        src,
-        length,
+        key.data(),
+        key.size(),
+        src.data(),
+        src.size(),
         to_ptr(buf));
 
     return buf;
@@ -120,8 +119,8 @@ hash::length() const noexcept {
 }
 
 buffer_t
-hash::make(hash_t type, const unsigned char* src, size_t length) {
-    return _make<buffer_t>(type, src, length);
+hash::make(hash_t type, buffer_view_t src) {
+    return _make<buffer_t>(type, src);
 }
 
 buffer_t
@@ -145,9 +144,8 @@ hash::of_file(hash_t type, const char* filePath) {
 }
 
 buffer_t
-hmac::make(
-    hash_t type, const buffer_t& key, const unsigned char* src, size_t length) {
-    return _make<buffer_t>(type, to_const_ptr(key), key.size(), src, length);
+hmac::make(hash_t type, buffer_view_t key, buffer_view_t src) {
+    return _make<buffer_t>(type, key, src);
 }
 
 void
@@ -169,9 +167,9 @@ hash::finish() {
 }
 
 void
-hmac::start(const buffer_t& key) {
+hmac::start(buffer_view_t key) {
     mbedcrypto_c_call(
-        mbedtls_md_hmac_starts, &pimpl->ctx_, to_const_ptr(key), key.size());
+        mbedtls_md_hmac_starts, &pimpl->ctx_, key.data(), key.size());
 }
 
 void
@@ -197,17 +195,12 @@ hmac::finish() {
 ///////////////////////////////////////////////////////////////////////////////
 QByteArray
 hash::make(hash_t type, const QByteArray& src) {
-    return _make<QByteArray>(type, to_const_ptr(src), (size_t)src.length());
+    return _make<QByteArray>(type, src);
 }
 
 QByteArray
 hmac::make(hash_t type, const QByteArray& key, const QByteArray& src) {
-    return _make<QByteArray>(
-        type,
-        to_const_ptr(key),
-        (size_t)key.length(),
-        to_const_ptr(src),
-        (size_t)src.length());
+    return _make<QByteArray>(type, key, src);
 }
 ///////////////////////////////////////////////////////////////////////////////
 #endif // QT_CORE_LIB
