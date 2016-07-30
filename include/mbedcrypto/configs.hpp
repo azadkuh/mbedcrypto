@@ -41,6 +41,18 @@ to_ptr(buffer_t& b) {
     return reinterpret_cast<uchars>(&b.front());
 }
 
+template<class T>
+inline auto
+to_const_ptr(const T& container) {
+    return container.data();
+}
+
+template<class T>
+inline auto
+to_ptr(const T& container) {
+    return &container.front();
+}
+
 #if defined(QT_CORE_LIB)
 inline auto
 to_const_ptr(const QByteArray& b) {
@@ -51,7 +63,59 @@ inline auto
 to_ptr(QByteArray& b) {
     return reinterpret_cast<uchars>(b.data());
 }
+
+inline QByteArray
+QByteArrayShallow(const buffer_t& src) {
+    return QByteArray::fromRawData(src.data(), src.size());
+}
+
+inline QByteArray
+QByteArrayShallow(cuchars src, size_t size) {
+    return QByteArray::fromRawData(reinterpret_cast<const char*>(src), size);
+}
 #endif // QT_CORE_LIB
+
+///////////////////////////////////////////////////////////////////////////////
+/// a class similar to c++17 std::string_view
+class buffer_view_t
+{
+    cuchars  data_ = nullptr;
+    size_t   size_ = 0;
+
+public:
+    constexpr buffer_view_t(cuchars data, size_t length) noexcept
+        : data_(data), size_(length) {}
+
+    // T could be std::string, QByteArray or even an std::vector<uchar>
+    template <class T>
+    constexpr buffer_view_t(const T& src)
+        : data_(to_const_ptr(src)), size_(src.length()) {}
+
+    constexpr cuchars data() const noexcept {
+        return data_;
+    }
+
+    constexpr size_t size() const noexcept {
+        return size_;
+    }
+
+    constexpr size_t length() const noexcept {
+        return size_;
+    }
+
+    constexpr bool empty() const noexcept {
+        return size_ == 0;
+    }
+
+    // copyalbe, moveable
+    ~buffer_view_t() = default;
+    buffer_view_t()  = delete;
+    buffer_view_t(const buffer_view_t&) = default;
+    buffer_view_t(buffer_view_t&&)      = default;
+    buffer_view_t& operator=(const buffer_view_t&) = default;
+    buffer_view_t& operator=(buffer_view_t&&)      = default;
+}; // buffer_view_t
+
 
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
