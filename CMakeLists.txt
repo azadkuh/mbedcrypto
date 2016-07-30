@@ -116,3 +116,16 @@ if(UNIX)
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         )
 endif()
+
+# help YouCompleteMe / Neovim / vim
+option(HELP_YCM OFF)
+if(HELP_YCM)
+    SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+    ADD_CUSTOM_TARGET(ycm
+        COMMAND cmake -E copy_if_different
+        ${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json
+        ${CMAKE_CURRENT_SOURCE_DIR}/compile_commands.json
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        )
+endif()
+
