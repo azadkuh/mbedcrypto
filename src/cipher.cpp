@@ -60,7 +60,12 @@ struct cipher_impl {
         iv(iv_data_);
     }
 
+    constexpr const auto& iv() const noexcept {
+        return iv_data_;
+    }
+
     void iv(buffer_view_t iv_data) {
+        iv_data_ = iv_data.to<buffer_t>();
         mbedcrypto_c_call(
             mbedtls_cipher_set_iv, &ctx_, iv_data.data(), iv_data.size());
     }
@@ -118,19 +123,29 @@ struct cipher_impl {
 
 class crypt_engine
 {
-    cipher_t      type_       = cipher_t::none;
     cipher_bm     block_mode_ = cipher_bm::none;
     size_t        block_size_ = 0;
     size_t        input_size_ = 0;
     size_t        chunks_     = 0;
+    cipher_impl   cim_;
     buffer_view_t input_;
 
-    explicit crypt_engine(cipher_t type, buffer_view_t input)
-        : type_(type),
-          block_mode_(cipher::block_mode(type)),
+    explicit crypt_engine(
+        cipher_t      type,
+        padding_t     pad,
+        buffer_view_t iv,
+        buffer_view_t key,
+        cipher::mode  m,
+        buffer_view_t input)
+        : block_mode_(cipher::block_mode(type)),
           block_size_(cipher::block_size(type)),
           input_size_(input.size()),
           input_(input) {
+
+        cim_.setup(type);
+        cim_.padding(pad);
+        cim_.iv(iv);
+        cim_.key(key, m);
 
         // compute number of chunks
         if (block_mode_ == cipher_bm::ecb) {
@@ -146,29 +161,26 @@ class crypt_engine
         }
     }
 
-    buffer_t compute(
-        padding_t pad, buffer_view_t iv, buffer_view_t key, cipher::mode m) {
+    constexpr size_t output_size() const noexcept {
+        return 32 + input_size_ + block_size_;
+    }
 
-        // prepare ciphering parameters
-        cipher_impl cim;
-        cim.setup(type_);
-        cim.padding(pad);
-        cim.iv(iv);
-        cim.key(key, m);
+    template<class TBuff>
+    TBuff compute() {
 
         // prepare output size
-        size_t   osize = 32 + input_size_ + block_size_;
-        buffer_t output(osize, '\0');
-        auto*    pDes = to_ptr(output);
+        size_t osize = output_size();
+        TBuff  output(osize, '\0');
+        auto*  pDes = to_ptr(output);
 
         cuchars  pSrc = input_.data();
 
         if (chunks_ == 1) {
             mbedcrypto_c_call(
                 mbedtls_cipher_crypt,
-                &cim.ctx_,
-                iv.data(),
-                iv.size(),
+                &cim_.ctx_,
+                to_const_ptr(cim_.iv()),
+                cim_.iv_size(),
                 pSrc,
                 input_size_,
                 pDes,
@@ -181,9 +193,9 @@ class crypt_engine
                 size_t done_size = 0;
                 mbedcrypto_c_call(
                     mbedtls_cipher_crypt,
-                    &cim.ctx_,
-                    iv.data(),
-                    iv.size(),
+                    &cim_.ctx_,
+                    to_const_ptr(cim_.iv()),
+                    cim_.iv_size(),
                     pSrc,
                     block_size_,
                     pDes,
@@ -200,7 +212,8 @@ class crypt_engine
     }
 
 public:
-    static buffer_t
+    template <typename TBuff>
+    static TBuff
     run(cipher_t      type,
         padding_t     pad,
         buffer_view_t iv,
@@ -209,8 +222,8 @@ public:
         buffer_view_t input) {
 
         // check cipher mode against input size
-        crypt_engine cengine(type, input);
-        return cengine.compute(pad, iv, key, m);
+        crypt_engine cengine(type, pad, iv, key, m, input);
+        return cengine.compute<TBuff>();
     }
 
 }; // struct crypt_engine
@@ -286,7 +299,7 @@ cipher::encrypt(
     buffer_view_t iv,
     buffer_view_t key,
     buffer_view_t input) {
-    return crypt_engine::run(type, pad, iv, key, encrypt_mode, input);
+    return crypt_engine::run<buffer_t>(type, pad, iv, key, encrypt_mode, input);
 }
 
 buffer_t
@@ -296,7 +309,7 @@ cipher::decrypt(
     buffer_view_t iv,
     buffer_view_t key,
     buffer_view_t input) {
-    return crypt_engine::run(type, pad, iv, key, decrypt_mode, input);
+    return crypt_engine::run<buffer_t>(type, pad, iv, key, decrypt_mode, input);
 }
 
 bool
@@ -394,7 +407,6 @@ cipher::decrypt_aead(
 cipher&
 cipher::iv(buffer_view_t iv_data) {
     pimpl->iv(iv_data);
-    pimpl->iv_data_ = iv_data.to<buffer_t>();
     return *this;
 }
 
