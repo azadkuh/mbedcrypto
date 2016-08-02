@@ -85,6 +85,22 @@ public:
         buffer_view_t key,
         buffer_view_t input) -> buffer_t;
 
+    /** same as encrypt() but prepends the iv to the result */
+    static auto pencrypt(
+        cipher_t,
+        padding_t,
+        buffer_view_t iv,
+        buffer_view_t key,
+        buffer_view_t input) -> buffer_t;
+
+    /** same as decrypt() but reads the iv from the begining of the input. */
+    static auto pdecrypt(
+        cipher_t,
+        padding_t,
+        buffer_view_t key,
+        buffer_view_t input) -> buffer_t;
+
+
 public: // aead methods require BUILD_CCM or BUILD_GCM
     /** returns true if any of BUILD_GCM or BUILD_CCM has been activated.
      * @sa features::aead
@@ -165,7 +181,7 @@ public: // properties
     auto   block_mode() const noexcept -> cipher_bm;
     size_t block_size() const noexcept;
     size_t key_bitlen() const noexcept;
-    size_t iv_size()    const noexcept;
+    size_t iv_size() const noexcept;
 
 
 public: // general encryption / decryption
@@ -247,7 +263,7 @@ public:
     cipher(const cipher&) = delete;
     cipher(cipher&&)      = default;
     cipher& operator=(const cipher&) = delete;
-    cipher& operator=(cipher&&)      = default;
+    cipher& operator=(cipher&&) = default;
 
 protected:
     struct impl;

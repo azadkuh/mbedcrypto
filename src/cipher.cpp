@@ -35,9 +35,10 @@ struct cipher_impl {
         mbedtls_cipher_free(&ctx_);
     }
 
-    void setup(cipher_t type) {
+    auto& setup(cipher_t type) {
         const auto* cinfot = native_info(type);
         mbedcrypto_c_call(mbedtls_cipher_setup, &ctx_, cinfot);
+        return *this;
     }
 
     size_t block_size() const noexcept {
@@ -56,34 +57,39 @@ struct cipher_impl {
         return from_native(ctx_.cipher_info->mode);
     }
 
-    void reset_last_iv() {
-        iv(iv_data_);
-    }
-
     constexpr const auto& iv() const noexcept {
         return iv_data_;
     }
 
-    void iv(buffer_view_t iv_data) {
+    auto& iv(buffer_view_t iv_data) {
         iv_data_ = iv_data.to<buffer_t>();
         mbedcrypto_c_call(
             mbedtls_cipher_set_iv, &ctx_, iv_data.data(), iv_data.size());
+
+        return *this;
     }
 
-    void key(buffer_view_t key_data, cipher::mode m) {
+    void reset_last_iv() {
+        iv(iv_data_);
+    }
+
+    auto& key(buffer_view_t key_data, cipher::mode m) {
         mbedcrypto_c_call(
             mbedtls_cipher_setkey,
             &ctx_,
             key_data.data(),
             key_data.size() << 3, // bitlen
             m == cipher::encrypt_mode ? MBEDTLS_ENCRYPT : MBEDTLS_DECRYPT);
+
+        return *this;
     }
 
-    void padding(padding_t p) {
-        if (p == padding_t::none)
-            return; // do nothing!
+    auto& padding(padding_t p) {
+        if (p != padding_t::none)
+            mbedcrypto_c_call(
+                mbedtls_cipher_set_padding_mode, &ctx_, to_native(p));
 
-        mbedcrypto_c_call(mbedtls_cipher_set_padding_mode, &ctx_, to_native(p));
+        return *this;
     }
 
     // updates in chunks
@@ -123,57 +129,48 @@ struct cipher_impl {
 
 class crypt_engine
 {
-    cipher_bm     block_mode_ = cipher_bm::none;
     size_t        block_size_ = 0;
-    size_t        input_size_ = 0;
     size_t        chunks_     = 0;
     cipher_impl   cim_;
     buffer_view_t input_;
 
-    explicit crypt_engine(
-        cipher_t      type,
-        padding_t     pad,
-        buffer_view_t iv,
-        buffer_view_t key,
-        cipher::mode  m,
-        buffer_view_t input)
-        : block_mode_(cipher::block_mode(type)),
-          block_size_(cipher::block_size(type)),
-          input_size_(input.size()),
-          input_(input) {
+    explicit crypt_engine(cipher_t type, buffer_view_t input)
+        : block_size_(cipher::block_size(type)), input_(input) {
+        setup_chunks(type);
+    }
 
-        cim_.setup(type);
-        cim_.padding(pad);
-        cim_.iv(iv);
-        cim_.key(key, m);
-
+    void setup_chunks(cipher_t type) {
         // compute number of chunks
-        if (block_mode_ == cipher_bm::ecb) {
-            if (input_size_ == 0 || input_size_ % block_size_)
+        if (cipher::block_mode(type) == cipher_bm::ecb) {
+            if (input_.size() == 0 || input_.size() % block_size_)
                 throw exceptions::usage_error{
                     "ecb cipher block:"
                     " a valid input size must be dividable by block size"};
 
-            chunks_ = input_size_ / block_size_;
+            chunks_ = input_.size() / block_size_;
 
         } else { // for any other cipher block do in single shot
             chunks_ = 1;
         }
     }
 
-    constexpr size_t output_size() const noexcept {
-        return 32 + input_size_ + block_size_;
+    void setup_engine(
+        cipher_t      type,
+        padding_t     pad,
+        buffer_view_t iv,
+        buffer_view_t key,
+        cipher::mode  m) {
+        cim_.setup(type).padding(pad).iv(iv).key(key, m);
     }
 
-    template<class TBuff>
-    TBuff compute() {
+    constexpr size_t output_size() const noexcept {
+        return 32 + input_.size() + block_size_;
+    }
 
-        // prepare output size
-        size_t osize = output_size();
-        TBuff  output(osize, '\0');
-        auto*  pDes = to_ptr(output);
-
-        cuchars  pSrc = input_.data();
+    size_t compute(uchars output) {
+        size_t  final_size = 0;
+        uchars  pDes       = output;
+        cuchars pSrc       = input_.data();
 
         if (chunks_ == 1) {
             mbedcrypto_c_call(
@@ -182,12 +179,12 @@ class crypt_engine
                 to_const_ptr(cim_.iv()),
                 cim_.iv_size(),
                 pSrc,
-                input_size_,
+                input_.size(),
                 pDes,
-                &osize);
+                &final_size);
 
         } else {
-            osize = 0;
+            final_size = 0;
 
             for (size_t i = 0; i < chunks_; ++i) {
                 size_t done_size = 0;
@@ -201,14 +198,13 @@ class crypt_engine
                     pDes,
                     &done_size);
 
-                osize += done_size;
+                final_size += done_size;
                 pSrc += block_size_;
                 pDes += block_size_;
             }
         }
 
-        output.resize(osize);
-        return output;
+        return final_size;
     }
 
 public:
@@ -222,8 +218,52 @@ public:
         buffer_view_t input) {
 
         // check cipher mode against input size
-        crypt_engine cengine(type, pad, iv, key, m, input);
-        return cengine.compute<TBuff>();
+        crypt_engine cengine(type, input);
+        cengine.setup_engine(type, pad, iv, key, m);
+
+        TBuff output(cengine.output_size(), '\0');
+        auto  written_size = cengine.compute(to_ptr(output));
+        output.resize(written_size);
+        return output;
+    }
+
+    template <typename TBuff>
+    static TBuff pencrypt(
+        cipher_t      type,
+        padding_t     pad,
+        buffer_view_t iv,
+        buffer_view_t key,
+        buffer_view_t input) {
+
+        // check cipher mode against input size
+        crypt_engine cengine(type, input);
+        cengine.setup_engine(type, pad, iv, key, cipher::mode::encrypt_mode);
+
+        TBuff output(cengine.output_size() + iv.size(), '\0');
+        // prepend the iv to the output
+        std::memcpy(to_ptr(output), iv.data(), iv.size());
+        // offset the output by iv
+        auto written_size = cengine.compute(to_ptr(output) + iv.size());
+        output.resize(written_size + iv.size());
+        return output;
+    }
+
+    template <typename TBuff>
+    static TBuff pdecrypt(
+        cipher_t type, padding_t pad, buffer_view_t key, buffer_view_t pinput) {
+
+        buffer_view_t iv{pinput.data(), cipher::iv_size(type)};
+        buffer_view_t input{pinput.data() + iv.size(),
+                            pinput.size() - iv.size()};
+
+        // check cipher mode against input size
+        crypt_engine cengine(type, input);
+        cengine.setup_engine(type, pad, iv, key, cipher::mode::decrypt_mode);
+
+        TBuff output(cengine.output_size(), '\0');
+        auto  written_size = cengine.compute(to_ptr(output));
+        output.resize(written_size);
+        return output;
     }
 
 }; // struct crypt_engine
@@ -310,6 +350,22 @@ cipher::decrypt(
     buffer_view_t key,
     buffer_view_t input) {
     return crypt_engine::run<buffer_t>(type, pad, iv, key, decrypt_mode, input);
+}
+
+buffer_t
+cipher::pencrypt(
+    cipher_t      type,
+    padding_t     pad,
+    buffer_view_t iv,
+    buffer_view_t key,
+    buffer_view_t input) {
+    return crypt_engine::pencrypt<buffer_t>(type, pad, iv, key, input);
+}
+
+buffer_t
+cipher::pdecrypt(
+    cipher_t type, padding_t pad, buffer_view_t key, buffer_view_t input) {
+    return crypt_engine::pdecrypt<buffer_t>(type, pad, key, input);
 }
 
 bool
