@@ -185,6 +185,14 @@ public:
         REQUIRE((decr == input));
     }
 
+    void one_shot_prepend() {
+        auto encr = cipher::pencrypt(ctype, padding_mode, iv, key, input);
+        auto decr = cipher::pdecrypt(ctype, padding_mode, key, encr);
+
+        INFO(to_string(ctype));
+        REQUIRE((decr == input));
+    }
+
     void by_object() {
         cipenc.start();
         auto encr = cipenc.update(input);
@@ -293,6 +301,9 @@ TEST_CASE("test ciphers against mbedtls", "[cipher]") {
             if (tester.block_mode != cipher_bm::ccm) {
                 // single shot calls
                 tester.one_shot();
+
+                // single shot with prepending iv
+                tester.one_shot_prepend();
 
                 // cipher object
                 // single start()/update()/finish()
