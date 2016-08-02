@@ -178,11 +178,19 @@ public:
 
     void one_shot() {
         auto encr = cipher::encrypt(ctype, padding_mode, iv, key, input);
-
         auto decr = cipher::decrypt(ctype, padding_mode, iv, key, encr);
 
         INFO(to_string(ctype));
         REQUIRE((decr == input));
+
+#if defined(QT_CORE_LIB)
+        auto qencr = cipher::encrypt<QByteArray>(ctype, padding_mode, iv, key, input);
+        auto qdecr = cipher::decrypt<QByteArray>(ctype, padding_mode, iv, key, qencr);
+
+        INFO(to_string(ctype));
+        REQUIRE((qencr == encr));
+        REQUIRE((qdecr == decr));
+#endif // QT_CORE_LIB
     }
 
     void one_shot_prepend() {
@@ -191,6 +199,15 @@ public:
 
         INFO(to_string(ctype));
         REQUIRE((decr == input));
+
+#if defined(QT_CORE_LIB)
+        auto qencr = cipher::pencrypt<QByteArray>(ctype, padding_mode, iv, key, input);
+        auto qdecr = cipher::pdecrypt<QByteArray>(ctype, padding_mode, key, encr);
+
+        INFO(to_string(ctype));
+        REQUIRE((qencr == encr));
+        REQUIRE((qdecr == decr));
+#endif // QT_CORE_LIB
     }
 
     void by_object() {
