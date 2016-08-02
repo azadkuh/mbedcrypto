@@ -333,7 +333,7 @@ cipher::block_mode() const noexcept {
 }
 
 buffer_t
-cipher::encrypt(
+cipher::_encrypt(
     cipher_t      type,
     padding_t     pad,
     buffer_view_t iv,
@@ -343,7 +343,7 @@ cipher::encrypt(
 }
 
 buffer_t
-cipher::decrypt(
+cipher::_decrypt(
     cipher_t      type,
     padding_t     pad,
     buffer_view_t iv,
@@ -353,7 +353,7 @@ cipher::decrypt(
 }
 
 buffer_t
-cipher::pencrypt(
+cipher::_pencrypt(
     cipher_t      type,
     padding_t     pad,
     buffer_view_t iv,
@@ -363,10 +363,48 @@ cipher::pencrypt(
 }
 
 buffer_t
-cipher::pdecrypt(
+cipher::_pdecrypt(
     cipher_t type, padding_t pad, buffer_view_t key, buffer_view_t input) {
     return crypt_engine::pdecrypt<buffer_t>(type, pad, key, input);
 }
+
+#if defined(QT_CORE_LIB)
+QByteArray
+cipher::_qencrypt(
+    cipher_t      type,
+    padding_t     pad,
+    buffer_view_t iv,
+    buffer_view_t key,
+    buffer_view_t input) {
+    return crypt_engine::run<QByteArray>(type, pad, iv, key, encrypt_mode, input);
+}
+
+QByteArray
+cipher::_qdecrypt(
+    cipher_t      type,
+    padding_t     pad,
+    buffer_view_t iv,
+    buffer_view_t key,
+    buffer_view_t input) {
+    return crypt_engine::run<QByteArray>(type, pad, iv, key, decrypt_mode, input);
+}
+
+QByteArray
+cipher::_qpencrypt(
+    cipher_t      type,
+    padding_t     pad,
+    buffer_view_t iv,
+    buffer_view_t key,
+    buffer_view_t input) {
+    return crypt_engine::pencrypt<QByteArray>(type, pad, iv, key, input);
+}
+
+QByteArray
+cipher::_qpdecrypt(
+    cipher_t type, padding_t pad, buffer_view_t key, buffer_view_t input) {
+    return crypt_engine::pdecrypt<QByteArray>(type, pad, key, input);
+}
+#endif // QT_CORE_LIB
 
 bool
 cipher::supports_aead() {

@@ -63,43 +63,49 @@ public:
     /// return block mode of a cipher type
     static auto block_mode(cipher_t type) -> cipher_bm;
 
+    // for the following methods, the template TBuff could be
+    // buffer_t (std::string or QByteArray)
+
     /** encrypts the input in single shot.
      * input can be in any size for cipher modes except ecb.
      * for ecb the size = block_size * N, where N >= 1
      */
+    template <typename TBuff = buffer_t>
     static auto encrypt(
-        cipher_t,
-        padding_t,
+        cipher_t      type,
+        padding_t     padding,
         buffer_view_t iv,
         buffer_view_t key,
-        buffer_view_t input) -> buffer_t;
+        buffer_view_t input) -> TBuff;
 
     /** decrypts the input in single shot.
      * input can be in any size for cipher modes except ecb.
      * for ecb the size = block_size * N, where N >= 1
      */
+    template <typename TBuff = buffer_t>
     static auto decrypt(
-        cipher_t,
-        padding_t,
+        cipher_t      type,
+        padding_t     padding,
         buffer_view_t iv,
         buffer_view_t key,
-        buffer_view_t input) -> buffer_t;
+        buffer_view_t input) -> TBuff;
 
-    /** same as encrypt() but prepends the iv to the result */
+    /// same as encrypt() but prepends the iv to the result
+    template <typename TBuff = buffer_t>
     static auto pencrypt(
-        cipher_t,
-        padding_t,
+        cipher_t      type,
+        padding_t     padding,
         buffer_view_t iv,
         buffer_view_t key,
-        buffer_view_t input) -> buffer_t;
+        buffer_view_t input) -> TBuff;
 
-    /** same as decrypt() but reads the iv from the begining of the input. */
+    /// same as decrypt() but reads the iv from the begining of the input.
+    template <typename TBuff = buffer_t>
     static auto pdecrypt(
-        cipher_t,
-        padding_t,
+        cipher_t      type,
+        padding_t     padding,
         buffer_view_t key,
-        buffer_view_t input) -> buffer_t;
-
+        buffer_view_t input) -> TBuff;
 
 public: // aead methods require BUILD_CCM or BUILD_GCM
     /** returns true if any of BUILD_GCM or BUILD_CCM has been activated.
@@ -107,7 +113,8 @@ public: // aead methods require BUILD_CCM or BUILD_GCM
      */
     static bool supports_aead();
 
-    /** encrypts (AEAD cipher) the input and authenticate by additional data.
+    /** encrypts (AEAD cipher) the input and authenticate by additional
+     * data.
      * only cipher_t::gcm and cipher_t::ccm support aead.
      * input and additional_data could be in any size.
      *
@@ -121,8 +128,8 @@ public: // aead methods require BUILD_CCM or BUILD_GCM
         buffer_view_t additional_data,
         buffer_view_t input) -> std::tuple<buffer_t, buffer_t>;
 
-    /** decrypts (AEAD cipher) the input and authenticate by additional data and
-     * the tag.
+    /** decrypts (AEAD cipher) the input and authenticate by additional data
+     * and the tag.
      * only cipher_t::gcm and cipher_t::ccm support aead.
      * additional_data could be in any size, input and tag are computed by
      * encrypt_aead().
@@ -268,7 +275,143 @@ public:
 protected:
     struct impl;
     std::unique_ptr<impl> pimpl;
+
+private:
+    static auto _encrypt(
+        cipher_t,
+        padding_t,
+        buffer_view_t iv,
+        buffer_view_t key,
+        buffer_view_t input) -> buffer_t;
+
+    static auto _decrypt(
+        cipher_t,
+        padding_t,
+        buffer_view_t iv,
+        buffer_view_t key,
+        buffer_view_t input) -> buffer_t;
+
+    static auto _pencrypt(
+        cipher_t,
+        padding_t,
+        buffer_view_t iv,
+        buffer_view_t key,
+        buffer_view_t input) -> buffer_t;
+
+    static auto
+    _pdecrypt(cipher_t, padding_t, buffer_view_t key, buffer_view_t input)
+        -> buffer_t;
+
+#if defined(QT_CORE_LIB)
+    static QByteArray _qencrypt(
+        cipher_t,
+        padding_t,
+        buffer_view_t iv,
+        buffer_view_t key,
+        buffer_view_t input);
+
+    static QByteArray _qdecrypt(
+        cipher_t,
+        padding_t,
+        buffer_view_t iv,
+        buffer_view_t key,
+        buffer_view_t input);
+
+    static QByteArray _qpencrypt(
+        cipher_t,
+        padding_t,
+        buffer_view_t iv,
+        buffer_view_t key,
+        buffer_view_t input);
+
+    static QByteArray
+    _qpdecrypt(cipher_t, padding_t, buffer_view_t key, buffer_view_t input);
+#endif // QT_CORE_LIB
 }; // cipher
+///////////////////////////////////////////////////////////////////////////////
+// cipher specializations
+
+template <>
+inline buffer_t
+cipher::encrypt(
+    cipher_t      type,
+    padding_t     padding,
+    buffer_view_t iv,
+    buffer_view_t key,
+    buffer_view_t input) {
+    return _encrypt(type, padding, iv, key, input);
+}
+
+template <>
+inline buffer_t
+cipher::decrypt(
+    cipher_t      type,
+    padding_t     padding,
+    buffer_view_t iv,
+    buffer_view_t key,
+    buffer_view_t input) {
+    return _decrypt(type, padding, iv, key, input);
+}
+
+template <>
+inline buffer_t
+cipher::pencrypt(
+    cipher_t      type,
+    padding_t     padding,
+    buffer_view_t iv,
+    buffer_view_t key,
+    buffer_view_t input) {
+    return _pencrypt(type, padding, iv, key, input);
+}
+
+template <>
+inline buffer_t
+cipher::pdecrypt(
+    cipher_t type, padding_t padding, buffer_view_t key, buffer_view_t input) {
+    return _pdecrypt(type, padding, key, input);
+}
+
+#if defined(QT_CORE_LIB)
+template <>
+inline QByteArray
+cipher::encrypt(
+    cipher_t      type,
+    padding_t     padding,
+    buffer_view_t iv,
+    buffer_view_t key,
+    buffer_view_t input) {
+    return _qencrypt(type, padding, iv, key, input);
+}
+
+template <>
+inline QByteArray
+cipher::decrypt(
+    cipher_t      type,
+    padding_t     padding,
+    buffer_view_t iv,
+    buffer_view_t key,
+    buffer_view_t input) {
+    return _qdecrypt(type, padding, iv, key, input);
+}
+
+template <>
+inline QByteArray
+cipher::pencrypt(
+    cipher_t      type,
+    padding_t     padding,
+    buffer_view_t iv,
+    buffer_view_t key,
+    buffer_view_t input) {
+    return _qpencrypt(type, padding, iv, key, input);
+}
+
+template <>
+inline QByteArray
+cipher::pdecrypt(
+    cipher_t type, padding_t padding, buffer_view_t key, buffer_view_t input) {
+    return _qpdecrypt(type, padding, key, input);
+}
+#endif // QT_CORE_LIB
 
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace mbedcrypto
