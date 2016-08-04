@@ -53,7 +53,13 @@ public:
      * length can be in any size because underlying class makes random in
      * chunks.
      */
-    auto make(size_t length) -> buffer_t;
+    template<class TBuff = buffer_t>
+    TBuff make(size_t length) {
+        TBuff rnd_bytes(length, '\0');
+        make(to_ptr(rnd_bytes), length);
+        return rnd_bytes;
+    }
+
     /// low level overload
     int make(unsigned char* buffer, size_t length) noexcept;
 
@@ -89,12 +95,16 @@ public: // auxiliary methods
     /// reseeds (extract data from entropy)
     void reseed();
     /// overload with custom data
-    void reseed(const buffer_t& custom);
+    void reseed(buffer_view_t custom) {
+        reseed(custom.data(), custom.size());
+    }
     /// low level overload, nullptr, 0 are valid
     int reseed(const unsigned char* custom, size_t length) noexcept;
 
     /// updates CTR_DRBG internal state with additional (custom) data
-    void update(const buffer_t& additional);
+    void update(buffer_view_t additional) {
+        update(additional.data(), additional.size());
+    }
     /// low level overload
     void update(const unsigned char* additional, size_t length) noexcept;
 

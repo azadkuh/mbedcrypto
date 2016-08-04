@@ -100,14 +100,6 @@ rnd_generator::make(unsigned char* buffer, size_t olen) noexcept {
     return make_chunked(&pimpl->ctx_, buffer, olen);
 }
 
-buffer_t
-rnd_generator::make(size_t length) {
-    buffer_t buf(length, '\0');
-    mbedcrypto_c_call(make_chunked, &pimpl->ctx_, to_ptr(buf), length);
-
-    return buf;
-}
-
 int
 rnd_generator::maker(void* p_rng, unsigned char* buffer, size_t olen) noexcept {
     rnd_generator* ctx = reinterpret_cast<rnd_generator*>(p_rng);
@@ -119,24 +111,9 @@ rnd_generator::reseed() {
     mbedcrypto_c_call(mbedtls_ctr_drbg_reseed, &pimpl->ctx_, nullptr, 0);
 }
 
-void
-rnd_generator::reseed(const buffer_t& custom) {
-    mbedcrypto_c_call(
-        mbedtls_ctr_drbg_reseed,
-        &pimpl->ctx_,
-        to_const_ptr(custom),
-        custom.size());
-}
-
 int
 rnd_generator::reseed(const unsigned char* custom, size_t length) noexcept {
     return mbedtls_ctr_drbg_reseed(&pimpl->ctx_, custom, length);
-}
-
-void
-rnd_generator::update(const buffer_t& additional) {
-    mbedtls_ctr_drbg_update(
-        &pimpl->ctx_, to_const_ptr(additional), additional.size());
 }
 
 void
