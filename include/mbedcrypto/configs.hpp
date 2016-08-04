@@ -74,6 +74,10 @@ public:
     constexpr buffer_view_t(cuchars data, size_t length) noexcept
         : data_(data), size_(length) {}
 
+    buffer_view_t(const char* string)
+        : data_(reinterpret_cast<cuchars>(string)),
+          size_(std::strlen(string)) {}
+
     // T could be std::string, QByteArray or even an std::vector<uchar>
     template <class T>
     constexpr buffer_view_t(const T& src)
