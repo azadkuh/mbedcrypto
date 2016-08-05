@@ -74,6 +74,9 @@ public:
     constexpr buffer_view_t(cuchars data, size_t length) noexcept
         : data_(data), size_(length) {}
 
+    constexpr explicit buffer_view_t(std::nullptr_t) noexcept
+        : data_(nullptr), size_(0) {}
+
     buffer_view_t(const char* string)
         : data_(reinterpret_cast<cuchars>(string)),
           size_(std::strlen(string)) {}
