@@ -10,7 +10,7 @@ newer and has more features with smaller footprint and can be configured to
 support `QByteArray` through the api.
 
 
-for more information see [wiki](https://github.com/azadkuh/mbedcrypto/wiki)
+for more information see [wiki](https://github.com/azadkuh/mbedcrypto/wiki) page.
 
 ----
 
@@ -127,8 +127,7 @@ $build/> make
 > the `mbedcrypto` library and the companion unit test app would be built into
 > `xbin` directory.
 
-see [wiki: setup and
-build](https://github.com/azadkuh/mbedcrypto/wiki/setup-and-build)
+see [wiki: setup and build](https://github.com/azadkuh/mbedcrypto/wiki/setup-and-build)
 ---
 
 ## build options
