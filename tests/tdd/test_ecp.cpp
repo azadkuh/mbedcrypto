@@ -37,7 +37,6 @@ mpi_checker(const char*, const mpi& mpi) {
 } // namespace anon
 ///////////////////////////////////////////////////////////////////////////////
 TEST_CASE("ec type checks", "[types][pk]") {
-    using namespace mbedcrypto;
 
     if (supports(pk_t::eckey) || supports(pk_t::eckey_dh)) {
         ecp my_key;                         // default as eckey
@@ -94,7 +93,6 @@ TEST_CASE("ec type checks", "[types][pk]") {
 }
 
 TEST_CASE("ec key tests", "[pk]") {
-    using namespace mbedcrypto;
 
     if (supports(features::pk_export) && supports(pk_t::eckey)) {
         ecp gen;
@@ -195,11 +193,13 @@ using ecdsa = wrapper<mbedtls_ecdsa_context>;
 } // namespace mbedtls
 ///////////////////////////////////////////////////////////////////////////////
 TEST_CASE("ecdsa c_api tests", "[pk]") {
-    mbedcrypto::ecdsa ec_;
-    ec_.generate_key(mbedcrypto::curve_t::secp192r1);
+    constexpr auto hash_type = hash_t::sha256;
 
-    auto hash_ = mbedcrypto::make_hash(
-        mbedcrypto::hash_t::sha256, mbedcrypto::test::long_text());
+    mbedcrypto::ecdsa ec_;
+    ec_.generate_key(curve_t::secp192r1);
+
+    std::string message{test::long_text()};
+    auto hash_value = hash::make(hash_type, message);
 
     auto c_sign = [&]() -> std::string {
         const auto*    ec_ctx = mbedtls_pk_ec(ec_.context().pk_);
@@ -216,11 +216,11 @@ TEST_CASE("ecdsa c_api tests", "[pk]") {
             mbedtls_ecdsa_write_signature,
             signer,
             MBEDTLS_MD_SHA256,
-            mbedcrypto::to_const_ptr(hash_),
-            hash_.size(),
-            mbedcrypto::to_ptr(signature),
+            to_const_ptr(hash_value),
+            hash_value.size(),
+            to_ptr(signature),
             &sig_len,
-            mbedcrypto::rnd_generator::maker,
+            rnd_generator::maker,
             &ec_.context().rnd_);
 
         signature.resize(sig_len);
@@ -237,22 +237,24 @@ TEST_CASE("ecdsa c_api tests", "[pk]") {
 
         int ret = mbedtls_ecdsa_read_signature(
             verifier,
-            mbedcrypto::to_const_ptr(hash_),
-            hash_.size(),
-            mbedcrypto::to_const_ptr(signature),
+            to_const_ptr(hash_value),
+            hash_value.size(),
+            to_const_ptr(signature),
             signature.size());
 
         if (ret == 0)
             return true;
 
-        std::cout << mbedcrypto::mbedtls_error_string(ret) << std::endl;
+        std::cout << mbedtls_error_string(ret) << std::endl;
         return false;
     };
 
-    auto cpp_sign = [&]() -> std::string { return ec_.sign(hash_); };
+    auto cpp_sign = [&]() -> std::string {
+        return ec_.sign(hash_value, hash_type);
+    };
 
     auto cpp_verify = [&](const std::string& signature) -> bool {
-        return ec_.verify(signature, hash_);
+        return ec_.verify(signature, hash_value, hash_type);
     };
 
     // sign by c_api
@@ -266,17 +268,23 @@ TEST_CASE("ecdsa c_api tests", "[pk]") {
 }
 
 TEST_CASE("ecdsa tests", "[pk]") {
-    using namespace mbedcrypto;
-    auto message_ = test::long_text();
+    constexpr auto hash_type = hash_t::sha256;
+    std::string    message{test::long_text()};
+    auto           hash_value = hash::make(hash_type, message);
 
     ecdsa signer;
     signer.generate_key(curve_t::secp192k1);
-    auto sig = signer.sign(message_, hash_t::sha256);
+    auto sig_h = signer.sign(hash_value, hash_type);
+    auto sig_m = signer.sign_message(message, hash_type);
+    // sig_h != sig_m because of random properties
 
     ecdsa verifier;
     verifier.import_public_key(signer.export_public_key(pk::pem_format));
 
-    REQUIRE(verifier.verify(sig, message_, hash_t::sha256));
+    REQUIRE(verifier.verify_message(sig_m, message, hash_type));
+    REQUIRE(verifier.verify(sig_h, hash_value, hash_type));
+    REQUIRE(verifier.verify_message(sig_h, message, hash_type));
+    REQUIRE(verifier.verify(sig_m, hash_value, hash_type));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -312,16 +320,16 @@ struct ecdh_base {
 
 struct peer : public ecdh_base {
 
-    auto make_peer_key(mbedcrypto::curve_t ctype) {
+    auto make_peer_key(curve_t ctype) {
         mbedtls_c_call(
-            mbedtls_ecp_group_load, &ecdh_->grp, mbedcrypto::to_native(ctype));
+            mbedtls_ecp_group_load, &ecdh_->grp, to_native(ctype));
 
         mbedtls_c_call(
             mbedtls_ecdh_gen_public,
             &ecdh_->grp,
             &ecdh_->d,
             &ecdh_->Q,
-            mbedcrypto::rnd_generator::maker,
+            rnd_generator::maker,
             &rnd_);
 
         std::string mypub(psk_length, '\0');
@@ -332,7 +340,7 @@ struct peer : public ecdh_base {
             &ecdh_->Q,
             ecdh_->point_format,
             &olen,
-            mbedcrypto::to_ptr(mypub),
+            to_ptr(mypub),
             psk_length);
 
         mypub.resize(olen);
@@ -340,7 +348,7 @@ struct peer : public ecdh_base {
     }
 
     auto shared_secret(const std::string& otherpub) {
-        const auto* p = mbedcrypto::to_const_ptr(otherpub);
+        const auto* p = to_const_ptr(otherpub);
         mbedtls_c_call(
             mbedtls_ecp_tls_read_point,
             &ecdh_->grp,
@@ -354,9 +362,9 @@ struct peer : public ecdh_base {
             mbedtls_ecdh_calc_secret,
             ecdh_,
             &olen,
-            mbedcrypto::to_ptr(secret),
+            to_ptr(secret),
             psk_length,
-            mbedcrypto::rnd_generator::maker,
+            rnd_generator::maker,
             &rnd_);
 
         secret.resize(olen);
@@ -368,7 +376,6 @@ struct peer : public ecdh_base {
 } // namespace mbedtls
 ///////////////////////////////////////////////////////////////////////////////
 TEST_CASE("ecdh tests", "[pk]") {
-    using namespace mbedcrypto;
 
     SECTION("calculate shared secret") {
         const auto ctype = curve_t::secp192k1;

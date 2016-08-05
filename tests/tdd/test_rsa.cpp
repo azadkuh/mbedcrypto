@@ -117,21 +117,31 @@ TEST_CASE("rsa cryptography", "[pk]") {
 
     SECTION("sign and verify") {
         // message is 455 bytes long > 2048 bits
-        auto message = test::long_text();
+        std::string message{test::long_text()};
+        constexpr auto hash_type = hash_t::sha1;
 
         rsa my_pri;
         my_pri.import_key(test::rsa_private_key());
-        // invalid message size
-        REQUIRE_THROWS(my_pri.sign(message));
+        // invalid hash value size
+        REQUIRE_THROWS(my_pri.sign(message, hash_type));
 
-        auto signature = my_pri.sign(message, hash_t::sha1);
-        REQUIRE((signature == test::long_text_signature()));
-        // verify by itself, a private key contains the public
-        REQUIRE(my_pri.verify(signature, message, hash_t::sha1));
+        // sign by message
+        auto sig_m = my_pri.sign_message(message, hash_type);
+        REQUIRE((sig_m == test::long_text_signature()));
+
+        // sign by hash
+        auto hvalue = to_sha1(message);
+        auto sig_h = my_pri.sign(hvalue, hash_type);
+        REQUIRE((sig_h == sig_m));
+
+        // verify by private key, a private key contains the public
+        REQUIRE(my_pri.verify_message(sig_m, message, hash_type));
+        REQUIRE(my_pri.verify(sig_m, hvalue, hash_type));
 
         rsa my_pub;
         my_pub.import_public_key(test::rsa_public_key());
-        REQUIRE(my_pub.verify(signature, message, hash_t::sha1));
+        REQUIRE(my_pub.verify_message(sig_m, message, hash_type));
+        REQUIRE(my_pub.verify(sig_m, hvalue, hash_type));
     }
 
     SECTION("encrypt and decrypt") {
@@ -143,7 +153,7 @@ TEST_CASE("rsa cryptography", "[pk]") {
 
         // message size is invalid
         REQUIRE_THROWS(my_pub.encrypt(message));
-        auto encv = my_pub.encrypt(message, hash_t::sha256);
+        auto encv = my_pub.encrypt(hvalue);
 
         rsa my_pri;
         my_pri.import_key(test::rsa_private_key());
@@ -171,32 +181,32 @@ TEST_CASE("rsa key tests", "[pk]") {
     }
 
     if (supports(features::pk_export)) {
-        const auto message = test::long_text();
+        std::string message{test::long_text()};
 
         rsa my_gen;
         my_gen.import_key(test::rsa_private_key());
-        const auto signature = my_gen.sign(message, hash_t::sha256);
+        const auto signature = my_gen.sign_message(message, hash_t::sha256);
 
         // test pem public
         rsa my_pub;
         my_pub.import_public_key(my_gen.export_public_key(pk::pem_format));
-        REQUIRE(my_pub.verify(signature, message, hash_t::sha256));
+        REQUIRE(my_pub.verify_message(signature, message, hash_t::sha256));
         REQUIRE(check_pair(my_pub, my_gen) == true);
 
         // test pem private
         rsa my_pri;
         my_pri.import_key(my_gen.export_key(pk::pem_format));
-        REQUIRE((signature == my_pri.sign(message, hash_t::sha256)));
+        REQUIRE((signature == my_pri.sign_message(message, hash_t::sha256)));
         REQUIRE(check_pair(my_pub, my_pri) == true);
 
         // test der public
         my_pub.import_public_key(my_gen.export_public_key(pk::der_format));
-        REQUIRE(my_pub.verify(signature, message, hash_t::sha256));
+        REQUIRE(my_pub.verify_message(signature, message, hash_t::sha256));
         REQUIRE(check_pair(my_pub, my_gen) == true);
 
         // test der private
         my_pri.import_key(my_gen.export_key(pk::der_format));
-        REQUIRE((signature == my_pri.sign(message, hash_t::sha256)));
+        REQUIRE((signature == my_pri.sign_message(message, hash_t::sha256)));
         REQUIRE(check_pair(my_pub, my_pri) == true);
     }
 }
