@@ -32,24 +32,30 @@ public:
     }
 
 public: // helper functions for rsa functionalities
-    auto
-    sign(const buffer_t& hash_or_message, hash_t hash_algo = hash_t::none) {
-        return pk::sign(context(), hash_or_message, hash_algo);
+    auto sign(buffer_view_t hash_value, hash_t hash_type) {
+        return pk::sign(context(), hash_value, hash_type);
+    }
+
+    auto sign_message(buffer_view_t message, hash_t hash_type) {
+        return pk::sign_message(context(), message, hash_type);
     }
 
     bool verify(
-        const buffer_t& signature,
-        const buffer_t& hash_or_message,
-        hash_t          hash_algo = hash_t::none) {
-        return pk::verify(context(), signature, hash_or_message, hash_algo);
+        buffer_view_t signature, buffer_view_t hash_value, hash_t hash_type) {
+        return pk::verify(context(), signature, hash_value, hash_type);
+    }
+
+    bool verify_message(
+        buffer_view_t signature, buffer_view_t message, hash_t hash_type) {
+        return pk::verify_message(context(), signature, message, hash_type);
     }
 
     auto
-    encrypt(const buffer_t& hash_or_message, hash_t hash_algo = hash_t::none) {
-        return pk::encrypt(context(), hash_or_message, hash_algo);
+    encrypt(buffer_view_t source) {
+        return pk::encrypt(context(), source);
     }
 
-    auto decrypt(const buffer_t& encrypted_value) {
+    auto decrypt(buffer_view_t encrypted_value) {
         return pk::decrypt(context(), encrypted_value);
     }
 

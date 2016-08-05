@@ -73,16 +73,22 @@ protected:
 struct ecdsa : public ecp {
     explicit ecdsa() : ecp(pk_t::ecdsa) {}
 
-    auto sign(const buffer_t& hash_or_message, hash_t hash_algo = hash_t::none)
-        -> buffer_t {
-        return pk::sign(context(), hash_or_message, hash_algo);
+    auto sign(buffer_view_t hash_value, hash_t hash_type) {
+        return pk::sign(context(), hash_value, hash_type);
+    }
+
+    auto sign_message(buffer_view_t message, hash_t hash_type) {
+        return pk::sign_message(context(), message, hash_type);
     }
 
     bool verify(
-        const buffer_t& signature,
-        const buffer_t& hash_or_message,
-        hash_t          hash_algo = hash_t::none) {
-        return pk::verify(context(), signature, hash_or_message, hash_algo);
+        buffer_view_t signature, buffer_view_t hash_value, hash_t hash_type) {
+        return pk::verify(context(), signature, hash_value, hash_type);
+    }
+
+    bool verify_message(
+        buffer_view_t signature, buffer_view_t message, hash_t hash_type) {
+        return pk::verify_message(context(), signature, message, hash_type);
     }
 }; // struct ecdsa
 ///////////////////////////////////////////////////////////////////////////////
@@ -143,7 +149,7 @@ public:
     auto make_peer_key(curve_t) -> buffer_t;
 
     /// calculates the shared secret by the peer (other endpoint) public key
-    auto shared_secret(const buffer_t& peer_key) -> buffer_t;
+    auto shared_secret(buffer_view_t peer_key) -> buffer_t;
 
     /** calculates the shared secret if peer's public has been loaded before.
      * @sa make_client_peer_key()
@@ -159,7 +165,7 @@ public: // RFC 4492 implementation ServerKeyExchange parameters
     /** client loads curve parameters and the server's public key.
      * returns the client's public key
      */
-    auto make_client_peer_key(const buffer_t& server_key_exchange) -> buffer_t;
+    auto make_client_peer_key(buffer_view_t server_key_exchange) -> buffer_t;
 }; // class ecdhe
 
 ///////////////////////////////////////////////////////////////////////////////

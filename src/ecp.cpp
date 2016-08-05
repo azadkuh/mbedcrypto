@@ -123,8 +123,8 @@ struct ecp::impl : public pk::context {
         return skex;
     }
 
-    auto ecdh_client_peer_key(const buffer_t& skex) {
-        const unsigned char* p = to_const_ptr(skex);
+    auto ecdh_client_peer_key(buffer_view_t skex) {
+        const unsigned char* p = skex.data();
         mbedcrypto_c_call(
             mbedtls_ecdh_read_params, ecdh_.get(), &p, p + skex.size());
 
@@ -148,11 +148,11 @@ struct ecp::impl : public pk::context {
         return secret;
     }
 
-    auto ecdh_calc_secret(const buffer_t& otherpub) {
+    auto ecdh_calc_secret(buffer_view_t otherpub) {
         mbedcrypto_c_call(
             mbedtls_ecdh_read_public,
             ecdh_.get(),
-            to_const_ptr(otherpub),
+            otherpub.data(),
             otherpub.size());
 
         return ecdh_calc_secret();
@@ -238,7 +238,7 @@ ecdh::peer_key() {
 }
 
 buffer_t
-ecdh::shared_secret(const buffer_t& peer_pub) {
+ecdh::shared_secret(buffer_view_t peer_pub) {
     return pimpl->ecdh_calc_secret(peer_pub);
 }
 
@@ -254,7 +254,7 @@ ecdh::make_server_key_exchange(curve_t ctype) {
 }
 
 buffer_t
-ecdh::make_client_peer_key(const buffer_t& server_key_exchange) {
+ecdh::make_client_peer_key(buffer_view_t server_key_exchange) {
     pimpl->ecdh_client_peer_key(server_key_exchange);
     return pimpl->ecdh_public_point();
 }

@@ -10,6 +10,7 @@
 #ifndef __MBEDCRYPTO_PK_HPP__
 #define __MBEDCRYPTO_PK_HPP__
 #include "mbedcrypto/mpi.hpp"
+#include "mbedcrypto/hash.hpp"
 
 #include <tuple>
 ///////////////////////////////////////////////////////////////////////////////
@@ -115,17 +116,17 @@ check_pair(const context& pub, const context& pri);
 void
 import_key(
     context&,
-    const buffer_t& private_key_data,
-    const buffer_t& password = buffer_t{});
+    buffer_view_t private_key_data,
+    buffer_view_t password = buffer_view_t{nullptr});
 
 /// (re)initializes the context by public key data.
 void
-import_public_key(context&, const buffer_t& public_key_data);
+import_public_key(context&, buffer_view_t public_key_data);
 
-/// (re)initializes the context by loading the private key from a file.
+/** (re)initializes the context by loading the private key from a file.
+ * password is a nullptr or a classic null terminated c string */
 void
-load_key(
-    context&, const char* file_path, const buffer_t& password = buffer_t{});
+load_key(context&, const char* file_path, const char* password = nullptr);
 
 /// (re)initializes the context by loading the public key from a file.
 void
@@ -171,43 +172,51 @@ generate_rsa_key(context&, size_t key_bitlen, size_t exponent = 65537);
 void
 generate_ec_key(context&, curve_t);
 
-/** signs a hash value (or a plain message) by the rsa private key.
- * hash_or_message could be a hash value or message.
- *  if message size is larger than max_crypt_size(), it will be hashed
- *  by hash_algo first, so hash_algo is only needed for plain long messages.
- *  if you have a short or already made the message digest, simply pass
- *  hash_t::none.
+/** signs a hash value (of a message) by the private key.
  * @note for RSA keys, the signature is padded by PKCS#1 v1.5
  * @sa what_can_do()
  */
 buffer_t
-sign(
-    context&, const buffer_t& hash_or_message, hash_t hash_algo = hash_t::none);
+sign(context&, buffer_view_t hash_value, hash_t hash_type);
 
-/** verifies an rsa signature and its padding, @sa sign()
+/// sing helper, message could be in any size
+inline auto
+sign_message(context& ctx, buffer_view_t message, hash_t hash_type) {
+    return sign(ctx, hash::make(hash_type, message), hash_type);
+}
+
+/** verifies an pk signature and its padding, @sa sign()
  * @sa what_can_do()
  */
 bool
 verify(
     context&,
-    const buffer_t& signature,
-    const buffer_t& hash_or_message,
-    hash_t          hash_type = hash_t::none);
+    buffer_view_t signature,
+    buffer_view_t hash_value,
+    hash_t        hash_type);
 
-/** encrypts a hash value (or a plain message) by the rsa public key.
- * @sa sign()
- * @sa what_can_do()
+/// verify overload
+inline bool
+verify_message(
+    context&      ctx,
+    buffer_view_t signature,
+    buffer_view_t message,
+    hash_t        hash_type) {
+    return verify(ctx, signature, hash::make(hash_type, message), hash_type);
+}
+
+/** encrypts source data (includes padding if relevant) by pk.
+ * @warning source size must be smaller than max_crypt_size()
+ * @sa sign() and what_can_do()
  */
 buffer_t
-encrypt(
-    context&, const buffer_t& hash_or_message, hash_t hash_algo = hash_t::none);
+encrypt(context&, buffer_view_t source);
 
-/** decrypts an encrypted buffer by rsa public key.
- * @sa max_crypt_size()
- * @sa what_can_do()
+/** decrypts an encrypted buffer by pk.
+ * @sa encrypt()
  */
 buffer_t
-decrypt(context&, const buffer_t& encrypted_value);
+decrypt(context&, buffer_view_t encrypted_value);
 
 ///////////////////////////////////////////////////////////////////////////////
 /// a base class for public key implementation. @sa rsa and ecp
@@ -252,16 +261,16 @@ struct pk_base {
 
 public: // key i/o
     void import_key(
-        const buffer_t& pri_data, const buffer_t& password = buffer_t{}) {
+        buffer_view_t pri_data, buffer_view_t password = buffer_view_t{nullptr}) {
         pk::import_key(context(), pri_data, password);
     }
 
-    void import_public_key(const buffer_t& pub_data) {
+    void import_public_key(buffer_view_t pub_data) {
         pk::import_public_key(context(), pub_data);
     }
 
     void
-    load_key(const char* file_path, const buffer_t& password = buffer_t{}) {
+    load_key(const char* file_path, const char* password = nullptr) {
         pk::load_key(context(), file_path, password);
     }
 

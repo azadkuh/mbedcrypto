@@ -17,31 +17,22 @@ enum K {
     DefaultExportBufferSize = 16000,
 };
 
+struct larger_than_key : public exceptions::usage_error {
+    larger_than_key()
+        : exceptions::usage_error(
+              "the input value is larger than max_crypt_size()") {}
+}; // struct larger_than_key
+
+void
+check_crypt_size_of(const context& pk, buffer_view_t in) {
+    if ( in.size() > max_crypt_size(pk))
+        throw larger_than_key{};
+}
+
 void
 finalize_pem(buffer_t& pem) {
     pem.push_back('\0');
 }
-
-class hm_prepare
-{
-    buffer_t hash_;
-
-public:
-    const buffer_t
-    operator()(const context& pk, const buffer_t& hmvalue, hash_t halgo) {
-
-        if (halgo == hash_t::none) {
-            if (hmvalue.size() > max_crypt_size(pk))
-                throw exceptions::usage_error{
-                    "the message is larger than max_crypt_size()"};
-
-            return hmvalue;
-        }
-
-        hash_ = hash::make(halgo, hmvalue);
-        return hash_;
-    }
-}; // hm_prepare
 
 void
 reset_as_impl(context& d, pk_t ptype) {
@@ -225,18 +216,16 @@ check_pair(const context& pub, const context& priv) {
 }
 
 void
-import_key(context& d, const buffer_t& priv_data, const buffer_t& pass) {
+import_key(context& d, buffer_view_t priv_data, buffer_view_t pass) {
     auto old_type = type_of(d);
     reset(d);
-
-    const auto* ppass = (pass.size() != 0) ? to_const_ptr(pass) : nullptr;
 
     mbedcrypto_c_call(
         mbedtls_pk_parse_key,
         &d.pk_,
-        to_const_ptr(priv_data),
+        priv_data.data(),
         priv_data.size(),
-        ppass,
+        pass.data(),
         pass.size());
     // check the key type
     ensure_type_match(d, old_type, type_of(d));
@@ -245,14 +234,14 @@ import_key(context& d, const buffer_t& priv_data, const buffer_t& pass) {
 }
 
 void
-import_public_key(context& d, const buffer_t& pub_data) {
+import_public_key(context& d, buffer_view_t pub_data) {
     auto old_type = type_of(d);
     reset(d);
 
     mbedcrypto_c_call(
         mbedtls_pk_parse_public_key,
         &d.pk_,
-        to_const_ptr(pub_data),
+        pub_data.data(),
         pub_data.size());
     // check the key type
     ensure_type_match(d, old_type, type_of(d));
@@ -261,13 +250,11 @@ import_public_key(context& d, const buffer_t& pub_data) {
 }
 
 void
-load_key(context& d, const char* fpath, const buffer_t& pass) {
+load_key(context& d, const char* fpath, const char* pass) {
     auto old_type = type_of(d);
     reset(d);
 
-    const auto* ppass = (pass.size() != 0) ? pass.data() : nullptr;
-
-    mbedcrypto_c_call(mbedtls_pk_parse_keyfile, &d.pk_, fpath, ppass);
+    mbedcrypto_c_call(mbedtls_pk_parse_keyfile, &d.pk_, fpath, pass);
     // check the key type
     ensure_type_match(d, old_type, type_of(d));
 
@@ -422,12 +409,11 @@ generate_ec_key(context& d, curve_t ctype) {
 }
 
 buffer_t
-sign(context& d, const buffer_t& hmvalue, hash_t halgo) {
+sign(context& d, buffer_view_t hvalue, hash_t halgo) {
     if (type_of(d) != pk_t::rsa && !can_do(d, pk_t::ecdsa))
         throw exceptions::support_error{};
 
-    hm_prepare  hm;
-    const auto& hvalue = hm(d, hmvalue, halgo);
+    check_crypt_size_of(d, hvalue);
 
     size_t   olen = 32 + max_crypt_size(d);
     buffer_t output(olen, '\0');
@@ -435,7 +421,7 @@ sign(context& d, const buffer_t& hmvalue, hash_t halgo) {
         mbedtls_pk_sign,
         &d.pk_,
         to_native(halgo),
-        to_const_ptr(hvalue),
+        hvalue.data(),
         hvalue.size(),
         to_ptr(output),
         &olen,
@@ -448,22 +434,18 @@ sign(context& d, const buffer_t& hmvalue, hash_t halgo) {
 
 bool
 verify(
-    context&        d,
-    const buffer_t& signature,
-    const buffer_t& hm_value,
-    hash_t          halgo) {
+    context& d, buffer_view_t signature, buffer_view_t hvalue, hash_t halgo) {
     if (type_of(d) != pk_t::rsa && !can_do(d, pk_t::ecdsa))
         throw exceptions::support_error{};
 
-    hm_prepare  hm;
-    const auto& hvalue = hm(d, hm_value, halgo);
+    check_crypt_size_of(d, hvalue);
 
     int ret = mbedtls_pk_verify(
         &d.pk_,
         to_native(halgo),
-        to_const_ptr(hvalue),
+        hvalue.data(),
         hvalue.size(),
-        to_const_ptr(signature),
+        signature.data(),
         signature.size());
 
     // TODO: check when to report other errors
@@ -483,20 +465,20 @@ verify(
 }
 
 buffer_t
-encrypt(context& d, const buffer_t& hmvalue, hash_t halgo) {
+encrypt(context& d, buffer_view_t source) {
     if (type_of(d) != pk_t::rsa)
         throw exceptions::support_error{};
 
-    hm_prepare  hm;
-    const auto& hvalue = hm(d, hmvalue, halgo);
+    check_crypt_size_of(d, source);
 
     size_t   olen = 32 + max_crypt_size(d);
     buffer_t output(olen, '\0');
+
     mbedcrypto_c_call(
         mbedtls_pk_encrypt,
         &d.pk_,
-        to_const_ptr(hvalue),
-        hvalue.size(),
+        source.data(),
+        source.size(),
         to_ptr(output),
         &olen,
         olen,
@@ -508,13 +490,12 @@ encrypt(context& d, const buffer_t& hmvalue, hash_t halgo) {
 }
 
 buffer_t
-decrypt(context& d, const buffer_t& encrypted_value) {
+decrypt(context& d, buffer_view_t encrypted_value) {
     if (type_of(d) != pk_t::rsa)
         throw exceptions::support_error{};
 
     if ((encrypted_value.size() << 3) > key_bitlen(d))
-        throw exceptions::usage_error{
-            "the encrypted value is larger than the key size"};
+        throw larger_than_key{};
 
     size_t   olen = 32 + max_crypt_size(d);
     buffer_t output(olen, '\0');
@@ -522,7 +503,7 @@ decrypt(context& d, const buffer_t& encrypted_value) {
     mbedcrypto_c_call(
         mbedtls_pk_decrypt,
         &d.pk_,
-        to_const_ptr(encrypted_value),
+        encrypted_value.data(),
         encrypted_value.size(),
         to_ptr(output),
         &olen,
