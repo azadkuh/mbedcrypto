@@ -11,7 +11,6 @@
 #define TESTS_GENERATOR_HPP
 
 #include "mbedcrypto/types.hpp"
-#include <cstring>
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
 namespace test {

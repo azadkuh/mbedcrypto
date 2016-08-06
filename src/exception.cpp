@@ -4,7 +4,6 @@
 #include "mbedtls/error.h"
 #include "mbedtls/pk.h"
 
-#include <cstring>
 #include <sstream>
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {

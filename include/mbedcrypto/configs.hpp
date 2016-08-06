@@ -12,6 +12,7 @@
 
 #include <memory>
 #include <string>
+#include <cstring>
 
 #if defined(QT_CORE_LIB)
 #include <QByteArray>

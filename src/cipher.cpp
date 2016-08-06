@@ -57,7 +57,7 @@ struct cipher_impl {
         return from_native(ctx_.cipher_info->mode);
     }
 
-    constexpr const auto& iv() const noexcept {
+    const auto& iv() const noexcept {
         return iv_data_;
     }
 
@@ -163,7 +163,7 @@ class crypt_engine
         cim_.setup(type).padding(pad).iv(iv).key(key, m);
     }
 
-    constexpr size_t output_size() const noexcept {
+    size_t output_size() const noexcept {
         return 32 + input_.size() + block_size_;
     }
 

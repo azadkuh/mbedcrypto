@@ -2,7 +2,6 @@
 #include "mbedcrypto/hash.hpp"
 #include "pk_private.hpp"
 
-#include <cstring>
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
 namespace pk {

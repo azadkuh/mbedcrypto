@@ -5,7 +5,6 @@
 #include "mbedtls/ecdsa.h"
 #include "mbedtls/ecp.h"
 
-#include <cstring>
 #include <initializer_list>
 #include <iostream>
 
