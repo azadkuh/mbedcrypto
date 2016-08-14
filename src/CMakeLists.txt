@@ -164,4 +164,7 @@ endif()
 
 if(BUILD_QT5_BIND)
     qt5_use_modules(mbedcrypto Core)
+    if(WIN32)
+        target_link_libraries(mbedcrypto pcre16)
+    endif()
 endif()

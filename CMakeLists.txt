@@ -68,6 +68,11 @@ if(IS_CLANG OR IS_GNUXX)
 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wnon-virtual-dtor -Woverloaded-virtual")
 
+    # mingw
+    if(WIN32)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static")
+    endif()
+
 elseif(MSVC)
     if(BUILD_SHARED_LIBS)
         add_definitions(-DMBEDCRYPTO_DYNAMIC -DMBEDCRYPTO_EXPORT)
