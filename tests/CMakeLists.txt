@@ -13,6 +13,10 @@ if(BUILD_QT5_BIND)
     qt5_use_modules(tests Core)
 endif()
 
+if(WIN32)
+    target_link_libraries(tests ws2_32)
+endif()
+
 OPTION(BUILD_TESTS_IDEA "build experimental and dirty test applications, you ain't gonna need it" OFF)
 
 if(BUILD_TESTS_IDEA)

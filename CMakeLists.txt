@@ -83,7 +83,8 @@ elseif(MSVC)
            )
     endif()
 
-    set(CMAKE_CXX_FLAGS_RELEASE "-nologo -Zm200 -Zc:wchar_t -FS -O2 -MD -Zc:strictStrings -W3")
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+    set(CMAKE_CXX_FLAGS_RELEASE "-nologo -Zm200 -Zc:wchar_t -FS -O2 -MT -Zc:strictStrings -W3")
 
 endif()
 
@@ -110,6 +111,7 @@ include_directories(.
     ./3rdparty/Catch/single_include
     ${CMAKE_CURRENT_BINARY_DIR}
     )
+link_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 add_subdirectory(src)
 if(BUILD_TESTS)
