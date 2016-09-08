@@ -30,6 +30,7 @@ set(MBEDTLS_SRC
     ${MBEDTLS_PATH}/md.c
     ${MBEDTLS_PATH}/aes.c
     ${MBEDTLS_PATH}/aesni.c
+    ${MBEDTLS_PATH}/padlock.c
     ${MBEDTLS_PATH}/cipher_wrap.c
     ${MBEDTLS_PATH}/cipher.c
     ${MBEDTLS_PATH}/entropy.c
