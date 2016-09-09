@@ -55,12 +55,13 @@ to_ptr(QByteArray& b) {
 
 inline QByteArray
 QByteArrayShallow(const buffer_t& src) {
-    return QByteArray::fromRawData(src.data(), src.size());
+    return QByteArray::fromRawData(src.data(), static_cast<int>(src.size()));
 }
 
 inline QByteArray
 QByteArrayShallow(cuchars src, size_t size) {
-    return QByteArray::fromRawData(reinterpret_cast<const char*>(src), size);
+    return QByteArray::fromRawData(
+        reinterpret_cast<const char*>(src), static_cast<int>(size));
 }
 #endif // QT_CORE_LIB
 
@@ -127,7 +128,8 @@ buffer_view_t::to<buffer_t>() const {
 template <>
 inline QByteArray
 buffer_view_t::to<QByteArray>() const {
-    return QByteArray(reinterpret_cast<const char*>(data_), size_);
+    return QByteArray(
+        reinterpret_cast<const char*>(data_), static_cast<int>(size_));
 }
 #endif // QT_CORE_LIB
 ///////////////////////////////////////////////////////////////////////////////
