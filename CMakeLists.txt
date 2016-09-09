@@ -34,6 +34,11 @@ option(BUILD_EC         "enable eckey, eckey_dh, ecdsa algorithms " OFF)
 
 option(BUILD_QT5_BIND   "also adds adaptors around Qt5::QByteArray" OFF)
 
+# use MT under MSVC
+if(MSVC)
+    option(BUILD_MT_RELEASE "static msvcrt build" ON)
+endif()
+
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING
         "Choose the type of build: None Release ASan MemSan Debug"
@@ -85,6 +90,10 @@ elseif(MSVC)
 
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
     set(CMAKE_CXX_FLAGS_RELEASE "-nologo -Zm200 -Zc:wchar_t -FS -O2 -MT -Zc:strictStrings -W3")
+	if(BUILD_MT_RELEASE)
+        string(REPLACE "-MD" "-MT" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS}")
+        string(REPLACE "-MD" "-MT" CMAKE_C_FLAGS_RELEASE   "${CMAKE_C_FLAGS}")
+	endif()
 
 endif()
 
