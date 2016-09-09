@@ -70,7 +70,9 @@ struct cipher_impl {
     }
 
     void reset_last_iv() {
-        iv(iv_data_);
+        // prevent from copying to self
+        auto clone = iv_data_;
+        iv(clone);
     }
 
     auto& key(buffer_view_t key_data, cipher::mode m) {
