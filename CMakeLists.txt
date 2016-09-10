@@ -89,10 +89,11 @@ elseif(MSVC)
     endif()
 
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-    set(CMAKE_CXX_FLAGS_RELEASE "-nologo -Zm200 -Zc:wchar_t -FS -O2 -MT -Zc:strictStrings -W3")
+    set(CMAKE_C_FLAGS_RELEASE "-nologo -Zm200 -Zc:wchar_t -FS -O2 -MT -Zc:strictStrings -W3 -MP")
+    set(CMAKE_CXX_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE})
 	if(BUILD_MT_RELEASE)
-        string(REPLACE "-MD" "-MT" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
         string(REPLACE "-MD" "-MT" CMAKE_C_FLAGS_RELEASE   "${CMAKE_C_FLAGS_RELEASE}")
+        string(REPLACE "-MD" "-MT" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
 	endif()
 
 endif()
