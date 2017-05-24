@@ -30,11 +30,18 @@ digest_pair(hash_t type) {
     return std::make_tuple(cinfot, length);
 }
 
+template <class T, class Tuple>
+T
+_zero_initialized_buffer(const Tuple& p) {
+    using length_t = decltype(T().size());
+    return T(static_cast<length_t>(std::get<1>(p)), '\0');
+}
+
 template <class T>
 T
 _make(hash_t type, buffer_view_t src) {
     auto digest = digest_pair(type);
-    T    buf(std::get<1>(digest), '\0');
+    auto buf    = _zero_initialized_buffer<T>(digest);
 
     mbedcrypto_c_call(
         mbedtls_md, std::get<0>(digest), src.data(), src.size(), to_ptr(buf));
@@ -46,7 +53,7 @@ template <class T>
 T
 _make(hash_t type, buffer_view_t key, buffer_view_t src) {
     auto digest = digest_pair(type);
-    T    buf(std::get<1>(digest), '\0');
+    auto buf    = _zero_initialized_buffer<T>(digest);
 
     mbedcrypto_c_call(
         mbedtls_md_hmac,
