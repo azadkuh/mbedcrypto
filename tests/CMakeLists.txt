@@ -11,10 +11,14 @@ add_executable(tests ${tests_src})
 target_link_libraries(tests mbedcrypto)
 if(BUILD_QT5_BIND)
     qt5_use_modules(tests Core)
-endif()
-
-if(WIN32)
-    target_link_libraries(tests ws2_32)
+    if(IS_LINUX)
+        target_link_libraries(tests dl)
+    endif()
+    if(BUILD_AS_STATIC)
+        # statically build Qt (5.6.2) forgets to link against qtpcre
+        # put it into your cmake build directory manually
+        target_link_libraries(tests qtpcre)
+    endif()
 endif()
 
 OPTION(BUILD_TESTS_IDEA "build experimental and dirty test applications, you ain't gonna need it" OFF)

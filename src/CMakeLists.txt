@@ -18,7 +18,7 @@ set(MBEDCRYPTO_SRC
     )
 
 # mandatory mbedtls sources
-set(MBEDTLS_PATH "../3rdparty/mbedtls/library")
+set(MBEDTLS_PATH "${DIR_3RDPARTY}/mbedtls/library")
 set(MBEDTLS_SRC
     ${MBEDTLS_PATH}/error.c
     ${MBEDTLS_PATH}/base64.c
@@ -165,7 +165,4 @@ endif()
 
 if(BUILD_QT5_BIND)
     qt5_use_modules(mbedcrypto Core)
-    if(WIN32)
-        target_link_libraries(mbedcrypto pcre16)
-    endif()
 endif()
