@@ -55,7 +55,8 @@ public:
      */
     template<class TBuff = buffer_t>
     TBuff make(size_t length) {
-        TBuff rnd_bytes(length, '\0');
+        using length_t = decltype(TBuff().size());
+        TBuff rnd_bytes(static_cast<length_t>(length), '\0');
         make(to_ptr(rnd_bytes), length);
         return rnd_bytes;
     }
