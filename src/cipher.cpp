@@ -223,9 +223,10 @@ public:
         crypt_engine cengine(type, input);
         cengine.setup_engine(type, pad, iv, key, m);
 
-        TBuff output(cengine.output_size(), '\0');
+        using length_t = decltype(TBuff().size());
+        TBuff output(static_cast<length_t>(cengine.output_size()), '\0');
         auto  written_size = cengine.compute(to_ptr(output));
-        output.resize(written_size);
+        output.resize(static_cast<length_t>(written_size));
         return output;
     }
 
@@ -241,12 +242,14 @@ public:
         crypt_engine cengine(type, input);
         cengine.setup_engine(type, pad, iv, key, cipher::mode::encrypt_mode);
 
-        TBuff output(cengine.output_size() + iv.size(), '\0');
+        using length_t = decltype(TBuff().size());
+        TBuff output(
+                static_cast<length_t>(cengine.output_size() + iv.size()), '\0');
         // prepend the iv to the output
         std::memcpy(to_ptr(output), iv.data(), iv.size());
         // offset the output by iv
         auto written_size = cengine.compute(to_ptr(output) + iv.size());
-        output.resize(written_size + iv.size());
+        output.resize(static_cast<length_t>(written_size + iv.size()));
         return output;
     }
 
@@ -262,9 +265,10 @@ public:
         crypt_engine cengine(type, input);
         cengine.setup_engine(type, pad, iv, key, cipher::mode::decrypt_mode);
 
-        TBuff output(cengine.output_size(), '\0');
+        using length_t = decltype(TBuff().size());
+        TBuff output(static_cast<length_t>(cengine.output_size()), '\0');
         auto  written_size = cengine.compute(to_ptr(output));
-        output.resize(written_size);
+        output.resize(static_cast<length_t>(written_size));
         return output;
     }
 
