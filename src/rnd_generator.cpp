@@ -86,7 +86,8 @@ rnd_generator::entropy_length(size_t len) noexcept {
 
 void
 rnd_generator::reseed_interval(size_t interval) noexcept {
-    mbedtls_ctr_drbg_set_reseed_interval(&pimpl->ctx_, interval);
+    mbedtls_ctr_drbg_set_reseed_interval(
+            &pimpl->ctx_, static_cast<int>(interval));
 }
 
 void

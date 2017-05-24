@@ -31,7 +31,7 @@ TEST_CASE("mbedcrypto error / exception checkings", "[types][exception]") {
             mbedcrypto_c_call(mbedtls_md_starts, &md);
             REQUIRE_FALSE("above line must throw");
 
-        } catch (exception& cerr) {
+        } catch (exception&) {
             REQUIRE("fine");
         }
     }

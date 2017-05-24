@@ -80,7 +80,7 @@ struct cipher_impl {
             mbedtls_cipher_setkey,
             &ctx_,
             key_data.data(),
-            key_data.size() << 3, // bitlen
+            static_cast<int>(key_data.size() << 3), // bitlen
             m == cipher::encrypt_mode ? MBEDTLS_ENCRYPT : MBEDTLS_DECRYPT);
 
         return *this;

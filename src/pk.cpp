@@ -376,8 +376,8 @@ generate_rsa_key(context& d, size_t key_bitlen, size_t exponent) {
         mbedtls_pk_rsa(d.pk_),
         rnd_generator::maker,
         &d.rnd_,
-        key_bitlen,
-        exponent);
+        static_cast<unsigned int>(key_bitlen),
+        static_cast<int>(exponent));
     // set the key type
     d.key_is_private_ = true;
 
