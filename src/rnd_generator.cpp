@@ -102,7 +102,7 @@ rnd_generator::make(unsigned char* buffer, size_t olen) noexcept {
 }
 
 int
-rnd_generator::maker(void* p_rng, unsigned char* buffer, size_t olen) noexcept {
+rnd_generator::maker(void* p_rng, unsigned char* buffer, size_t olen) {
     rnd_generator* ctx = reinterpret_cast<rnd_generator*>(p_rng);
     return ctx->make(buffer, olen);
 }

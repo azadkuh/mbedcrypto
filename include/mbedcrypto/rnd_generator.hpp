@@ -76,7 +76,7 @@ public:
      * @endcode
      * @sa mbedtls_ctr_drbg_random()
      */
-    static int maker(void* p_rng, unsigned char*, size_t) noexcept;
+    static int maker(void* p_rng, unsigned char*, size_t);
 
 public: // auxiliary methods
     /** set entropy read length. default: 32/48 (sha256/sha512).
