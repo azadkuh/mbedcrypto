@@ -15,9 +15,6 @@ if(BUILD_QT5_BIND)
         target_link_libraries(tests dl)
     endif()
     if(BUILD_AS_STATIC)
-        # statically build Qt (5.6.2) forgets to link against qtpcre
-        # put it into your cmake build directory manually
-        target_link_libraries(tests qtpcre)
         if(WIN32)
             target_link_libraries(tests ws2_32)
         endif()
