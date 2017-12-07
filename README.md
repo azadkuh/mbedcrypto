@@ -1,4 +1,4 @@
-#mbedcrypto
+# mbedcrypto
 `mbedcrypto` is a portable, small, easy to use, feature rich and fast
 `c++14` library for cryptography based on fantastic and clean
 [mbedtls](https://github.com/ARMmbed/mbedtls)<sup>[note](#mbedtls)</sup>
@@ -109,19 +109,20 @@ see [types.hpp](./include/mbedcrypto/types.hpp)
 
 
 ## setup
-after cloning this repository, first update the dependencies:
-```bash
-#on mbedcrypto directory
-$medcrypto/> ./update-dependencies.sh
-```
-this script automatically setups `3rdparty` directory, then tries to pull or
-update dependencies from github.
+When using ```git clone```, add the ```--recurse-submodules``` flag to the command.
+This way, the dependencies will be downloaded aswell.
+
+> Dependencies are downloaded using Git's submodules. See the [manual](https://git-scm.com/book/en/v2/Git-Tools-Submodules) for more info.
+
+Then build the `mbedcrypto` library using CMake in your terminal:
+
+> Before building the library, you need to be in the top-level of the `mbedcrypto` repository.
 
 ```bash
-$medcrypto/> mkdir build
-$medcrypto/> cd build
-$build/> cmake ..
-$build/> make
+mkdir build
+cd build
+cmake ..
+make
 ```
 
 > the `mbedcrypto` library and the companion unit test app would be built into
