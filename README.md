@@ -106,17 +106,31 @@ total number of supported algorithms:
 - pki: 6
 
 see [types.hpp](./include/mbedcrypto/types.hpp)
-
+---
 
 ## setup
+
+### setup using Bash
+
+```git clone``` the repository as you usually would. Then go to your terminal and execute the following command to download all dependencies:
+
+```bash
+./update-dependencies.sh
+```
+
+### setup using git submodules
+
 When using ```git clone```, add the ```--recurse-submodules``` flag to the command.
 This way, the dependencies will be downloaded aswell.
 
 > Dependencies are downloaded using Git's submodules. See the [manual](https://git-scm.com/book/en/v2/Git-Tools-Submodules) for more info.
+---
 
-Then build the `mbedcrypto` library using CMake in your terminal:
+## build
 
 > Before building the library, you need to be in the top-level of the `mbedcrypto` repository.
+
+Build the `mbedcrypto` library using CMake in your terminal:
 
 ```bash
 mkdir build
@@ -129,9 +143,8 @@ make
 > `xbin` directory.
 
 see [wiki: setup and build](https://github.com/azadkuh/mbedcrypto/wiki/setup-and-build)
----
 
-## build options
+### build options
 these are the most important build options:
 
 | options          | default | message                                                         |
