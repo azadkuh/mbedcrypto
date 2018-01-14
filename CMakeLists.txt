@@ -55,7 +55,9 @@ set(DIR_3RDPARTY ${CMAKE_SOURCE_DIR}/3rdparty)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${DIR_XBIN})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${DIR_XBIN})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${DIR_XBIN})
-
+set(INSTALL_DIR_INCLUDE include/mbedcrypto)
+set(INSTALL_DIR_LIBRARY lib)
+set(INSTALL_DIR_RUNTIME bin)
 
 #-----------------------------------------------------------------------------
 # sub-projects

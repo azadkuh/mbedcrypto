@@ -45,6 +45,30 @@ set(MBEDTLS_SRC
     ${MBEDTLS_PATH}/platform.c
     )
 
+# header files to be exported by install
+set(DIR_MBEDCRYPTO_INCLUE "${CMAKE_SOURCE_DIR}/include/mbedcrypto")
+set(MBEDCRYPTO_HEADERS
+    ${DIR_MBEDCRYPTO_INCLUE}/configs.hpp
+    ${DIR_MBEDCRYPTO_INCLUE}/exception.hpp
+    ${DIR_MBEDCRYPTO_INCLUE}/types.hpp
+    ${DIR_MBEDCRYPTO_INCLUE}/tcodec.hpp
+    ${DIR_MBEDCRYPTO_INCLUE}/hash.hpp
+    ${DIR_MBEDCRYPTO_INCLUE}/cipher.hpp
+    ${DIR_MBEDCRYPTO_INCLUE}/rnd_generator.hpp
+    )
+if(BUILD_PK_EXPORT OR BUILD_RSA_KEYGEN OR BUILD_EC)
+    list(APPEND MBEDCRYPTO_HEADERS
+        ${DIR_MBEDCRYPTO_INCLUE}/mpi.hpp
+        ${DIR_MBEDCRYPTO_INCLUE}/pk.hpp
+        ${DIR_MBEDCRYPTO_INCLUE}/rsa.hpp
+        )
+endif()
+if(BUILD_EC)
+    list(APPEND MBEDCRYPTO_HEADERS
+        ${DIR_MBEDCRYPTO_INCLUE}/ecp.hpp
+        )
+endif()
+
 # optional mbedtls definitions and sources based on specified options
 #  message digests (hashes)
 if(BUILD_MD2)
@@ -170,6 +194,8 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     SOVERSION 1
     VERSION 1.0.0
     )
+install(TARGETS ${PROJECT_NAME} DESTINATION ${INSTALL_DIR_LIBRARY})
+install(FILES ${MBEDCRYPTO_HEADERS} DESTINATION ${INSTALL_DIR_INCLUDE})
 
 ## mbedtls parts
 if(BUILD_SINGLE_LIB)

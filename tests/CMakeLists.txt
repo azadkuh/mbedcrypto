@@ -11,6 +11,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${DIR_3RDPARTY}/Catch/single_include
     )
 target_link_libraries(${PROJECT_NAME} mbedcrypto)
+install(TARGETS ${PROJECT_NAME} DESTINATION ${INSTALL_DIR_RUNTIME})
 
 if(BUILD_QT5_BIND)
     target_link_libraries(${PROJECT_NAME} Qt5::Core)
