@@ -2,7 +2,6 @@
  *
  * @copyright (C) 2016
  * @date 2016.03.03
- * @version 1.0.0
  * @author amir zamani <azadkuh@live.com>
  *
  */
@@ -10,7 +9,7 @@
 #ifndef MBEDCRYPTO_TYPES_HPP
 #define MBEDCRYPTO_TYPES_HPP
 
-#include "exception.hpp"
+#include "mbedcrypto/exception.hpp"
 
 #include <vector>
 ///////////////////////////////////////////////////////////////////////////////

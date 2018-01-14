@@ -2,13 +2,13 @@
  *
  * @copyright (C) 2016
  * @date 2016.05.01
- * @version 1.0.0
  * @author amir zamani <azadkuh@live.com>
  *
  */
 
 #ifndef __MBEDCRYPTO_PK_HPP__
 #define __MBEDCRYPTO_PK_HPP__
+
 #include "mbedcrypto/mpi.hpp"
 #include "mbedcrypto/hash.hpp"
 

@@ -2,7 +2,6 @@
  *
  * @copyright (C) 2016
  * @date 2016.03.10
- * @version 1.0.0
  * @author amir zamani <azadkuh@live.com>
  *
  */
@@ -11,6 +10,7 @@
 #define MBEDTLSCRYPTO_CIPHER_HPP
 
 #include "mbedcrypto/types.hpp"
+
 #include <tuple>
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {

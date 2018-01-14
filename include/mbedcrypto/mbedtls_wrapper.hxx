@@ -2,8 +2,8 @@
  *
  * @copyright (C) 2016
  * @date 2016.04.25
- * @version 1.0.0
  * @author amir zamani <azadkuh@live.com>
+ *
  */
 
 #ifndef __MBEDTLS_WRAPPER_HXX__
