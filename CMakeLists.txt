@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project("mbedcrypto" CXX)
+project(mbedcrypto CXX)
 enable_testing()
 
 # compiler checks and flags
@@ -46,14 +46,15 @@ option(BUILD_EC         "enable eckey, eckey_dh, ecdsa algorithms " OFF)
 
 
 # output directory
-set(DIR_XBIN     ${CMAKE_SOURCE_DIR}/../mbedcrypto.xbin${ARCH_TYPE})
+get_filename_component(PARENT_DIR ${CMAKE_SOURCE_DIR} DIRECTORY)
+set(DIR_XBIN     ${PARENT_DIR}/${PROJECT_NAME}.xbin${ARCH_TYPE})
 set(DIR_3RDPARTY ${CMAKE_SOURCE_DIR}/3rdparty)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${DIR_XBIN})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${DIR_XBIN})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${DIR_XBIN})
 
-include_directories(.
-    ./include
+include_directories(
+    ${CMAKE_SOURCE_DIR}/include
     ${DIR_3RDPARTY}/mbedtls/include
     ${DIR_3RDPARTY}/Catch/single_include
     ${CMAKE_CURRENT_BINARY_DIR}
