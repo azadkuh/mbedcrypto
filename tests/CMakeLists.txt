@@ -1,17 +1,19 @@
 project(mbedcrypto_tests)
 
-# modify this file to add/remove features and modules from mbedtls
-add_definitions( -DMBEDTLS_CONFIG_FILE=\"mbedcrypto_mbedtls_config.h\" )
-
 file(GLOB tests_src
     ./tdd/**.hpp
     ./tdd/**.cpp
     )
 add_executable(${PROJECT_NAME} ${tests_src})
+add_test(${PROJECT_NAME} ${DIR_XBIN}/${PROJECT_NAME})
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_SOURCE_DIR}
+    ${DIR_3RDPARTY}/Catch/single_include
+    )
 target_link_libraries(${PROJECT_NAME} mbedcrypto)
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR})
+
 if(BUILD_QT5_BIND)
-    qt5_use_modules(${PROJECT_NAME} Core)
+    target_link_libraries(${PROJECT_NAME} Qt5::Core)
     if(IS_LINUX)
         target_link_libraries(${PROJECT_NAME} dl)
     endif()

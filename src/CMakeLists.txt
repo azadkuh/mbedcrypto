@@ -1,20 +1,17 @@
 project(mbedcrypto)
 
-# modify this file to add/remove features and modules from mbedtls
-add_definitions( -DMBEDTLS_CONFIG_FILE=\"mbedcrypto_mbedtls_config.h\" )
-
 # mbedcrypto main files
 set(MBEDCRYPTO_SRC
-    ../src/exception.cpp
-    ../src/conversions.cpp
-    ../src/types.cpp
-    ../src/tcodec.cpp
-    ../src/hash.cpp
-    ../src/cipher.cpp
-    ../src/mpi.cpp
-    ../src/rnd_generator.cpp
-    ../src/pk.cpp
-    ../src/rsa.cpp
+    exception.cpp
+    conversions.cpp
+    types.cpp
+    tcodec.cpp
+    hash.cpp
+    cipher.cpp
+    mpi.cpp
+    rnd_generator.cpp
+    pk.cpp
+    rsa.cpp
     )
 
 # mandatory mbedtls sources
@@ -66,7 +63,7 @@ endif()
 if(BUILD_ALL_CIPHER_PADDINGS)
     set(MBEDTLS_CIPHER_PADDING_ONE_AND_ZEROS ON)
     set(MBEDTLS_CIPHER_PADDING_ZEROS_AND_LEN ON)
-    set(MBEDTLS_CIPHER_PADDING_ZEROS ON)
+    set(MBEDTLS_CIPHER_PADDING_ZEROS         ON)
 endif()
 
 #  cipher block modes
@@ -106,31 +103,32 @@ endif()
 #  public key options
 if(BUILD_PK_EXPORT)
     set(MBEDTLS_ASN1_WRITE_C ON)
-    set(MBEDTLS_PK_WRITE_C ON)
-    set(MBEDTLS_PEM_WRITE_C ON)
+    set(MBEDTLS_PK_WRITE_C   ON)
+    set(MBEDTLS_PEM_WRITE_C  ON)
     list(APPEND MBEDTLS_SRC
         ${MBEDTLS_PATH}/asn1write.c
-        ${MBEDTLS_PATH}/pkwrite.c)
+        ${MBEDTLS_PATH}/pkwrite.c
+        )
 endif()
 if(BUILD_RSA_KEYGEN)
     set(MBEDTLS_GENPRIME ON)
 endif()
 if(BUILD_EC)
-    set(MBEDTLS_ECP_C ON)
-    SET(MBEDTLS_ECDH_C ON)
-    set(MBEDTLS_DHM_C ON)
+    set(MBEDTLS_ECP_C   ON)
+    SET(MBEDTLS_ECDH_C  ON)
+    set(MBEDTLS_DHM_C   ON)
     set(MBEDTLS_ECDSA_C ON)
-    set(MBEDTLS_ECP_DP_SECP192R1_ENABLED ON)
-    set(MBEDTLS_ECP_DP_SECP224R1_ENABLED ON)
-    set(MBEDTLS_ECP_DP_SECP256R1_ENABLED ON)
-    set(MBEDTLS_ECP_DP_SECP384R1_ENABLED ON)
-    set(MBEDTLS_ECP_DP_SECP521R1_ENABLED ON)
-    set(MBEDTLS_ECP_DP_SECP192K1_ENABLED ON)
-    set(MBEDTLS_ECP_DP_SECP224K1_ENABLED ON)
-    set(MBEDTLS_ECP_DP_SECP256K1_ENABLED ON)
-    set(MBEDTLS_ECP_DP_BP256R1_ENABLED ON)
-    set(MBEDTLS_ECP_DP_BP384R1_ENABLED ON)
-    set(MBEDTLS_ECP_DP_BP512R1_ENABLED ON)
+    set(MBEDTLS_ECP_DP_SECP192R1_ENABLED  ON)
+    set(MBEDTLS_ECP_DP_SECP224R1_ENABLED  ON)
+    set(MBEDTLS_ECP_DP_SECP256R1_ENABLED  ON)
+    set(MBEDTLS_ECP_DP_SECP384R1_ENABLED  ON)
+    set(MBEDTLS_ECP_DP_SECP521R1_ENABLED  ON)
+    set(MBEDTLS_ECP_DP_SECP192K1_ENABLED  ON)
+    set(MBEDTLS_ECP_DP_SECP224K1_ENABLED  ON)
+    set(MBEDTLS_ECP_DP_SECP256K1_ENABLED  ON)
+    set(MBEDTLS_ECP_DP_BP256R1_ENABLED    ON)
+    set(MBEDTLS_ECP_DP_BP384R1_ENABLED    ON)
+    set(MBEDTLS_ECP_DP_BP512R1_ENABLED    ON)
     set(MBEDTLS_ECP_DP_CURVE25519_ENABLED ON)
     list(APPEND MBEDTLS_SRC
         ${MBEDTLS_PATH}/ecp.c
@@ -140,29 +138,49 @@ if(BUILD_EC)
         ${MBEDTLS_PATH}/ecdsa.c
         )
     list(APPEND MBEDCRYPTO_SRC
-        ../src/ecp.cpp
+        ecp.cpp
         )
 endif()
 
 # cofig.h file
-configure_file(mbedcrypto_mbedtls_config.h.in ${CMAKE_BINARY_DIR}/mbedcrypto_mbedtls_config.h)
+configure_file(mbedcrypto_mbedtls_config.h.in
+    ${CMAKE_BINARY_DIR}/mbedcrypto_mbedtls_config.h)
 
+#-----------------------------------------------------------------------------
 # libraries
 
-add_library(mbedcrypto ${MBEDCRYPTO_SRC})
-set_target_properties(mbedcrypto PROPERTIES
+## interface library to share common properties
+add_library(mbedtls_obj INTERFACE)
+target_include_directories(mbedtls_obj INTERFACE
+    ${DIR_3RDPARTY}/mbedtls/include
+    ${CMAKE_BINARY_DIR}
+    )
+target_compile_definitions(mbedtls_obj INTERFACE
+    -DMBEDTLS_CONFIG_FILE=\"mbedcrypto_mbedtls_config.h\"
+    )
+
+
+## main mbedcrypto library
+add_library(${PROJECT_NAME} ${MBEDCRYPTO_SRC})
+# modify this file to add/remove features and modules from mbedtls
+target_include_directories(${PROJECT_NAME} PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    )
+set_target_properties(${PROJECT_NAME} PROPERTIES
     SOVERSION 1
     VERSION 1.0.0
     )
 
-# mbedtls parts
+## mbedtls parts
 if(BUILD_SINGLE_LIB)
-    target_sources(mbedcrypto PRIVATE ${MBEDTLS_SRC})
+    target_sources(${PROJECT_NAME} PRIVATE ${MBEDTLS_SRC})
+    target_link_libraries(${PROJECT_NAME} mbedtls_obj)
 else()
     add_library(mbedtls ${MBEDTLS_SRC})
-    target_link_libraries(mbedcrypto mbedtls)
+    target_link_libraries(mbedtls mbedtls_obj)
+    target_link_libraries(${PROJECT_NAME} mbedtls)
 endif()
 
 if(BUILD_QT5_BIND)
-    qt5_use_modules(mbedcrypto Core)
+    target_link_libraries(${PROJECT_NAME} Qt5::Core)
 endif()
