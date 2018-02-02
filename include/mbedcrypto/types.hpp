@@ -24,13 +24,13 @@ namespace mbedcrypto {
 
 /** all possible supported hash (message-digest) types in mbedcrypto.
  * hints:
- * - @warning md2 is unsecure and deprecated, md4 is no much better.
+ * - @warning md2 is insecure and deprecated, md4 is no much better.
  * - @warning using md5 and sha1 are insecure for password hashing,
  * and more susceptible to hardware-accelerated attacks.
  */
 enum class hash_t {
     none,      ///< invalid or unknown
-    md2,       ///< unsecure and unacceptable
+    md2,       ///< insecure and unacceptable
     md4,       ///< not recommended
     md5,       ///<
     sha1,      ///<
@@ -77,7 +77,7 @@ enum class cipher_bm {
     ctr,    ///< counter, custom input size
     gcm,    ///< Galois/counter mode
     ccm,    ///< counter with cbc-mac
-    stream, ///< as in arc4_128 or null ciphers (unsecure)
+    stream, ///< as in arc4_128 or null ciphers (insecure)
 };
 
 /** all possible supported cipher types in mbedcrypto.

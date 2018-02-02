@@ -37,7 +37,7 @@ for more information see [wiki](https://github.com/azadkuh/mbedcrypto/wiki) page
  pointer / error code) functions are available.
 - *highly configurable*: to add or remove the algorithms, simply change `cmake`
  build options. see [build options](#build-options)
-- *optional suppport for Qt5*: optional support for **Qt5**'s `QByteArray` is also
+- *optional support for Qt5*: optional support for **Qt5**'s `QByteArray` is also
 available.
 
 
@@ -115,13 +115,13 @@ see [types.hpp](./include/mbedcrypto/types.hpp)
 ```git clone``` the repository as you usually would. Then go to your terminal and execute the following command to download all dependencies:
 
 ```bash
-./update-dependencies.sh
+$mbedcrypto> ./update-dependencies.sh
 ```
 
 ### setup using git submodules
 
 When using ```git clone```, add the ```--recurse-submodules``` flag to the command.
-This way, the dependencies will be downloaded aswell.
+This way, the dependencies will be downloaded as well.
 
 > Dependencies are downloaded using Git's submodules. See the [manual](https://git-scm.com/book/en/v2/Git-Tools-Submodules) for more info.
 ---
@@ -133,10 +133,16 @@ This way, the dependencies will be downloaded aswell.
 Build the `mbedcrypto` library using CMake in your terminal:
 
 ```bash
-mkdir build
-cd build
-cmake ..
-make
+$workspace/> mkdir mbedcrypto.build
+$workspace/> cd mbedcrypto.build
+$mbedcrypto.build/> cmake ../mbedcrypto
+
+# optionally to reconfigure the build option
+$mbedcrypto.build/> ccmake .
+
+$mbedcrypto.build/> make
+
+$mbedcrypto.build/> make install
 ```
 
 > the `mbedcrypto` library and the companion unit test app would be built into
@@ -149,7 +155,7 @@ these are the most important build options:
 
 | options          | default | message                                                         |
 | :---             | :---:   | :---                                                            |
-| BUILD_MD2        | OFF     | enable md2 hash (unsecure and deprecated)                       |
+| BUILD_MD2        | OFF     | enable md2 hash (insecure and deprecated)                       |
 | BUILD_MD4        | OFF     | enable md4 hash                                                 |
 | BUILD_RIPEMD160  | OFF     | enable ripemd160 hash                                           |
 | BUILD_CFB        | OFF     | enable cfb (cipher feedback mode)                               |
@@ -159,7 +165,7 @@ these are the most important build options:
 | BUILD_DES        | ON      | enable des and triple-des cipher                                |
 | BUILD_BLOWFISH   | OFF     | enable blowfish cipher                                          |
 | BUILD_CAMELLIA   | OFF     | enable camellia cipher                                          |
-| BUILD_ARC4       | OFF     | enable arc4 cipher (unsecure)                                   |
+| BUILD_ARC4       | OFF     | enable arc4 cipher (insecure)                                   |
 | BUILD_PK_EXPORT  | ON      | enable export keys in pem or der format                         |
 | BUILD_RSA_KEYGEN | ON      | enable rsa key generator                                        |
 | BUILD_EC         | OFF     | enable eckey, eckey_dh and ecdsa algorithms                     |
@@ -175,7 +181,7 @@ samples and unit tests are available under [tests/tdd](./tests/tdd/) folder.
 
 ```bash
 #run the tests
-$xbin/> ./tests
+$mbedcrypto.xbin64/> ./mbedcrypto-tests
 ```
 
 possible output:

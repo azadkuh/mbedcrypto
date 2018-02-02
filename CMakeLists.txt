@@ -17,7 +17,7 @@ option(BUILD_SHARED_LIBS "build mbedcrypto as a unix shared (so/dylib) library" 
 
 # cryptograohic features
 ## optional hash algorithms:
-option(BUILD_MD2       "enable md2 hash (unsecure and deprecated)" OFF)
+option(BUILD_MD2       "enable md2 hash (insecure and deprecated)" OFF)
 option(BUILD_MD4       "enable md4 hash"                           OFF)
 option(BUILD_RIPEMD160 "enable ripemd160 hash"                     OFF)
 
@@ -39,7 +39,7 @@ option(BUILD_CCM
 option(BUILD_DES      "enable des and triple-des cipher" ON)
 option(BUILD_BLOWFISH "enable blowfish cipher"           OFF)
 option(BUILD_CAMELLIA "enable camellia cipher"           OFF)
-option(BUILD_ARC4     "enable arc4 cipher (unsecure)"    OFF)
+option(BUILD_ARC4     "enable arc4 cipher (insecure)"    OFF)
 
 ## optional pk algorithm
 option(BUILD_PK_EXPORT  "enable export keys in pem or der format"   ON)
