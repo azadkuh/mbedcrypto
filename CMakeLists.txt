@@ -49,9 +49,9 @@ option(BUILD_EC         "enable eckey, eckey_dh, ecdsa algorithms " OFF)
 
 #-----------------------------------------------------------------------------
 # common directories
-get_filename_component(PARENT_DIR ${CMAKE_SOURCE_DIR} DIRECTORY)
+get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
 set(DIR_XBIN     ${PARENT_DIR}/${PROJECT_NAME}.xbin${ARCH_TYPE})
-set(DIR_3RDPARTY ${CMAKE_SOURCE_DIR}/3rdparty)
+set(DIR_3RDPARTY ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${DIR_XBIN})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${DIR_XBIN})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${DIR_XBIN})

@@ -46,26 +46,26 @@ set(MBEDTLS_SRC
     )
 
 # header files to be exported by install
-set(DIR_MBEDCRYPTO_INCLUE "${CMAKE_SOURCE_DIR}/include/mbedcrypto")
+set(DIR_MBEDCRYPTO_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/include/mbedcrypto")
 set(MBEDCRYPTO_HEADERS
-    ${DIR_MBEDCRYPTO_INCLUE}/configs.hpp
-    ${DIR_MBEDCRYPTO_INCLUE}/exception.hpp
-    ${DIR_MBEDCRYPTO_INCLUE}/types.hpp
-    ${DIR_MBEDCRYPTO_INCLUE}/tcodec.hpp
-    ${DIR_MBEDCRYPTO_INCLUE}/hash.hpp
-    ${DIR_MBEDCRYPTO_INCLUE}/cipher.hpp
-    ${DIR_MBEDCRYPTO_INCLUE}/rnd_generator.hpp
+    ${DIR_MBEDCRYPTO_INCLUDE}/configs.hpp
+    ${DIR_MBEDCRYPTO_INCLUDE}/exception.hpp
+    ${DIR_MBEDCRYPTO_INCLUDE}/types.hpp
+    ${DIR_MBEDCRYPTO_INCLUDE}/tcodec.hpp
+    ${DIR_MBEDCRYPTO_INCLUDE}/hash.hpp
+    ${DIR_MBEDCRYPTO_INCLUDE}/cipher.hpp
+    ${DIR_MBEDCRYPTO_INCLUDE}/rnd_generator.hpp
     )
 if(BUILD_PK_EXPORT OR BUILD_RSA_KEYGEN OR BUILD_EC)
     list(APPEND MBEDCRYPTO_HEADERS
-        ${DIR_MBEDCRYPTO_INCLUE}/mpi.hpp
-        ${DIR_MBEDCRYPTO_INCLUE}/pk.hpp
-        ${DIR_MBEDCRYPTO_INCLUE}/rsa.hpp
+        ${DIR_MBEDCRYPTO_INCLUDE}/mpi.hpp
+        ${DIR_MBEDCRYPTO_INCLUDE}/pk.hpp
+        ${DIR_MBEDCRYPTO_INCLUDE}/rsa.hpp
         )
 endif()
 if(BUILD_EC)
     list(APPEND MBEDCRYPTO_HEADERS
-        ${DIR_MBEDCRYPTO_INCLUE}/ecp.hpp
+        ${DIR_MBEDCRYPTO_INCLUDE}/ecp.hpp
         )
 endif()
 
@@ -188,7 +188,7 @@ target_compile_definitions(mbedtls_obj INTERFACE
 add_library(${PROJECT_NAME} ${MBEDCRYPTO_SRC})
 # modify this file to add/remove features and modules from mbedtls
 target_include_directories(${PROJECT_NAME} PUBLIC
-    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
 set_target_properties(${PROJECT_NAME} PROPERTIES
     SOVERSION 1
