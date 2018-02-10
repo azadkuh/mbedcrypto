@@ -239,7 +239,7 @@ readability, size, compiling and setup, … to name a few.
 ## disclaimer
 
 - implementing an easy-to-use, lightweight and portable `c++` library for
-cryptography are the main purpose of `mbedcrypto`.
+cryptography is the main purpose of `mbedcrypto`.
 - there are many more algorithms in cryptographic libraries, the focus of
 `mbedcrypto` is on the most important or widely used algorithms, tries to be
 simple and not to bloat your application.
