@@ -46,7 +46,7 @@ set(MBEDTLS_SRC
     )
 
 # header files to be exported by install
-set(DIR_MBEDCRYPTO_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/include/mbedcrypto")
+set(DIR_MBEDCRYPTO_INCLUDE "${MBEDCRYPTO_SOURCE_DIR}/include/mbedcrypto")
 set(MBEDCRYPTO_HEADERS
     ${DIR_MBEDCRYPTO_INCLUDE}/configs.hpp
     ${DIR_MBEDCRYPTO_INCLUDE}/exception.hpp
