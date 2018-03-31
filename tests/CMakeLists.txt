@@ -1,17 +1,16 @@
 project(mbedcrypto_tests)
 
 file(GLOB tests_src
-    ./tdd/**.hpp
-    ./tdd/**.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tdd/**.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tdd/**.cpp
     )
 add_executable(${PROJECT_NAME} ${tests_src})
 add_test(${PROJECT_NAME} ${DIR_XBIN}/${PROJECT_NAME})
 target_include_directories(${PROJECT_NAME} PRIVATE
-    ${CMAKE_SOURCE_DIR}
+    ${MBEDCRYPTO_SOURCE_DIR}
     ${DIR_3RDPARTY}/Catch/single_include
     )
 target_link_libraries(${PROJECT_NAME} mbedcrypto)
-install(TARGETS ${PROJECT_NAME} DESTINATION ${INSTALL_DIR_RUNTIME})
 
 if(BUILD_QT5_BIND)
     target_link_libraries(${PROJECT_NAME} Qt5::Core)
@@ -29,11 +28,11 @@ endif()
 # other test application
 OPTION(BUILD_TESTS_IDEA "build experimental and dirty test applications, you ain't gonna need it" OFF)
 if(BUILD_TESTS_IDEA)
-    add_executable(c_raii ./other/c_raii.cpp)
+    add_executable(c_raii ${CMAKE_CURRENT_SOURCE_DIR}/other/c_raii.cpp)
     target_link_libraries(c_raii mbedcrypto)
 
     if(BUILD_EC AND BUILD_PK_EXPORT)
-        add_executable(ec_keygen ./other/ec_keygen.cpp)
+        add_executable(ec_keygen ${CMAKE_CURRENT_SOURCE_DIR}/tests/other/ec_keygen.cpp)
         target_link_libraries(ec_keygen mbedcrypto)
     endif()
 
