@@ -34,6 +34,7 @@ set(MBEDTLS_SRC
     ${MBEDTLS_PATH}/entropy_poll.c
     ${MBEDTLS_PATH}/ctr_drbg.c
     ${MBEDTLS_PATH}/rsa.c
+    ${MBEDTLS_PATH}/rsa_internal.c
     ${MBEDTLS_PATH}/pem.c
     ${MBEDTLS_PATH}/bignum.c
     ${MBEDTLS_PATH}/oid.c
