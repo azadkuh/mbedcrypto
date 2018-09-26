@@ -3,7 +3,7 @@
 #include "pk_common.hpp"
 
 #include "mbedcrypto/hash.hpp"
-#include "mbedcrypto/mbedtls_wrapper.hxx"
+#include "src/mbedtls_wrapper.hxx"
 
 #include "../../src/pk_private.hpp"
 
