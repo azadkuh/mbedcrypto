@@ -1,40 +1,33 @@
 project(mbedcrypto_tests)
 
-file(GLOB tests_src
-    ./tdd/**.hpp
-    ./tdd/**.cpp
+add_executable(${PROJECT_NAME}
+    ./tdd/main.cpp
+    ./tdd/generator.cpp
+    ./tdd/test_cipher.cpp
+    ./tdd/test_ecp.cpp
+    ./tdd/test_exception.cpp
+    ./tdd/test_hash.cpp
+    ./tdd/test_qt5.cpp
+    ./tdd/test_random.cpp
+    ./tdd/test_rsa.cpp
+    ./tdd/test_tcodec.cpp
+    ./tdd/test_types.cpp
     )
-add_executable(${PROJECT_NAME} ${tests_src})
-add_test(${PROJECT_NAME} ${DIR_XBIN}/${PROJECT_NAME})
+
 target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_BINARY_DIR}
     ${CMAKE_SOURCE_DIR}
-    ${DIR_3RDPARTY}/Catch/single_include
+    ${CMAKE_SOURCE_DIR}/3rdparty/Catch/single_include
+    ${CMAKE_SOURCE_DIR}/3rdparty/mbedtls/include
     )
-target_link_libraries(${PROJECT_NAME} mbedcrypto)
-install(TARGETS ${PROJECT_NAME} DESTINATION ${INSTALL_DIR_RUNTIME})
-
-if(BUILD_QT5_BIND)
-    target_link_libraries(${PROJECT_NAME} Qt5::Core)
-    if(IS_LINUX)
-        target_link_libraries(${PROJECT_NAME} dl)
-    endif()
-    if(BUILD_AS_STATIC)
-        if(WIN32)
-            target_link_libraries(${PROJECT_NAME} ws2_32)
-        endif()
+target_link_libraries(${PROJECT_NAME} PRIVATE mbedcrypto)
+if(BUILD_STATIC_RUNTIME)
+    if(MSVC)
+        target_compile_options(${PROJECT_NAME} PUBLIC "-MT")
+    elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+        set_target_properties(${PROJECT_NAME} PROPERTIES
+            LINK_FLAGS "-static-libstdc++ -static-libgcc")
     endif()
 endif()
 
-#-----------------------------------------------------------------------------
-# other test application
-OPTION(BUILD_TESTS_IDEA "build experimental and dirty test applications, you ain't gonna need it" OFF)
-if(BUILD_TESTS_IDEA)
-    add_executable(c_raii ./other/c_raii.cpp)
-    target_link_libraries(c_raii mbedcrypto)
-
-    if(BUILD_EC AND BUILD_PK_EXPORT)
-        add_executable(ec_keygen ./other/ec_keygen.cpp)
-        target_link_libraries(ec_keygen mbedcrypto)
-    endif()
-
-endif()
+add_test(${PROJECT_NAME} ${PROJECT_NAME})

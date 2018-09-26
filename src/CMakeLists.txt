@@ -1,7 +1,41 @@
-project(mbedcrypto)
+project(mbedcrypto CXX)
 
+configure_file(mbedcrypto_mbedtls_config.h.in
+    ${CMAKE_BINARY_DIR}/mbedcrypto_mbedtls_config.h
+    )
+
+set(MBEDTLS_SRCDIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/mbedtls/library)
+set(MBEDTLS_INCDIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/mbedtls/include)
+#------------------------------------------------------------------------------
 # mbedcrypto main files
-set(MBEDCRYPTO_SRC
+add_library(${PROJECT_NAME}
+    ${MBEDTLS_SRCDIR}/error.c
+    ${MBEDTLS_SRCDIR}/base64.c
+    ${MBEDTLS_SRCDIR}/md5.c
+    ${MBEDTLS_SRCDIR}/sha1.c
+    ${MBEDTLS_SRCDIR}/sha256.c
+    ${MBEDTLS_SRCDIR}/sha512.c
+    ${MBEDTLS_SRCDIR}/md_wrap.c
+    ${MBEDTLS_SRCDIR}/md.c
+    ${MBEDTLS_SRCDIR}/aes.c
+    ${MBEDTLS_SRCDIR}/aesni.c
+    ${MBEDTLS_SRCDIR}/padlock.c
+    ${MBEDTLS_SRCDIR}/cipher_wrap.c
+    ${MBEDTLS_SRCDIR}/cipher.c
+    ${MBEDTLS_SRCDIR}/entropy.c
+    ${MBEDTLS_SRCDIR}/entropy_poll.c
+    ${MBEDTLS_SRCDIR}/ctr_drbg.c
+    ${MBEDTLS_SRCDIR}/rsa.c
+    ${MBEDTLS_SRCDIR}/rsa_internal.c
+    ${MBEDTLS_SRCDIR}/pem.c
+    ${MBEDTLS_SRCDIR}/bignum.c
+    ${MBEDTLS_SRCDIR}/oid.c
+    ${MBEDTLS_SRCDIR}/asn1parse.c
+    ${MBEDTLS_SRCDIR}/pkparse.c
+    ${MBEDTLS_SRCDIR}/pk_wrap.c
+    ${MBEDTLS_SRCDIR}/pk.c
+    ${MBEDTLS_SRCDIR}/oid.c
+    ${MBEDTLS_SRCDIR}/platform.c
     exception.cpp
     conversions.cpp
     types.cpp
@@ -14,75 +48,19 @@ set(MBEDCRYPTO_SRC
     rsa.cpp
     )
 
-# mandatory mbedtls sources
-set(MBEDTLS_PATH "${DIR_3RDPARTY}/mbedtls/library")
-set(MBEDTLS_SRC
-    ${MBEDTLS_PATH}/error.c
-    ${MBEDTLS_PATH}/base64.c
-    ${MBEDTLS_PATH}/md5.c
-    ${MBEDTLS_PATH}/sha1.c
-    ${MBEDTLS_PATH}/sha256.c
-    ${MBEDTLS_PATH}/sha512.c
-    ${MBEDTLS_PATH}/md_wrap.c
-    ${MBEDTLS_PATH}/md.c
-    ${MBEDTLS_PATH}/aes.c
-    ${MBEDTLS_PATH}/aesni.c
-    ${MBEDTLS_PATH}/padlock.c
-    ${MBEDTLS_PATH}/cipher_wrap.c
-    ${MBEDTLS_PATH}/cipher.c
-    ${MBEDTLS_PATH}/entropy.c
-    ${MBEDTLS_PATH}/entropy_poll.c
-    ${MBEDTLS_PATH}/ctr_drbg.c
-    ${MBEDTLS_PATH}/rsa.c
-    ${MBEDTLS_PATH}/rsa_internal.c
-    ${MBEDTLS_PATH}/pem.c
-    ${MBEDTLS_PATH}/bignum.c
-    ${MBEDTLS_PATH}/oid.c
-    ${MBEDTLS_PATH}/asn1parse.c
-    ${MBEDTLS_PATH}/pkparse.c
-    ${MBEDTLS_PATH}/pk_wrap.c
-    ${MBEDTLS_PATH}/pk.c
-    ${MBEDTLS_PATH}/oid.c
-    ${MBEDTLS_PATH}/platform.c
-    )
-
-# header files to be exported by install
-set(DIR_MBEDCRYPTO_INCLUE "${CMAKE_SOURCE_DIR}/include/mbedcrypto")
-set(MBEDCRYPTO_HEADERS
-    ${DIR_MBEDCRYPTO_INCLUE}/configs.hpp
-    ${DIR_MBEDCRYPTO_INCLUE}/exception.hpp
-    ${DIR_MBEDCRYPTO_INCLUE}/types.hpp
-    ${DIR_MBEDCRYPTO_INCLUE}/tcodec.hpp
-    ${DIR_MBEDCRYPTO_INCLUE}/hash.hpp
-    ${DIR_MBEDCRYPTO_INCLUE}/cipher.hpp
-    ${DIR_MBEDCRYPTO_INCLUE}/rnd_generator.hpp
-    )
-if(BUILD_PK_EXPORT OR BUILD_RSA_KEYGEN OR BUILD_EC)
-    list(APPEND MBEDCRYPTO_HEADERS
-        ${DIR_MBEDCRYPTO_INCLUE}/mpi.hpp
-        ${DIR_MBEDCRYPTO_INCLUE}/pk.hpp
-        ${DIR_MBEDCRYPTO_INCLUE}/rsa.hpp
-        )
-endif()
-if(BUILD_EC)
-    list(APPEND MBEDCRYPTO_HEADERS
-        ${DIR_MBEDCRYPTO_INCLUE}/ecp.hpp
-        )
-endif()
-
 # optional mbedtls definitions and sources based on specified options
 #  message digests (hashes)
 if(BUILD_MD2)
     set(MBEDTLS_MD2_C ON)
-    list(APPEND MBEDTLS_SRC ${MBEDTLS_PATH}/md2.c)
+    target_sources(${PROJECT_NAME} PRIVATE ${MBEDTLS_SRCDIR}/md2.c)
 endif()
 if(BUILD_MD4)
     set(MBEDTLS_MD4_C ON)
-    list(APPEND MBEDTLS_SRC ${MBEDTLS_PATH}/md4.c)
+    target_sources(${PROJECT_NAME} PRIVATE ${MBEDTLS_SRCDIR}/md4.c)
 endif()
 if(BUILD_RIPEMD160)
     set(MBEDTLS_RIPEMD160_C ON)
-    list(APPEND MBEDTLS_SRC ${MBEDTLS_PATH}/ripemd160.c)
+    target_sources(${PROJECT_NAME} PRIVATE ${MBEDTLS_SRCDIR}/ripemd160.c)
 endif()
 
 if(BUILD_ALL_CIPHER_PADDINGS)
@@ -100,29 +78,29 @@ if(BUILD_CTR)
 endif()
 if(BUILD_GCM)
     set(MBEDTLS_GCM_C ON)
-    list(APPEND MBEDTLS_SRC ${MBEDTLS_PATH}/gcm.c)
+    target_sources(${PROJECT_NAME} PRIVATE ${MBEDTLS_SRCDIR}/gcm.c)
 endif()
 if(BUILD_CCM)
     set(MBEDTLS_CCM_C ON)
-    list(APPEND MBEDTLS_SRC ${MBEDTLS_PATH}/ccm.c)
+    target_sources(${PROJECT_NAME} PRIVATE ${MBEDTLS_SRCDIR}/ccm.c)
 endif()
 
 #  cipher algorithms
 if(BUILD_DES)
     set(MBEDTLS_DES_C ON)
-    list(APPEND MBEDTLS_SRC ${MBEDTLS_PATH}/des.c)
+    target_sources(${PROJECT_NAME} PRIVATE ${MBEDTLS_SRCDIR}/des.c)
 endif()
 if(BUILD_BLOWFISH)
     set(MBEDTLS_BLOWFISH_C ON)
-    list(APPEND MBEDTLS_SRC ${MBEDTLS_PATH}/blowfish.c)
+    target_sources(${PROJECT_NAME} PRIVATE ${MBEDTLS_SRCDIR}/blowfish.c)
 endif()
 if(BUILD_CAMELLIA)
     set(MBEDTLS_CAMELLIA_C ON)
-    list(APPEND MBEDTLS_SRC ${MBEDTLS_PATH}/camellia.c)
+    target_sources(${PROJECT_NAME} PRIVATE ${MBEDTLS_SRCDIR}/camellia.c)
 endif()
 if(BUILD_ARC4)
     set(MBEDTLS_ARC4_C ON)
-    list(APPEND MBEDTLS_SRC ${MBEDTLS_PATH}/arc4.c)
+    target_sources(${PROJECT_NAME} PRIVATE ${MBEDTLS_SRCDIR}/arc4.c)
 endif()
 
 #  public key options
@@ -130,9 +108,9 @@ if(BUILD_PK_EXPORT)
     set(MBEDTLS_ASN1_WRITE_C ON)
     set(MBEDTLS_PK_WRITE_C   ON)
     set(MBEDTLS_PEM_WRITE_C  ON)
-    list(APPEND MBEDTLS_SRC
-        ${MBEDTLS_PATH}/asn1write.c
-        ${MBEDTLS_PATH}/pkwrite.c
+    target_sources(${PROJECT_NAME} PRIVATE
+        ${MBEDTLS_SRCDIR}/asn1write.c
+        ${MBEDTLS_SRCDIR}/pkwrite.c
         )
 endif()
 if(BUILD_RSA_KEYGEN)
@@ -155,59 +133,56 @@ if(BUILD_EC)
     set(MBEDTLS_ECP_DP_BP384R1_ENABLED    ON)
     set(MBEDTLS_ECP_DP_BP512R1_ENABLED    ON)
     set(MBEDTLS_ECP_DP_CURVE25519_ENABLED ON)
-    list(APPEND MBEDTLS_SRC
-        ${MBEDTLS_PATH}/ecp.c
-        ${MBEDTLS_PATH}/ecp_curves.c
-        ${MBEDTLS_PATH}/dhm.c
-        ${MBEDTLS_PATH}/ecdh.c
-        ${MBEDTLS_PATH}/ecdsa.c
-        )
-    list(APPEND MBEDCRYPTO_SRC
+    target_sources(${PROJECT_NAME} PRIVATE
+        ${MBEDTLS_SRCDIR}/ecp.c
+        ${MBEDTLS_SRCDIR}/ecp_curves.c
+        ${MBEDTLS_SRCDIR}/dhm.c
+        ${MBEDTLS_SRCDIR}/ecdh.c
+        ${MBEDTLS_SRCDIR}/ecdsa.c
         ecp.cpp
         )
 endif()
 
-# cofig.h file
-configure_file(mbedcrypto_mbedtls_config.h.in
-    ${CMAKE_BINARY_DIR}/mbedcrypto_mbedtls_config.h)
-
-#-----------------------------------------------------------------------------
-# libraries
-
-## interface library to share common properties
-add_library(mbedtls_obj INTERFACE)
-target_include_directories(mbedtls_obj INTERFACE
-    ${DIR_3RDPARTY}/mbedtls/include
-    ${CMAKE_BINARY_DIR}
-    )
-target_compile_definitions(mbedtls_obj INTERFACE
+#------------------------------------------------------------------------------
+target_compile_definitions(${PROJECT_NAME} PRIVATE
     -DMBEDTLS_CONFIG_FILE=\"mbedcrypto_mbedtls_config.h\"
     )
-
-
-## main mbedcrypto library
-add_library(${PROJECT_NAME} ${MBEDCRYPTO_SRC})
-# modify this file to add/remove features and modules from mbedtls
-target_include_directories(${PROJECT_NAME} PUBLIC
-    ${CMAKE_SOURCE_DIR}/include
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_14)
+target_include_directories(${PROJECT_NAME}
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+    PRIVATE
+        $<BUILD_INTERFACE:${MBEDTLS_INCDIR}>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
     )
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    SOVERSION 1
-    VERSION 1.0.0
-    )
-install(TARGETS ${PROJECT_NAME} DESTINATION ${INSTALL_DIR_LIBRARY})
-install(FILES ${MBEDCRYPTO_HEADERS} DESTINATION ${INSTALL_DIR_INCLUDE})
-
-## mbedtls parts
-if(BUILD_SINGLE_LIB)
-    target_sources(${PROJECT_NAME} PRIVATE ${MBEDTLS_SRC})
-    target_link_libraries(${PROJECT_NAME} mbedtls_obj)
-else()
-    add_library(mbedtls ${MBEDTLS_SRC})
-    target_link_libraries(mbedtls mbedtls_obj)
-    target_link_libraries(${PROJECT_NAME} mbedtls)
+if(BUILD_STATIC_RUNTIME)
+    if(MSVC)
+        target_compile_options(${PROJECT_NAME} PUBLIC "-MT")
+    elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+        set_target_properties(${PROJECT_NAME} PROPERTIES
+            LINK_FLAGS "-static-libstdc++ -static-libgcc")
+    endif()
 endif()
 
-if(BUILD_QT5_BIND)
-    target_link_libraries(${PROJECT_NAME} Qt5::Core)
-endif()
+#------------------------------------------------------------------------------
+find_package(Threads REQUIRED)
+target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads ${CMAKE_DL_LIBS})
+add_library(mbedcrypto::mbedcrypto ALIAS ${PROJECT_NAME})
+
+#------------------------------------------------------------------------------
+include(GNUInstallDirs)
+install(TARGETS ${PROJECT_NAME} EXPORT MbedCryptoConfig
+    ARCHIVE  DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY  DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
+install(DIRECTORY
+    ${CMAKE_SOURCE_DIR}/include/mbedcrypto DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
+install(EXPORT MbedCryptoConfig
+    NAMESPACE mbedcrypto::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake
+    )
+# export(TARGETS ${PROJECT_NAME} FILE MbedCryptoConfig.cmake)
+
