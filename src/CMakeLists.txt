@@ -4,8 +4,8 @@ configure_file(mbedcrypto_mbedtls_config.h.in
     ${CMAKE_BINARY_DIR}/mbedcrypto_mbedtls_config.h
     )
 
-set(MBEDTLS_SRCDIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/mbedtls/library)
-set(MBEDTLS_INCDIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/mbedtls/include)
+set(MBEDTLS_SRCDIR ${CMAKE_SOURCE_DIR}/3rdparty/mbedtls/library)
+set(MBEDTLS_INCDIR ${CMAKE_SOURCE_DIR}/3rdparty/mbedtls/include)
 #------------------------------------------------------------------------------
 # mbedcrypto main files
 add_library(${PROJECT_NAME}
