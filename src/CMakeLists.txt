@@ -1,9 +1,5 @@
 project(mbedcrypto CXX)
 
-configure_file(mbedcrypto_mbedtls_config.h.in
-    ${CMAKE_BINARY_DIR}/mbedcrypto_mbedtls_config.h
-    )
-
 set(MBEDTLS_SRCDIR ${CMAKE_SOURCE_DIR}/3rdparty/mbedtls/library)
 set(MBEDTLS_INCDIR ${CMAKE_SOURCE_DIR}/3rdparty/mbedtls/include)
 #------------------------------------------------------------------------------
@@ -145,6 +141,9 @@ if(BUILD_EC)
 endif()
 
 #------------------------------------------------------------------------------
+configure_file(mbedcrypto_mbedtls_config.h.in
+    ${CMAKE_BINARY_DIR}/mbedcrypto_mbedtls_config.h
+    )
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     -DMBEDTLS_CONFIG_FILE=\"mbedcrypto_mbedtls_config.h\"
     )
