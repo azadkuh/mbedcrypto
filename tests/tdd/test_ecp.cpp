@@ -1,12 +1,12 @@
+#if defined(MBEDTLS_ECP_C)
 #include <catch.hpp>
+#include "pk_common.hpp"
 
 #include "mbedcrypto/hash.hpp"
 #include "mbedcrypto/mbedtls_wrapper.hxx"
-#include "pk_common.hpp"
 
 #include "../../src/pk_private.hpp"
 
-#if defined(MBEDTLS_ECP_C)
 
 #include "mbedtls/ecdh.h"
 #include "mbedtls/ecdsa.h"
