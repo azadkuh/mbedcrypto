@@ -35,6 +35,7 @@ add_library(${PROJECT_NAME}
     ${MBEDTLS_SRCDIR}/pk_wrap.c
     ${MBEDTLS_SRCDIR}/pk.c
     ${MBEDTLS_SRCDIR}/oid.c
+    ${MBEDTLS_SRCDIR}/platform_util.c
     ${MBEDTLS_SRCDIR}/platform.c
     exception.cpp
     conversions.cpp
