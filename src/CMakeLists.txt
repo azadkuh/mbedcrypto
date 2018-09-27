@@ -136,8 +136,10 @@ endif()
 
 #------------------------------------------------------------------------------
 configure_file(mbedcrypto_mbedtls_config.h.in
-    ${CMAKE_BINARY_DIR}/mbedcrypto_mbedtls_config.h
-    )
+    ${CMAKE_BINARY_DIR}/mbedcrypto_mbedtls_config.h)
+configure_file(mbedcrypto_config.h.in
+    ${CMAKE_BINARY_DIR}/mbedcrypto_config.h)
+
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     -DMBEDTLS_CONFIG_FILE=\"mbedcrypto_mbedtls_config.h\"
     )
@@ -171,12 +173,14 @@ install(TARGETS ${PROJECT_NAME} EXPORT MbedCryptoConfig
     ARCHIVE  DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY  DESTINATION ${CMAKE_INSTALL_LIBDIR}
     )
-install(DIRECTORY
-    ${CMAKE_SOURCE_DIR}/include/mbedcrypto DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/mbedcrypto
+    DESTINATION   ${CMAKE_INSTALL_INCLUDEDIR}
+    )
+install(FILES   ${CMAKE_BINARY_DIR}/mbedcrypto_config.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mbedcrypto
     )
 install(EXPORT MbedCryptoConfig
     NAMESPACE mbedcrypto::
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake
     )
-# export(TARGETS ${PROJECT_NAME} FILE MbedCryptoConfig.cmake)
 
