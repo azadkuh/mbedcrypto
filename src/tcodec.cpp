@@ -20,7 +20,7 @@ hex::encode(buffer_view_t bsrc) {
     auto     length = bsrc.length();
     auto     src    = bsrc.data();
     buffer_t buffer(length << 1, '\0');
-    uchars   hexdata = to_ptr(buffer);
+    auto*    hexdata = to_ptr(buffer);
 
     for (size_t i = 0; i < length; ++i) {
         hexdata[i << 1]       = hex_lower(src[i] >> 4);
@@ -41,8 +41,8 @@ hex::decode(const char* src, size_t length) {
     if ((length & 1) != 0) // size must be even
         throw exceptions::usage_error{"invalid size for hex string"};
 
-    buffer_t       buffer(length >> 1, '\0');
-    unsigned char* bindata = to_ptr(buffer);
+    buffer_t buffer(length >> 1, '\0');
+    auto*    bindata = to_ptr(buffer);
 
     size_t j = 0, k = 0;
     for (size_t i = 0; i < length; ++i, ++src) {
@@ -94,23 +94,25 @@ base64::decode_size(buffer_view_t src) noexcept {
 
 int
 base64::encode(
-    cuchars src, size_t srclen, uchars dest, size_t& destlen) noexcept {
-
+    const uint8_t* src,
+    size_t         srclen,
+    uint8_t*       dest,
+    size_t&        destlen) noexcept {
     size_t olen = 0;
     int    ret  = mbedtls_base64_encode(dest, destlen, &olen, src, srclen);
     destlen     = olen;
-
     return ret;
 }
 
 int
 base64::decode(
-    cuchars src, size_t srclen, uchars dest, size_t& destlen) noexcept {
-
+    const uint8_t* src,
+    size_t         srclen,
+    uint8_t*       dest,
+    size_t&        destlen) noexcept {
     size_t olen = 0;
     int    ret  = mbedtls_base64_decode(dest, destlen, &olen, src, srclen);
     destlen     = olen;
-
     return ret;
 }
 

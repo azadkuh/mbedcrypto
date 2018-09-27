@@ -9,12 +9,9 @@
 #include <iostream>
 
 namespace {
-using cuchars = const unsigned char*;
-using uchars  = unsigned char*;
-
 ///////////////////////////////////////////////////////////////////////////////
 int
-my_random1(void* prng, unsigned char* output, size_t olen) {
+my_random1(void* prng, uint8_t* output, size_t olen) {
     auto* rnd = reinterpret_cast<mbedtls_ctr_drbg_context*>(prng);
     return mbedtls_ctr_drbg_random(rnd, output, olen);
 }
@@ -31,7 +28,7 @@ test1() {
         ctr_drbg,
         mbedtls_entropy_func,
         entropy,
-        reinterpret_cast<cuchars>(gibberish),
+        reinterpret_cast<const uint8_t*>(gibberish),
         std::strlen(gibberish));
 
     mbedtls_c_call(

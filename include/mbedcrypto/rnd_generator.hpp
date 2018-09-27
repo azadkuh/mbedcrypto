@@ -61,7 +61,7 @@ public:
     }
 
     /// low level overload
-    int make(unsigned char* buffer, size_t length) noexcept;
+    int make(uint8_t* buffer, size_t length) noexcept;
 
     /** equivalent for mbedtls_ctr_drbg_random().
      * p_rng must be the address of a rnd_generator instance.
@@ -75,7 +75,7 @@ public:
      * @endcode
      * @sa mbedtls_ctr_drbg_random()
      */
-    static int maker(void* p_rng, unsigned char*, size_t);
+    static int maker(void* p_rng, uint8_t*, size_t);
 
 public: // auxiliary methods
     /** set entropy read length. default: 32/48 (sha256/sha512).
@@ -99,14 +99,14 @@ public: // auxiliary methods
         reseed(custom.data(), custom.size());
     }
     /// low level overload, nullptr, 0 are valid
-    int reseed(const unsigned char* custom, size_t length) noexcept;
+    int reseed(const uint8_t* custom, size_t length) noexcept;
 
     /// updates CTR_DRBG internal state with additional (custom) data
     void update(buffer_view_t additional) {
         update(additional.data(), additional.size());
     }
     /// low level overload
-    void update(const unsigned char* additional, size_t length) noexcept;
+    void update(const uint8_t* additional, size_t length) noexcept;
 
     // move only
     rnd_generator(const rnd_generator&) = delete;

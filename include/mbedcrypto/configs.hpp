@@ -26,30 +26,26 @@ namespace mbedcrypto {
 /// although std::vector<unsigned char> is a better options for binary contents.
 using buffer_t = std::string;
 
-// synonyms
-using cuchars = const unsigned char*;
-using uchars  = unsigned char*;
-
 // helper function used internally
 inline auto
 to_const_ptr(const buffer_t& b) {
-    return reinterpret_cast<cuchars>(b.data());
+    return reinterpret_cast<const uint8_t*>(b.data());
 }
 
 inline auto
 to_ptr(buffer_t& b) {
-    return reinterpret_cast<uchars>(&b.front());
+    return reinterpret_cast<uint8_t*>(&b.front());
 }
 
 #if defined(QT_CORE_LIB)
 inline auto
 to_const_ptr(const QByteArray& b) {
-    return reinterpret_cast<cuchars>(b.data());
+    return reinterpret_cast<const uint8_t*>(b.data());
 }
 
 inline auto
 to_ptr(QByteArray& b) {
-    return reinterpret_cast<uchars>(b.data());
+    return reinterpret_cast<uint8_t*>(b.data());
 }
 
 inline QByteArray
@@ -58,7 +54,7 @@ QByteArrayShallow(const buffer_t& src) {
 }
 
 inline QByteArray
-QByteArrayShallow(cuchars src, size_t size) {
+QByteArrayShallow(const uint8_t* src, size_t size) {
     return QByteArray::fromRawData(
         reinterpret_cast<const char*>(src), static_cast<int>(size));
 }
@@ -68,26 +64,26 @@ QByteArrayShallow(cuchars src, size_t size) {
 /// a class similar to c++17 std::string_view
 class buffer_view_t
 {
-    cuchars  data_ = nullptr;
-    size_t   size_ = 0;
+    const uint8_t* data_ = nullptr;
+    size_t         size_ = 0;
 
 public:
-    constexpr buffer_view_t(cuchars data, size_t length) noexcept
-        : data_(data), size_(length) {}
+    constexpr buffer_view_t(const uint8_t* data, size_t length) noexcept
+        : data_{data}, size_{length} {}
 
     constexpr explicit buffer_view_t(std::nullptr_t) noexcept
-        : data_(nullptr), size_(0) {}
+        : data_{nullptr}, size_{0} {}
 
     buffer_view_t(const char* string)
-        : data_(reinterpret_cast<cuchars>(string)),
-          size_(std::strlen(string)) {}
+        : data_{reinterpret_cast<const uint8_t*>(string)},
+          size_{std::strlen(string)} {}
 
     // T could be std::string, QByteArray or even an std::vector<uchar>
     template <class T>
     constexpr buffer_view_t(const T& src)
-        : data_(to_const_ptr(src)), size_(src.length()) {}
+        : data_{to_const_ptr(src)}, size_{src.length()} {}
 
-    constexpr cuchars data() const noexcept {
+    constexpr const auto* data() const noexcept {
         return data_;
     }
 

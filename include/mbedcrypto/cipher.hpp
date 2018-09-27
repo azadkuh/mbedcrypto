@@ -222,16 +222,14 @@ public: // general encryption / decryption
      * for the selected cipher_t.
      * output_size the size of output, also will be updated by actual size.
      */
-    int update(
-        buffer_view_t  input,
-        unsigned char* output,
-        size_t&        output_size) noexcept;
+    int
+    update(buffer_view_t input, uint8_t* output, size_t& output_size) noexcept;
 
     /** low level overload.
      * the output size must be block_size() + 32
      * output_size the size of output, also will be updated by actual size.
      */
-    int finish(unsigned char* output, size_t& output_size) noexcept;
+    int finish(uint8_t* output, size_t& output_size) noexcept;
 
 
     /** helper function, runs start() / update() / finish() in a single call,

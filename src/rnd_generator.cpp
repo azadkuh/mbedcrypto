@@ -10,8 +10,7 @@ static_assert(std::is_copy_constructible<rnd_generator>::value == false, "");
 static_assert(std::is_move_constructible<rnd_generator>::value == true,  "");
 
 int
-make_chunked(
-    mbedtls_ctr_drbg_context* ctx, unsigned char* buffer, size_t length) {
+make_chunked(mbedtls_ctr_drbg_context* ctx, uint8_t* buffer, size_t length) {
 
     constexpr size_t MaxChunkSize = MBEDTLS_CTR_DRBG_MAX_REQUEST;
 
@@ -55,7 +54,7 @@ struct rnd_generator::impl {
         mbedtls_ctr_drbg_free(&ctx_);
     }
 
-    void setup(const unsigned char* custom, size_t length) {
+    void setup(const uint8_t* custom, size_t length) {
         mbedtls_entropy_init(&entropy_);
 
         mbedtls_ctr_drbg_init(&ctx_);
@@ -97,12 +96,12 @@ rnd_generator::prediction_resistance(bool p) noexcept {
 }
 
 int
-rnd_generator::make(unsigned char* buffer, size_t olen) noexcept {
+rnd_generator::make(uint8_t* buffer, size_t olen) noexcept {
     return make_chunked(&pimpl->ctx_, buffer, olen);
 }
 
 int
-rnd_generator::maker(void* p_rng, unsigned char* buffer, size_t olen) {
+rnd_generator::maker(void* p_rng, uint8_t* buffer, size_t olen) {
     rnd_generator* ctx = reinterpret_cast<rnd_generator*>(p_rng);
     return ctx->make(buffer, olen);
 }
@@ -113,12 +112,12 @@ rnd_generator::reseed() {
 }
 
 int
-rnd_generator::reseed(const unsigned char* custom, size_t length) noexcept {
+rnd_generator::reseed(const uint8_t* custom, size_t length) noexcept {
     return mbedtls_ctr_drbg_reseed(&pimpl->ctx_, custom, length);
 }
 
 void
-rnd_generator::update(const unsigned char* additional, size_t length) noexcept {
+rnd_generator::update(const uint8_t* additional, size_t length) noexcept {
     mbedtls_ctr_drbg_update(&pimpl->ctx_, additional, length);
 }
 ///////////////////////////////////////////////////////////////////////////////

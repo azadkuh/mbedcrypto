@@ -56,16 +56,16 @@ struct base64 {
 
     // raw overloads
     static int encode(
-        const unsigned char* src,
-        size_t               src_length,
-        unsigned char*       dest,
-        size_t&              dest_length) noexcept;
+        const uint8_t* src,
+        size_t         src_length,
+        uint8_t*       dest,
+        size_t&        dest_length) noexcept;
 
     static int decode(
-        const unsigned char* src,
-        size_t               src_length,
-        unsigned char*       dest,
-        size_t&              dest_length) noexcept;
+        const uint8_t* src,
+        size_t         src_length,
+        uint8_t*       dest,
+        size_t&        dest_length) noexcept;
 
 }; // struct base64
 

@@ -54,9 +54,7 @@ copy_from(mbedtls_ecdh_context* ecdh, const pk::context& ctx) {
 
 size_t
 write_ecp_point(
-    const mbedtls_ecdh_context* ecdh,
-    unsigned char*              buffer,
-    size_t                      buffer_length) {
+    const mbedtls_ecdh_context* ecdh, uint8_t* buffer, size_t buffer_length) {
     size_t olen = 0;
 
     mbedcrypto_c_call(
@@ -73,7 +71,7 @@ write_ecp_point(
 
 size_t
 write_ecp_group(
-    const mbedtls_ecp_group* grp, unsigned char* buffer, size_t buffer_length) {
+    const mbedtls_ecp_group* grp, uint8_t* buffer, size_t buffer_length) {
     size_t olen = 0;
 
     mbedcrypto_c_call(
@@ -124,7 +122,7 @@ struct ecp::impl : public pk::context {
     }
 
     auto ecdh_client_peer_key(buffer_view_t skex) {
-        const unsigned char* p = skex.data();
+        const auto* p = skex.data();
         mbedcrypto_c_call(
             mbedtls_ecdh_read_params, ecdh_.get(), &p, p + skex.size());
 

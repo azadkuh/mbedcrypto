@@ -95,7 +95,7 @@ struct cipher_impl {
     }
 
     // updates in chunks
-    int update_chunked(buffer_view_t achunk, uchars poutput, size_t& osize) {
+    int update_chunked(buffer_view_t achunk, uint8_t* poutput, size_t& osize) {
         auto bsize = block_size();
         if (achunk.size() % bsize)
             return MBEDTLS_ERR_CIPHER_FULL_BLOCK_EXPECTED;
@@ -169,10 +169,10 @@ class crypt_engine
         return 32 + input_.size() + block_size_;
     }
 
-    size_t compute(uchars output) {
-        size_t  final_size = 0;
-        uchars  pDes       = output;
-        cuchars pSrc       = input_.data();
+    size_t compute(uint8_t* output) {
+        size_t      final_size = 0;
+        auto*       pDes       = output;
+        const auto* pSrc       = input_.data();
 
         if (chunks_ == 1) {
             mbedcrypto_c_call(
@@ -582,7 +582,7 @@ cipher::update(
 
 int
 cipher::update(
-    buffer_view_t input, unsigned char* output, size_t& output_size) noexcept {
+    buffer_view_t input, uint8_t* output, size_t& output_size) noexcept {
     if (block_mode() == cipher_bm::ecb) {
         return pimpl->update_chunked(input, output, output_size);
     }
@@ -617,7 +617,7 @@ cipher::finish(buffer_t& output, size_t out_index) {
 }
 
 int
-cipher::finish(unsigned char* output, size_t& output_size) noexcept {
+cipher::finish(uint8_t* output, size_t& output_size) noexcept {
     return mbedtls_cipher_finish(&pimpl->ctx_, output, &output_size);
 }
 

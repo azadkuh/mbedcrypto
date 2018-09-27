@@ -59,7 +59,7 @@ public: // iterative usage, reusing the instance
     /** updates the hash by chunks of data.
      * may be called repeatedly between start() and finish().
      */
-    void update(const unsigned char* chunk, size_t chunk_size);
+    void update(const uint8_t* chunk, size_t chunk_size);
 
     void update(buffer_view_t chunk) {
         return update(chunk.data(), chunk.size());
@@ -124,7 +124,7 @@ public: // iterative or reuse
     /** updates the hash by chunks of data.
      * may be called repeatedly between start() and finish().
      */
-    void update(const unsigned char* chunk, size_t chunk_size);
+    void update(const uint8_t* chunk, size_t chunk_size);
 
     void update(buffer_view_t chunk) {
         return update(chunk.data(), chunk.size());

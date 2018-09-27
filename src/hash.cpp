@@ -161,7 +161,7 @@ hash::start() {
 }
 
 void
-hash::update(const unsigned char* src, size_t length) {
+hash::update(const uint8_t* src, size_t length) {
     mbedcrypto_c_call(mbedtls_md_update, &pimpl->ctx_, src, length);
 }
 
@@ -185,7 +185,7 @@ hmac::start() {
 }
 
 void
-hmac::update(const unsigned char* src, size_t length) {
+hmac::update(const uint8_t* src, size_t length) {
     mbedcrypto_c_call(mbedtls_md_hmac_update, &pimpl->ctx_, src, length);
 }
 
