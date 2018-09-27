@@ -21,7 +21,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/3rdparty/mbedtls/include
     )
 target_link_libraries(${PROJECT_NAME} PRIVATE mbedcrypto)
-if(BUILD_STATIC_RUNTIME)
+if(MBEDCRYPTO_STATIC_CRT)
     if(MSVC)
         target_compile_options(${PROJECT_NAME} PUBLIC "-MT")
     elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")

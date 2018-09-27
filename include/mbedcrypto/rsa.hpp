@@ -16,8 +16,8 @@ namespace mbedcrypto {
 
 /** rsa cryptography.
  * built by default in mbedcrypto. for more options:
- *  - BUILD_RSA_KEYGEN
- *  - BUILD_PK_EXPORT
+ *  - MBEDCRYPTO_RSA_KEYGEN
+ *  - MBEDCRYPTO_PK_EXPORT
  * @sa cmake options.
  */
 class rsa : public pk::pk_base

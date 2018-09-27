@@ -24,9 +24,9 @@ namespace pk {
 /** base context for pk data.
  *
  * related cmake build options:
- *   BUILD_PK_EXPORT
- *   BUILD_RSA_KEYGEN
- *   BUILD_EC
+ *   MBEDCRYPTO_PK_EXPORT
+ *   MBEDCRYPTO_RSA_KEYGEN
+ *   MBEDCRYPTO_EC
  *
  */
 struct context;
@@ -132,27 +132,27 @@ load_key(context&, const char* file_path, const char* password = nullptr);
 void
 load_public_key(context&, const char* file_path);
 
-/** exports private key if BUILD_PK_EXPORT has been set.
+/** exports private key if MBEDCRYPTO_PK_EXPORT has been set.
  * @sa supports_pk_export()
  */
 buffer_t
 export_key(context&, pk::key_format);
 
-/** exports public key if BUILD_PK_EXPORT has been set.
+/** exports public key if MBEDCRYPTO_PK_EXPORT has been set.
  * @sa supports_pk_export()
  */
 buffer_t
 export_public_key(context&, pk::key_format);
 
-/// returns true only by enabled BUILD_PK_EXPORT builds
+/// returns true only by enabled MBEDCRYPTO_PK_EXPORT builds
 bool
 supports_key_export() noexcept;
 
-/// returns true only by enabled BUILD_RSA_KEYGEN builds
+/// returns true only by enabled MBEDCRYPTO_RSA_KEYGEN builds
 bool
 supports_rsa_keygen() noexcept;
 
-/// returns true only by enabled BUILD_EC builds
+/// returns true only by enabled MBEDCRYPTO_EC builds
 bool
 supports_ec_keygen() noexcept;
 
@@ -160,14 +160,14 @@ supports_ec_keygen() noexcept;
  * @sa supports_rsa_keygen()
  * exponent rsa public exponent. only change the default exponent value if you
  *  know exactly what you're doing.
- * @warning requires the BUILD_RSA_KEYGEN option (see cmake file)
+ * @warning requires the MBEDCRYPTO_RSA_KEYGEN option (see cmake file)
  */
 void
 generate_rsa_key(context&, size_t key_bitlen, size_t exponent = 65537);
 
 /** generates an EC (private) key.
  * @sa supports_ec_keygen()
- * @warning requires the BUILD_EC option (see cmake file)
+ * @warning requires the MBEDCRYPTO_EC option (see cmake file)
  */
 void
 generate_ec_key(context&, curve_t);

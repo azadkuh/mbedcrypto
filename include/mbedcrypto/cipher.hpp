@@ -18,21 +18,17 @@ namespace mbedcrypto {
 
 /** symmetric cryptography.
  *
- * related cmake build options:
- * paddings:
- *  - BUILD_ALL_CIPHER_PADDINGS
- *
  * block mdoes:
- *  - BUILD_CFB
- *  - BUILD_CTR
- *  - BUILD_GCM
- *  - BUILD_CCM
+ *  - MBEDCRYPTO_CFB
+ *  - MBEDCRYPTO_CTR
+ *  - MBEDCRYPTO_GCM
+ *  - MBEDCRYPTO_CCM
  *
  * cipher types:
- *  - BUILD_DES
- *  - BUILD_BLOWFISH
- *  - BUILD_CAMELLIA
- *  - BUILD_ARC4
+ *  - MBEDCRYPTO_DES
+ *  - MBEDCRYPTO_BLOWFISH
+ *  - MBEDCRYPTO_CAMELLIA
+ *  - MBEDCRYPTO_ARC4
  *
  */
 class cipher
@@ -107,8 +103,8 @@ public:
         buffer_view_t key,
         buffer_view_t input) -> TBuff;
 
-public: // aead methods require BUILD_CCM or BUILD_GCM
-    /** returns true if any of BUILD_GCM or BUILD_CCM has been activated.
+public: // aead methods require MBEDCRYPTO_CCM or MBEDCRYPTO_GCM
+    /** returns true if any of MBEDCRYPTO_GCM or MBEDCRYPTO_CCM has been activated.
      * @sa features::aead
      */
     static bool supports_aead();
@@ -243,7 +239,7 @@ public: // general encryption / decryption
      */
     auto crypt(buffer_view_t input) -> buffer_t;
 
-public: // gcm features: requires BUILD_GCM
+public: // gcm features: requires MBEDCRYPTO_GCM
     /** set the additional data for a gcm encryption/decryption or throws non
      * gcm modes.
      * ad could be in any size, can be transmitted in plain text.

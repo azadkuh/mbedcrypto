@@ -6,40 +6,33 @@ project(mbedcrypto
 
 #-----------------------------------------------------------------------------
 # options
-option(BUILD_TESTS          "build test units and apps"           ON)
-option(BUILD_QT5_BIND       "adds adaptors around Qt5/QByteArray" OFF)
-option(BUILD_STATIC_RUNTIME "build by static c/c++ runtime"       ON)
-
 # cryptograohic features
 ## optional hash algorithms:
-option(BUILD_MD2       "enable md2 hash (insecure and deprecated)" OFF)
-option(BUILD_MD4       "enable md4 hash"                           OFF)
-option(BUILD_RIPEMD160 "enable ripemd160 hash"                     OFF)
-
-## optional cipher padding modes:
-## (pkc7 is always built and does not depend on this option)
-option(BUILD_ALL_CIPHER_PADDINGS
-    "add one_and_zeros, zeros_and_length and zeros modes"
-    ON)
+option(MBEDCRYPTO_MD2       "enable md2 hash (insecure and deprecated)" OFF)
+option(MBEDCRYPTO_MD4       "enable md4 hash"                           OFF)
+option(MBEDCRYPTO_RIPEMD160 "enable ripemd160 hash"                     OFF)
 
 ## optional cipher block modes:
-option(BUILD_CFB "enable cfb (cipher feedback mode)"                      OFF)
-option(BUILD_CTR "enable ctr (cipher counter mode)"                       ON)
-option(BUILD_GCM "enable gcm (Galois cipher mode, for aead cryptography)" ON)
-option(BUILD_CCM
-    "enable ccm (counter cbc-mac cipher mode, for aead cryptography)"
-    ON)
+option(MBEDCRYPTO_CFB "enable cfb (cipher feedback mode)"                      OFF)
+option(MBEDCRYPTO_CTR "enable ctr (cipher counter mode)"                       ON)
+option(MBEDCRYPTO_GCM "enable gcm (Galois cipher mode, for aead cryptography)" ON)
+option(MBEDCRYPTO_CCM
+    "enable ccm (counter cbc-mac cipher mode, for aead cryptography)" ON)
 
 ## optional cipher algorithms:
-option(BUILD_DES      "enable des and triple-des cipher" ON)
-option(BUILD_BLOWFISH "enable blowfish cipher"           OFF)
-option(BUILD_CAMELLIA "enable camellia cipher"           OFF)
-option(BUILD_ARC4     "enable arc4 cipher (insecure)"    OFF)
+## note: AES is the de facto mandatory algorithm (not optional)
+option(MBEDCRYPTO_DES      "enable des and triple-des cipher" OFF)
+option(MBEDCRYPTO_BLOWFISH "enable blowfish cipher"           OFF)
+option(MBEDCRYPTO_CAMELLIA "enable camellia cipher"           OFF)
+option(MBEDCRYPTO_ARC4     "enable arc4 cipher (insecure)"    OFF)
 
 ## optional pk algorithm
-option(BUILD_PK_EXPORT  "enable export keys in pem or der format"  ON)
-option(BUILD_RSA_KEYGEN "enable rsa key generator"                 ON)
-option(BUILD_EC         "enable eckey, eckey_dh, ecdsa algorithms" OFF)
+option(MBEDCRYPTO_PK_EXPORT  "enable export keys in pem or der format"  ON)
+option(MBEDCRYPTO_RSA_KEYGEN "enable rsa key generator"                 ON)
+option(MBEDCRYPTO_EC         "enable eckey, eckey_dh, ecdsa algorithms" OFF)
+
+option(MBEDCRYPTO_Qt5        "adds adaptors around Qt5/QByteArray" OFF)
+option(MBEDCRYPTO_STATIC_CRT "build by static c/c++ runtime"       ON)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING
@@ -50,6 +43,7 @@ if(WIN32)
     option(BUILD_AS_X32XP "build for a 32bit (XP/2003) targets" OFF)
 endif()
 
+option(BUILD_TESTS "build test units and apps" ON)
 #------------------------------------------------------------------------------
 enable_testing()
 

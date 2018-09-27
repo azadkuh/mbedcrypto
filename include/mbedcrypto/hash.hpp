@@ -16,9 +16,9 @@ namespace mbedcrypto {
 /** a class for computing hash (message digest) values for buffer or files.
  *
  * related cmake build options:
- *  - BUILD_MD2
- *  - BUILD_MD4
- *  - BUILD_RIPEMD160
+ *  - MBEDCRYPTO_MD2
+ *  - MBEDCRYPTO_MD4
+ *  - MBEDCRYPTO_RIPEMD160
  *
  * sample:
  * @code

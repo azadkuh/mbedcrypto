@@ -153,26 +153,27 @@ see [wiki: setup and build](https://github.com/azadkuh/mbedcrypto/wiki/setup-and
 ### build options
 these are the most important build options:
 
-| options          | default | message                                                         |
-| :---             | :---:   | :---                                                            |
-| BUILD_MD2        | OFF     | enable md2 hash (insecure and deprecated)                       |
-| BUILD_MD4        | OFF     | enable md4 hash                                                 |
-| BUILD_RIPEMD160  | OFF     | enable ripemd160 hash                                           |
-| BUILD_CFB        | OFF     | enable cfb (cipher feedback mode)                               |
-| BUILD_CTR        | ON      | enable ctr (cipher counter mode)                                |
-| BUILD_GCM        | ON      | enable gcm (Galois cipher mode, for aead cryptography)          |
-| BUILD_CCM        | ON      | enable ccm (counter cbc-mac cipher mode, for aead cryptography) |
-| BUILD_DES        | ON      | enable des and triple-des cipher                                |
-| BUILD_BLOWFISH   | OFF     | enable blowfish cipher                                          |
-| BUILD_CAMELLIA   | OFF     | enable camellia cipher                                          |
-| BUILD_ARC4       | OFF     | enable arc4 cipher (insecure)                                   |
-| BUILD_PK_EXPORT  | ON      | enable export keys in pem or der format                         |
-| BUILD_RSA_KEYGEN | ON      | enable rsa key generator                                        |
-| BUILD_EC         | OFF     | enable eckey, eckey_dh and ecdsa algorithms                     |
-| BUILD_QT5_BIND   | OFF     | also adds adaptors around **Qt5**'s `QByteArray`                |
+| options               | message                                                         |
+| :---                  | :---                                                            |
+| MBEDCRYPTO_MD2        | enable md2 hash (insecure and deprecated)                       |
+| MBEDCRYPTO_MD4        | enable md4 hash                                                 |
+| MBEDCRYPTO_RIPEMD160  | enable ripemd160 hash                                           |
+| MBEDCRYPTO_CFB        | enable cfb (cipher feedback mode)                               |
+| MBEDCRYPTO_CTR        | enable ctr (cipher counter mode)                                |
+| MBEDCRYPTO_GCM        | enable gcm (Galois cipher mode, for aead cryptography)          |
+| MBEDCRYPTO_CCM        | enable ccm (counter cbc-mac cipher mode, for aead cryptography) |
+| MBEDCRYPTO_DES        | enable des and triple-des cipher                                |
+| MBEDCRYPTO_BLOWFISH   | enable blowfish cipher                                          |
+| MBEDCRYPTO_CAMELLIA   | enable camellia cipher                                          |
+| MBEDCRYPTO_ARC4       | enable arc4 cipher (insecure)                                   |
+| MBEDCRYPTO_PK_EXPORT  | enable export keys in pem or der format                         |
+| MBEDCRYPTO_RSA_KEYGEN | enable rsa key generator                                        |
+| MBEDCRYPTO_EC         | enable eckey, eckey_dh and ecdsa algorithms                     |
+| MBEDCRYPTO_Qt5        | also adds adaptors around **Qt5**'s `QByteArray`                |
 
-please see [CMakeLists.txt](./CMakeLists.txt) for the full list.
 
+> *AES* is mandatory and is included by default.
+> please see [CMakeLists.txt](./CMakeLists.txt) for the full list.
 
 ---
 
