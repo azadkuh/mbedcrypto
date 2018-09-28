@@ -144,7 +144,7 @@ target_prepare_build_flags(${PROJECT_NAME})
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     -DMBEDTLS_CONFIG_FILE=\"mbedcrypto_mbedtls_config.h\"
     )
-target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_14)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_14)
 target_include_directories(${PROJECT_NAME}
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
