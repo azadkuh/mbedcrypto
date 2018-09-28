@@ -21,13 +21,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/3rdparty/mbedtls/include
     )
 target_link_libraries(${PROJECT_NAME} PRIVATE mbedcrypto)
-if(MBEDCRYPTO_STATIC_CRT)
-    if(MSVC)
-        target_compile_options(${PROJECT_NAME} PUBLIC "-MT")
-    elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-        set_target_properties(${PROJECT_NAME} PROPERTIES
-            LINK_FLAGS "-static-libstdc++ -static-libgcc")
-    endif()
-endif()
+target_prepare_runtime_crt(${PROJECT_NAME})
 
 add_test(${PROJECT_NAME} ${PROJECT_NAME})

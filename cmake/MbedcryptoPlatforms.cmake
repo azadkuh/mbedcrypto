@@ -6,7 +6,6 @@ set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Release or Debug?" FORCE)
 
 #------------------------------------------------------------------------------
 if (WIN32 AND ${CMAKE_SIZEOF_VOID_P} LESS 8)
-    set(BUILD_TOOLSET_X32 ON CACHE BOOL "is 32bit target?" FORCE)
     option(BUILD_TOOLSET_XP "build for old x32 (XP/2003) targets" OFF)
     message(STATUS "compiling on x32 system ...")
 else()
@@ -26,23 +25,26 @@ macro(target_prepare_build_flags tgt)
             $<$<BOOL:BUILD_TOOLSET_XP>:-D_WIN32_WINNT=0x0502 -DWINVER=0x0502>
             )
     endif()
-    if(MBEDCRYPTO_STATIC_CRT)
-        if(MSVC)
-            foreach(flag
-                    CMAKE_C_FLAGS   CMAKE_C_FLAGS_RELEASE   CMAKE_C_FLAGS_DEBUG
-                    CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_DEBUG
-                    )
-                string(REGEX REPLACE "/MD" "/MT" ${flag} "${${flag}}")
-                set(${flag} "${${flag}}" CACHE STRING "msvc flags" FORCE)
-            endforeach()
-            target_compile_options(${tgt} PUBLIC
-                "$<$<CONFIG:Release>:-MT>"
-                "$<$<CONFIG:Debug>:-MTd>"
+    if(MSVC AND MBEDCRYPTO_STATIC_CRT)
+        foreach(flag
+                CMAKE_C_FLAGS   CMAKE_C_FLAGS_RELEASE   CMAKE_C_FLAGS_DEBUG
+                CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_DEBUG
                 )
-        elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-            set_target_properties(${tgt} PROPERTIES
-                LINK_FLAGS "-static-libstdc++ -static-libgcc")
-        endif()
+            string(REGEX REPLACE "/MD" "/MT" ${flag} "${${flag}}")
+            set(${flag} "${${flag}}" CACHE STRING "msvc flags" FORCE)
+        endforeach()
+        target_compile_options(${tgt} PUBLIC
+            "$<$<CONFIG:Release>:-MT>"
+            "$<$<CONFIG:Debug>:-MTd>"
+            )
+    endif()
+endmacro()
+
+macro(target_prepare_runtime_crt tgt)
+    if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" AND MBEDCRYPTO_STATIC_CRT)
+        set_target_properties(${tgt} PROPERTIES
+            LINK_FLAGS "-static-libstdc++ -static-libgcc"
+            )
     endif()
 endmacro()
 
