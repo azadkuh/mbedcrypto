@@ -4,6 +4,7 @@ project(mbedcrypto
     LANGUAGES C CXX
     )
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 #-----------------------------------------------------------------------------
 # options
 # cryptograohic features

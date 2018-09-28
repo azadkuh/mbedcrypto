@@ -14,6 +14,10 @@ endif()
 
 #------------------------------------------------------------------------------
 macro(target_prepare_build_flags tgt)
+    if(MBEDCRYPTO_Qt5)
+        find_package(Qt5Core)
+        target_link_libraries(${tgt} PUBLIC Qt5::Core)
+    endif()
     if(UNIX)
         find_package(Threads REQUIRED)
         target_link_libraries(${tgt} PUBLIC Threads::Threads ${CMAKE_DL_LIBS})
@@ -43,7 +47,7 @@ endmacro()
 macro(target_prepare_runtime_crt tgt)
     if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" AND MBEDCRYPTO_STATIC_CRT)
         set_target_properties(${tgt} PROPERTIES
-            LINK_FLAGS "-static-libstdc++ -static-libgcc"
+            LINK_FLAGS "-s -static-libstdc++ -static-libgcc"
             )
     endif()
 endmacro()
