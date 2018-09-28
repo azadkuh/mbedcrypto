@@ -1,11 +1,9 @@
 # tmp and build direcotry
-build
-tmp
-xbin
-docs
-res/
+docs/
 TODO.md
 tags
+# all dot files .clang-format, .vimrc, ...
+.*
 
 # ahh! OSX finder!
 .directory
@@ -13,41 +11,3 @@ tags
 
 # key files
 *.pem
-
-# temp files
-Makefile*
-*.user
-*.autosave
-*.~
-*.o
-*.qmake.stash
-*.pro.user*
-*.bak
-*.log
-*_plugin_import.cpp
-*.swp
-
-# Visual studio
-*.htm
-*.html
-*.ncb
-*.idb
-*.suo
-*.pdb
-*.vcxproj.filters
-*.vcproj
-*.vcxproj
-*.sln
-*.rc
-
-# node.js external modules
-node_modules
-# neovim, vim, YouCompleteMe
-.vimrc
-.gvimrc
-init.vim
-Session.vim
-.ycm_extra_conf.*
-.color_coded*
-# clang-format
-.clang-format*
