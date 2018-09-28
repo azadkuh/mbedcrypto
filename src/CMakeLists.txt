@@ -140,6 +140,7 @@ configure_file(mbedcrypto_mbedtls_config.h.in
 configure_file(mbedcrypto_config.h.in
     ${CMAKE_BINARY_DIR}/mbedcrypto_config.h)
 
+target_prepare_build_flags(${PROJECT_NAME})
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     -DMBEDTLS_CONFIG_FILE=\"mbedcrypto_mbedtls_config.h\"
     )
@@ -153,18 +154,8 @@ target_include_directories(${PROJECT_NAME}
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
     )
-if(MBEDCRYPTO_STATIC_CRT)
-    if(MSVC)
-        target_compile_options(${PROJECT_NAME} PUBLIC "-MT")
-    elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-        set_target_properties(${PROJECT_NAME} PROPERTIES
-            LINK_FLAGS "-static-libstdc++ -static-libgcc")
-    endif()
-endif()
 
 #------------------------------------------------------------------------------
-find_package(Threads REQUIRED)
-target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads ${CMAKE_DL_LIBS})
 add_library(mbedcrypto::mbedcrypto ALIAS ${PROJECT_NAME})
 
 #------------------------------------------------------------------------------
