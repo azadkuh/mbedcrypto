@@ -15,7 +15,7 @@
 
 #if defined(QT_CORE_LIB)
 #include <QByteArray>
-#endif // QT_CORE_LIB
+#endif
 ///////////////////////////////////////////////////////////////////////////////
 namespace mbedcrypto {
 
@@ -49,12 +49,12 @@ to_ptr(QByteArray& b) {
 }
 
 inline QByteArray
-QByteArrayShallow(const buffer_t& src) {
+to_qbytearray_view(const buffer_t& src) {
     return QByteArray::fromRawData(src.data(), static_cast<int>(src.size()));
 }
 
 inline QByteArray
-QByteArrayShallow(const uint8_t* src, size_t size) {
+to_qbytearray_view(const uint8_t* src, size_t size) {
     return QByteArray::fromRawData(
         reinterpret_cast<const char*>(src), static_cast<int>(size));
 }
@@ -78,10 +78,10 @@ public:
         : data_{reinterpret_cast<const uint8_t*>(string)},
           size_{std::strlen(string)} {}
 
-    // T could be std::string, QByteArray or even an std::vector<uchar>
+    // T could be std::string, QByteArray or even an std::vector<uint8_t>
     template <class T>
     constexpr buffer_view_t(const T& src)
-        : data_{to_const_ptr(src)}, size_{src.length()} {}
+        : data_{to_const_ptr(src)}, size_{static_cast<size_t>(src.length())} {}
 
     constexpr const auto* data() const noexcept {
         return data_;
@@ -116,15 +116,17 @@ public:
 template <>
 inline buffer_t
 buffer_view_t::to<buffer_t>() const {
-    return buffer_t(reinterpret_cast<const char*>(data_), size_);
+    return buffer_t{reinterpret_cast<const char*>(data_), size_};
 }
 
 #if defined(QT_CORE_LIB)
 template <>
 inline QByteArray
 buffer_view_t::to<QByteArray>() const {
-    return QByteArray(
-        reinterpret_cast<const char*>(data_), static_cast<int>(size_));
+    return QByteArray{
+        reinterpret_cast<const char*>(data_),
+        static_cast<int>(size_)
+    };
 }
 #endif // QT_CORE_LIB
 ///////////////////////////////////////////////////////////////////////////////
