@@ -160,7 +160,7 @@ add_library(mbedcrypto::mbedcrypto ALIAS ${PROJECT_NAME})
 
 #------------------------------------------------------------------------------
 include(GNUInstallDirs)
-install(TARGETS ${PROJECT_NAME} EXPORT MbedCryptoConfig
+install(TARGETS ${PROJECT_NAME} EXPORT MbedcryptoConfig
     ARCHIVE  DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY  DESTINATION ${CMAKE_INSTALL_LIBDIR}
     )
@@ -170,7 +170,7 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/mbedcrypto
 install(FILES   ${CMAKE_BINARY_DIR}/mbedcrypto_config.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mbedcrypto
     )
-install(EXPORT MbedCryptoConfig
+install(EXPORT MbedcryptoConfig
     NAMESPACE mbedcrypto::
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake
     )

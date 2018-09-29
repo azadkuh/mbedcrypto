@@ -110,48 +110,43 @@ see [types.hpp](./include/mbedcrypto/types.hpp)
 
 ## setup
 
-### setup using Bash
+### bash
 
-```git clone``` the repository as you usually would. Then go to your terminal and execute the following command to download all dependencies:
+`git clone` the repository as you usually would. Then go to your terminal and
+execute the following command to download all dependencies (fetches `master`):
 
 ```bash
 $mbedcrypto> ./update-dependencies.sh
 ```
 
-### setup using git submodules
+### git submodules
 
-When using ```git clone```, add the ```--recurse-submodules``` flag to the command.
+Alternatively, when using `git clone`, add the `--recurse-submodules` flag to the command.
 This way, the dependencies will be downloaded as well.
 
-> Dependencies are downloaded using Git's submodules. See the [manual](https://git-scm.com/book/en/v2/Git-Tools-Submodules) for more info.
+> Dependencies are downloaded using Git's submodules. See the
+  [manual](https://git-scm.com/book/en/v2/Git-Tools-Submodules) for more info.
 ---
 
 ## build
-
-> Before building the library, you need to be in the top-level of the `mbedcrypto` repository.
-
 Build the `mbedcrypto` library using CMake in your terminal:
 
 ```bash
 $workspace/> mkdir mbedcrypto.build
 $workspace/> cd mbedcrypto.build
-$mbedcrypto.build/> cmake ../mbedcrypto
+$mbedcrypto.build/> cmake /path/to/mbedcrypto
 
-# optionally to reconfigure the build option
+# optionally to reconfigure the build option (or by cmake-gui .)
 $mbedcrypto.build/> ccmake .
 
-$mbedcrypto.build/> make
+$mbedcrypto.build/> make -j
 
 $mbedcrypto.build/> make install
 ```
 
-> the `mbedcrypto` library and the companion unit test app would be built into
-> `xbin` directory.
-
-see [wiki: setup and build](https://github.com/azadkuh/mbedcrypto/wiki/setup-and-build)
-
 ### build options
-these are the most important build options:
+to trim the library size, only SHA/AES/RSA algorithms are included.
+you can add other algorithms by these cmake options:
 
 | options               | message                                                         |
 | :---                  | :---                                                            |
@@ -172,7 +167,6 @@ these are the most important build options:
 | MBEDCRYPTO_Qt5        | also adds adaptors around **Qt5**'s `QByteArray`                |
 
 
-> *AES* is mandatory and is included by default.
 > please see [CMakeLists.txt](./CMakeLists.txt) for the full list.
 
 ---
