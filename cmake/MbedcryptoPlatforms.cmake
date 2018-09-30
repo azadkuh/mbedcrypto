@@ -2,7 +2,9 @@
 #  - static c++/c runtime library
 #  - win32_xp old toolset
 
-set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Release or Debug?" FORCE)
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Release or Debug?" FORCE)
+endif()
 
 #------------------------------------------------------------------------------
 if (WIN32 AND ${CMAKE_SIZEOF_VOID_P} LESS 8)
