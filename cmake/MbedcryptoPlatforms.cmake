@@ -31,17 +31,24 @@ macro(target_prepare_build_flags tgt)
             $<$<BOOL:BUILD_TOOLSET_XP>:-D_WIN32_WINNT=0x0502 -DWINVER=0x0502>
             )
     endif()
-    if(MSVC AND MBEDCRYPTO_STATIC_CRT)
+    if(MSVC)
+        if(MBEDCRYPTO_STATIC_CRT)
+            set(_src_opt "/MD")
+            set(_dst_opt "/MT")
+        else()
+            set(_src_opt "/MT")
+            set(_dst_opt "/MD")
+        endif()
         foreach(flag
                 CMAKE_C_FLAGS   CMAKE_C_FLAGS_RELEASE   CMAKE_C_FLAGS_DEBUG
                 CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_DEBUG
                 )
-            string(REGEX REPLACE "/MD" "/MT" ${flag} "${${flag}}")
+            string(REGEX REPLACE ${_src_opt} ${_dst_opt} ${flag} "${${flag}}")
             set(${flag} "${${flag}}" CACHE STRING "msvc flags" FORCE)
         endforeach()
         target_compile_options(${tgt} PUBLIC
-            "$<$<CONFIG:Release>:-MT>"
-            "$<$<CONFIG:Debug>:-MTd>"
+            "$<$<CONFIG:Release>:${_src_opt}>"
+            "$<$<CONFIG:Debug>:${_dst_opt}d>"
             )
     endif()
 endmacro()
