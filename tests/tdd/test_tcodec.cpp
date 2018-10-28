@@ -67,12 +67,25 @@ TEST_CASE("hex tests", "[hex]") {
         const buffer_t hex(Hex);
 
         REQUIRE(from_hex(hex) == binary);
+        // overload without exception
+        bool ok    = false;
+        auto unhex = from_hex(hex, ok);
+        REQUIRE(ok);
+        REQUIRE(unhex == binary);
 
         const buffer_t inv_char("03fe65ds35"); // s is invalid
         REQUIRE_THROWS(from_hex(inv_char));
+        // overload without exception
+        unhex = from_hex(inv_char, ok);
+        REQUIRE_FALSE(ok);
+        REQUIRE(unhex.empty());
 
         const buffer_t inv_size("0a347535fa1"); // size is invalid
         REQUIRE_THROWS(from_hex(inv_size));
+        // overload without exception
+        unhex = from_hex(inv_size, ok);
+        REQUIRE_FALSE(ok);
+        REQUIRE(unhex.empty());
     }
 }
 
@@ -99,10 +112,15 @@ TEST_CASE("base64 test cases", "[base64]") {
             const buffer_t src(test::short_text());
             const buffer_t predef(short_text_base64());
 
-            auto encoded = to_base64(src);
+            const auto encoded = to_base64(src);
             REQUIRE(encoded == predef);
 
             auto decoded = from_base64(encoded);
+            REQUIRE(decoded == src);
+            // overload without exception
+            bool ok = false;
+            decoded = from_base64(encoded, ok);
+            REQUIRE(ok);
             REQUIRE(decoded == src);
         });
     }
@@ -110,6 +128,11 @@ TEST_CASE("base64 test cases", "[base64]") {
     SECTION("invalid base64") {
         const buffer_t invalid_base64("2K=fZhduM2LEg2LLZhdin2YbbjA==");
         REQUIRE_THROWS(base64::decode(invalid_base64));
+        // overload without exception
+        bool ok    = false;
+        auto plain = from_base64(invalid_base64, ok);
+        REQUIRE_FALSE(ok);
+        REQUIRE(plain.empty());
     }
 
     SECTION("reuse") {
@@ -150,10 +173,16 @@ TEST_CASE("base64 test cases", "[base64]") {
         const buffer_t src        = test::long_binary();
         size_t         bin_length = src.size();
 
-        auto encoded = to_base64(src);
+        const auto encoded = to_base64(src);
         REQUIRE(encoded.size() > bin_length);
 
         auto decoded = from_base64(encoded);
+        REQUIRE(decoded.size() == src.size());
+        REQUIRE(decoded == src);
+        // overload without exception
+        bool ok = false;
+        decoded = from_base64(encoded, ok);
+        REQUIRE(ok);
         REQUIRE(decoded.size() == src.size());
         REQUIRE(decoded == src);
     }
