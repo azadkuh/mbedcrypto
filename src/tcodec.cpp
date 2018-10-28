@@ -11,6 +11,44 @@ hex_lower(unsigned char b) noexcept {
     return "0123456789abcdef"[b & 0x0f];
 }
 
+enum class hex_err {
+    ok,
+    invalid_size,
+    invalid_chars,
+};
+
+std::pair<buffer_t, hex_err>
+hex_decode_impl(const char* src, size_t length) {
+    if (length == 0)
+        length = std::strlen(src);
+    if (length == 0) // empty buffer
+        return std::make_pair(buffer_t{}, hex_err::ok);
+    if ((length & 1) != 0) // size must be even
+        return std::make_pair(buffer_t{}, hex_err::invalid_size);
+
+    buffer_t buffer(length >> 1, '\0');
+    auto*    bindata = to_ptr(buffer);
+
+    size_t j = 0, k = 0;
+    for (size_t i = 0; i < length; ++i, ++src) {
+        char s = *src;
+
+        if (s >= '0' && s <= '9')
+            j = s - '0';
+        else if (s >= 'A' && s <= 'F')
+            j = s - '7';
+        else if (s >= 'a' && s <= 'f')
+            j = s - 'W';
+        else
+            return std::make_pair(buffer_t{}, hex_err::invalid_chars);
+
+        k               = ((i & 1) != 0) ? j : j << 4;
+        bindata[i >> 1] = (unsigned char)(bindata[i >> 1] | k);
+    }
+
+    return std::make_pair(std::move(buffer), hex_err::ok);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace anon
 ///////////////////////////////////////////////////////////////////////////////
@@ -32,36 +70,19 @@ hex::encode(buffer_view_t bsrc) {
 
 buffer_t
 hex::decode(const char* src, size_t length) {
-    if (length == 0)
-        length = std::strlen(src);
-
-    if (length == 0) // empty buffer
-        return buffer_t{};
-
-    if ((length & 1) != 0) // size must be even
+    auto p = hex_decode_impl(src, length);
+    if (p.second == hex_err::invalid_size)
         throw exceptions::usage_error{"invalid size for hex string"};
+    else if (p.second == hex_err::invalid_chars)
+        throw exceptions::usage_error{"invalid character in hex string"};
+    return p.first;
+}
 
-    buffer_t buffer(length >> 1, '\0');
-    auto*    bindata = to_ptr(buffer);
-
-    size_t j = 0, k = 0;
-    for (size_t i = 0; i < length; ++i, ++src) {
-        char s = *src;
-
-        if (s >= '0' && s <= '9')
-            j = s - '0';
-        else if (s >= 'A' && s <= 'F')
-            j = s - '7';
-        else if (s >= 'a' && s <= 'f')
-            j = s - 'W';
-        else
-            throw exceptions::usage_error{"invalid character in hex string"};
-
-        k               = ((i & 1) != 0) ? j : j << 4;
-        bindata[i >> 1] = (unsigned char)(bindata[i >> 1] | k);
-    }
-
-    return buffer;
+buffer_t
+from_hex(const buffer_t& src, bool& ok) {
+    auto p = hex_decode_impl(src.data(), src.size());
+    ok     = p.second == hex_err::ok ? true : false;
+    return p.first;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -159,6 +180,21 @@ base64::decode(buffer_view_t src) {
     buffer_t dest;
     decode(src, dest);
     return dest;
+}
+
+buffer_t
+from_base64(const buffer_t& src, bool& ok) {
+    ok           = false;
+    size_t dsize = base64::decode_size(src);
+    if (dsize == 0)
+        return buffer_t{};
+    buffer_t des(dsize, char(0));
+    auto     ret =
+        base64::decode(to_const_ptr(src), src.size(), to_ptr(des), dsize);
+    if (ret != 0)
+        return buffer_t{};
+    ok = true;
+    return des;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

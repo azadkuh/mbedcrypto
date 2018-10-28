@@ -18,10 +18,12 @@ namespace mbedcrypto {
 /// hex represetation
 struct hex {
 
-    /// encodes a buffer to hex string
+    /// encodes a buffer to hex string (to lower case).
+    /// only throws if memory allocation fails.
     static buffer_t encode(buffer_view_t src);
 
-    /// decodes froma a hex string
+    /// decodes from a hex string (both lower/upper case).
+    /// throws if the src is not a valid hex string.
     static buffer_t decode(const char* src, size_t length = 0);
 
     /// overload
@@ -81,6 +83,11 @@ from_hex(const buffer_t& src) {
     return hex::decode(src);
 }
 
+/// set the ok value and does not throw as error.
+/// returns an empty string when fails.
+buffer_t
+from_hex(const buffer_t& src, bool& ok);
+
 inline buffer_t
 to_base64(const buffer_t& src) {
     return base64::encode(src);
@@ -91,7 +98,12 @@ from_base64(const buffer_t& src) {
     return base64::decode(src);
 }
 
-#if defined(QT_CORE_LIB)
+/// set the ok value and does not throw as error.
+/// returns an empty string when fails.
+buffer_t
+from_base64(const buffer_t& src, bool& ok);
+
+#if defined(QT_CORE_LIB) // use Qt native api
 inline QByteArray
 to_hex(const QByteArray& src) noexcept {
     return src.toHex();
