@@ -46,10 +46,6 @@ macro(target_prepare_build_flags tgt)
             string(REGEX REPLACE ${_src_opt} ${_dst_opt} ${flag} "${${flag}}")
             set(${flag} "${${flag}}" CACHE STRING "msvc flags" FORCE)
         endforeach()
-        target_compile_options(${tgt} PUBLIC
-            "$<$<CONFIG:Release>:${_src_opt}>"
-            "$<$<CONFIG:Debug>:${_dst_opt}d>"
-            )
     endif()
 endmacro()
 
