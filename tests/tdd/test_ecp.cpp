@@ -1,5 +1,5 @@
 #if defined(MBEDTLS_ECP_C)
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 #include "pk_common.hpp"
 
 #include "mbedcrypto/hash.hpp"

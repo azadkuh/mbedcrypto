@@ -1,4 +1,4 @@
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 #include "mbedcrypto/hash.hpp"
 #include "pk_common.hpp"

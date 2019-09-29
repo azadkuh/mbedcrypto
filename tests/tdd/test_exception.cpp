@@ -1,6 +1,6 @@
 #include "mbedcrypto/types.hpp"
 #include "mbedtls/md.h"
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 ///////////////////////////////////////////////////////////////////////////////
 

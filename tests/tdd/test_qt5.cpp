@@ -1,5 +1,5 @@
 #if defined(QT_CORE_LIB)
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 #include "mbedcrypto/tcodec.hpp"
 #include "mbedcrypto/hash.hpp"
