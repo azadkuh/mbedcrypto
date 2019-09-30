@@ -31,7 +31,7 @@ for more information see [wiki](https://github.com/azadkuh/mbedcrypto/wiki) page
 - *low dependency*:
   - the `mbedtls`<sup>[note](#mbedtls)</sup> as underlying cryptography engine,
    is the only mandatory dependency.
-  - [catch](https://github.com/philsquared/Catch): only for unit testing.
+  - [catch2](https://github.com/catchorg/Catch2): only for unit testing.
   - `cmake` for building the library and the unit test app.
 - *high+low level*: both high level (c++ objects / exception) and low level (c
  pointer / error code) functions are available.
@@ -112,24 +112,24 @@ see [types.hpp](./include/mbedcrypto/types.hpp)
 
 ### bash
 
-`git clone` the repository as you usually would. Then go to your terminal and
-execute the following command to download all dependencies (fetches `master`):
+to setup all 3rdparty dependencies:
+- ARMmbed/mbedtls
+- catchorg/Catch2
 
+run:
 ```bash
-$mbedcrypto> ./update-dependencies.sh
+$mbedcrypto> ./setup.sh all
+
+# optionally: $> ./setup.sh help
 ```
 
-### git submodules
+this script downloads the latest release files (master branch) of dependencies
+into `./3rdparty/` directory.
 
-Alternatively, when using `git clone`, add the `--recurse-submodules` flag to the command.
-This way, the dependencies will be downloaded as well.
-
-> Dependencies are downloaded using Git's submodules. See the
-  [manual](https://git-scm.com/book/en/v2/Git-Tools-Submodules) for more info.
 ---
 
 ## build
-Build the `mbedcrypto` library using CMake in your terminal:
+Build the `mbedcrypto` library using `CMake` in your terminal:
 
 ```bash
 $workspace/> mkdir mbedcrypto.build
