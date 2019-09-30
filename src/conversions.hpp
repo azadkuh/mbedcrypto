@@ -2,9 +2,7 @@
  *
  * @copyright (C) 2016
  * @date 2016.03.04
- * @version 1.0.0
  * @author amir zamani <azadkuh@live.com>
- *
  */
 
 #ifndef MBEDCRYPTO_CONVERSIONS_HPP
@@ -13,14 +11,14 @@
 #include "mbedcrypto_mbedtls_config.h"
 #include "mbedcrypto/types.hpp"
 
-#include "mbedtls/cipher.h"
-#include "mbedtls/ecp.h"
-#include "mbedtls/md.h"
-#include "mbedtls/pk.h"
-///////////////////////////////////////////////////////////////////////////////
+#include <mbedtls/cipher.h>
+#include <mbedtls/ecp.h>
+#include <mbedtls/md.h>
+#include <mbedtls/pk.h>
+//-----------------------------------------------------------------------------
 namespace mbedcrypto {
 enum class cipher_bm;
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 // clang-format off
 
 auto to_native(hash_t)    -> mbedtls_md_type_t;
@@ -38,7 +36,7 @@ auto from_native(mbedtls_pk_type_t)        -> pk_t;
 auto from_native(mbedtls_ecp_group_id)     -> curve_t;
 
 // clang-format on
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 } // namespace mbedcrypto
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 #endif // MBEDCRYPTO_CONVERSIONS_HPP

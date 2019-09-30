@@ -3,16 +3,15 @@
  * @copyright (C) 2016
  * @date 2016.05.07
  * @author amir zamani <azadkuh@live.com>
- *
  */
 
-#ifndef __MBEDCRYPTO_RSA_HPP__
-#define __MBEDCRYPTO_RSA_HPP__
+#ifndef MBEDCRYPTO_RSA_HPP
+#define MBEDCRYPTO_RSA_HPP
 
 #include "mbedcrypto/pk.hpp"
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 namespace mbedcrypto {
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 
 /** rsa cryptography.
  * built by default in mbedcrypto. for more options:
@@ -98,7 +97,8 @@ protected:
     struct impl;
     std::unique_ptr<impl> pimpl;
 }; // rsa
-///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
 
 /// helper function, @sa pk::check_pair()
 inline bool
@@ -106,7 +106,7 @@ check_pair(const rsa& pub, const rsa& pri) {
     return pk::check_pair(pub.context(), pri.context());
 }
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 } // namespace mbedcrypto
-///////////////////////////////////////////////////////////////////////////////
-#endif // __MBEDCRYPTO_RSA_HPP__
+//-----------------------------------------------------------------------------
+#endif // MBEDCRYPTO_RSA_HPP

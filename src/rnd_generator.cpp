@@ -1,11 +1,12 @@
 #include "mbedcrypto/rnd_generator.hpp"
 
-#include "mbedtls/ctr_drbg.h"
-#include "mbedtls/entropy.h"
-///////////////////////////////////////////////////////////////////////////////
+#include <mbedtls/ctr_drbg.h>
+#include <mbedtls/entropy.h>
+//-----------------------------------------------------------------------------
 namespace mbedcrypto {
 namespace {
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
+
 static_assert(std::is_copy_constructible<rnd_generator>::value == false, "");
 static_assert(std::is_move_constructible<rnd_generator>::value == true,  "");
 
@@ -39,9 +40,9 @@ make_chunked(mbedtls_ctr_drbg_context* ctx, uint8_t* buffer, size_t length) {
     return 0; // success
 }
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 } // namespace anon
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 
 struct rnd_generator::impl {
     mbedtls_entropy_context  entropy_;
@@ -66,7 +67,8 @@ struct rnd_generator::impl {
 
 }; // class rnd_generator::imp
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
+
 rnd_generator::rnd_generator(const buffer_t& b)
     : pimpl(std::make_unique<impl>()) {
     pimpl->setup(to_const_ptr(b), b.size());
@@ -120,6 +122,7 @@ void
 rnd_generator::update(const uint8_t* additional, size_t length) noexcept {
     mbedtls_ctr_drbg_update(&pimpl->ctx_, additional, length);
 }
-///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
 } // namespace mbedcrypto
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------

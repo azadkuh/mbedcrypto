@@ -3,16 +3,15 @@
  * @copyright (C) 2016
  * @date 2016.05.08
  * @author amir zamani <azadkuh@live.com>
- *
  */
 
-#ifndef __MBEDCRYPTO_ECP_HPP__
-#define __MBEDCRYPTO_ECP_HPP__
+#ifndef MBEDCRYPTO_ECP_HPP
+#define MBEDCRYPTO_ECP_HPP
 
 #include "mbedcrypto/pk.hpp"
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 namespace mbedcrypto {
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 
 /** elliptic curve (ec) for public key cryptography.
  * to use this ec you must build mbedcrypto with:
@@ -67,7 +66,9 @@ protected:
     struct impl;
     std::unique_ptr<impl> pimpl;
 }; // ecp
-///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+
 /// ECDSA specialized class
 struct ecdsa : public ecp {
     explicit ecdsa() : ecp(pk_t::ecdsa) {}
@@ -90,7 +91,9 @@ struct ecdsa : public ecp {
         return pk::verify_message(context(), signature, message, hash_type);
     }
 }; // struct ecdsa
-///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+
 /** ECDH(E) TLS compatible implementation.
  *
  * to calculate the shared secret when the curve type is predefined on both
@@ -167,14 +170,15 @@ public: // RFC 4492 implementation ServerKeyExchange parameters
     auto make_client_peer_key(buffer_view_t server_key_exchange) -> buffer_t;
 }; // class ecdhe
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
+
 /// helper function, @sa pk::check_pair()
 inline bool
 check_pair(const ecp& pub, const ecp& pri) {
     return pk::check_pair(pub.context(), pri.context());
 }
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 } // namespace mbedcrypto
-///////////////////////////////////////////////////////////////////////////////
-#endif // __MBEDCRYPTO_ECP_HPP__
+//-----------------------------------------------------------------------------
+#endif // MBEDCRYPTO_ECP_HPP

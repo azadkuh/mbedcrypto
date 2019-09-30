@@ -3,7 +3,6 @@
  * @copyright (C) 2016
  * @date 2016.03.07
  * @author amir zamani <azadkuh@live.com>
- *
  */
 
 #ifndef MBEDCRYPTO_CONFIGS_HPP
@@ -16,8 +15,9 @@
 #if defined(QT_CORE_LIB)
 #include <QByteArray>
 #endif
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 namespace mbedcrypto {
+//-----------------------------------------------------------------------------
 
 /// std::string is able to hold both TEXT and Binary data.
 /// as encryption is frequently being used with both text strings and binaries,
@@ -60,7 +60,8 @@ to_qbytearray_view(const uint8_t* src, size_t size) {
 }
 #endif // QT_CORE_LIB
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
+
 /// a class similar to c++17 std::string_view
 class buffer_view_t
 {
@@ -129,7 +130,8 @@ buffer_view_t::to<QByteArray>() const {
     };
 }
 #endif // QT_CORE_LIB
-///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
 } // namespace mbedcrypto
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 #endif // MBEDCRYPTO_CONFIGS_HPP

@@ -2,27 +2,28 @@
  *
  * @copyright (C) 2016
  * @date 2016.05.01
- * @version 1.0.0
  * @author amir zamani <azadkuh@live.com>
- *
  */
 
-#ifndef __PK_PRIVATE_HPP__
-#define __PK_PRIVATE_HPP__
+#ifndef MBEDCRYPTO_PK_PRIVATE_HPP
+#define MBEDCRYPTO_PK_PRIVATE_HPP
+
 #include "mbedcrypto/mpi.hpp"
 #include "mbedcrypto/pk.hpp"
 #include "mbedcrypto/rnd_generator.hpp"
 
-#include "conversions.hpp"
+#include "./conversions.hpp"
 
-#include "mbedtls/bignum.h"
-#include "mbedtls/pk_internal.h"
-///////////////////////////////////////////////////////////////////////////////
+#include <mbedtls/bignum.h>
+#include <mbedtls/pk_internal.h>
+//-----------------------------------------------------------------------------
 namespace mbedcrypto {
 namespace pk {
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
+
 auto native_info(pk_t) -> const mbedtls_pk_info_t*;
-///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
 
 struct context {
     bool               key_is_private_ = false;
@@ -43,7 +44,7 @@ struct context {
     context& operator=(context&&)      = default;
 }; // struct context
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 
 inline const mbedtls_pk_info_t*
 native_info(pk_t type) {
@@ -55,9 +56,10 @@ native_info(pk_t type) {
     return pinfot;
 }
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 } // namespace pk
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
+
 struct mpi::impl {
     mbedtls_mpi ctx_;
 
@@ -88,7 +90,7 @@ public:
 
 }; // struct mpi::impl
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 /// deep copy
 template <>
 inline void
@@ -103,7 +105,7 @@ mpi::operator>>(mbedtls_mpi& other) const {
     pimpl->copy_to(&other);
 }
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 } // namespace mbedcrypto
-///////////////////////////////////////////////////////////////////////////////
-#endif // __PK_PRIVATE_HPP__
+//-----------------------------------------------------------------------------
+#endif // MBEDCRYPTO_PK_PRIVATE_HPP

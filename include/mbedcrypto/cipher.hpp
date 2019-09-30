@@ -3,18 +3,17 @@
  * @copyright (C) 2016
  * @date 2016.03.10
  * @author amir zamani <azadkuh@live.com>
- *
  */
 
-#ifndef MBEDTLSCRYPTO_CIPHER_HPP
-#define MBEDTLSCRYPTO_CIPHER_HPP
+#ifndef MBEDCRYPTO_CIPHER_HPP
+#define MBEDCRYPTO_CIPHER_HPP
 
 #include "mbedcrypto/types.hpp"
 
 #include <tuple>
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 namespace mbedcrypto {
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 
 /** symmetric cryptography.
  *
@@ -322,7 +321,8 @@ private:
     _qpdecrypt(cipher_t, padding_t, buffer_view_t key, buffer_view_t input);
 #endif // QT_CORE_LIB
 }; // cipher
-///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
 // cipher specializations
 
 template <>
@@ -407,7 +407,7 @@ cipher::pdecrypt(
 }
 #endif // QT_CORE_LIB
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 } // namespace mbedcrypto
-///////////////////////////////////////////////////////////////////////////////
-#endif // MBEDTLSCRYPTO_CIPHER_HPP
+//-----------------------------------------------------------------------------
+#endif // MBEDCRYPTO_CIPHER_HPP

@@ -1,13 +1,13 @@
 #include "mbedcrypto/exception.hpp"
 
-#include "mbedtls/cipher.h"
-#include "mbedtls/error.h"
-#include "mbedtls/pk.h"
+#include <mbedtls/cipher.h>
+#include <mbedtls/error.h>
+#include <mbedtls/pk.h>
 
 #include <sstream>
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 namespace mbedcrypto {
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 
 std::string
 mbedtls_error_string(int err, const char* message) {
@@ -26,9 +26,9 @@ mbedtls_error_string(int err, const char* message) {
     return ss.str();
 }
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 namespace exceptions {
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 
 type_error::type_error()
     : exception("invalid or unknown type, or conversion error") {}
@@ -59,7 +59,7 @@ rsa_keygen_missed::rsa_keygen_missed()
 ecp_missed::ecp_missed()
     : exception("needs EC (elliptic curves), check build options") {}
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 } // namespace exceptions
 } // namespace mbedcrypto
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------

@@ -3,16 +3,15 @@
  * @copyright (C) 2016
  * @date 2016.05.15
  * @author amir zamani <azadkuh@live.com>
- *
  */
 
-#ifndef __MBEDCRYPTO_MPI_HPP__
-#define __MBEDCRYPTO_MPI_HPP__
+#ifndef MBEDCRYPTO_MPI_HPP
+#define MBEDCRYPTO_MPI_HPP
 
 #include "mbedcrypto/types.hpp"
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 namespace mbedcrypto {
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 
 /** multi-precision integer (bignum).
  * mpi can be a large (4096bit or what so ever) number.
@@ -66,9 +65,9 @@ protected:
     std::unique_ptr<impl> pimpl;
 }; // mpi
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 } // namespace mbedcrypto
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 
 inline bool
 operator==(const mbedcrypto::mpi& a, const mbedcrypto::mpi& b) noexcept {
@@ -84,5 +83,6 @@ inline bool
 operator<(const mbedcrypto::mpi& a, const mbedcrypto::mpi& b) noexcept {
     return mbedcrypto::mpi::compare(a, b) < 0;
 }
-///////////////////////////////////////////////////////////////////////////////
-#endif // __MBEDCRYPTO_MPI_HPP__
+
+//-----------------------------------------------------------------------------
+#endif // MBEDCRYPTO_MPI_HPP

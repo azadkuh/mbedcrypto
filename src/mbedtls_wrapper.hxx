@@ -3,29 +3,28 @@
  * @copyright (C) 2016
  * @date 2016.04.25
  * @author amir zamani <azadkuh@live.com>
- *
  */
 
-#ifndef __MBEDTLS_WRAPPER_HXX__
-#define __MBEDTLS_WRAPPER_HXX__
+#ifndef MBEDTLS_WRAPPER_HXX
+#define MBEDTLS_WRAPPER_HXX
 
-#include "mbedtls/cipher.h"
-#include "mbedtls/ctr_drbg.h"
-#include "mbedtls/entropy.h"
-#include "mbedtls/error.h"
-#include "mbedtls/md.h"
-#include "mbedtls/pk.h"
+#include <mbedtls/cipher.h>
+#include <mbedtls/ctr_drbg.h>
+#include <mbedtls/entropy.h>
+#include <mbedtls/error.h>
+#include <mbedtls/md.h>
+#include <mbedtls/pk.h>
 
 #include <sstream>
 #include <stdexcept>
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 /** helper c++ utils for adding RAII and exceptions to mbedtls's c api.
  * @sa wrapper for usage example
  */
 namespace mbedtls {
-
 namespace details { // forward declarations
+//-----------------------------------------------------------------------------
 /// mbedtls_xxx_init() wrapper
 template <class T, class... Args>
 inline void
@@ -36,6 +35,7 @@ template <class T>
 inline void
 cleanup(T*) noexcept;
 } // namespace details
+//-----------------------------------------------------------------------------
 
 /// a light RAII wrapper utility for mbedtls high level functions.
 template <class T> class wrapper final
@@ -76,6 +76,7 @@ using rnd_gen = wrapper<mbedtls_ctr_drbg_context>;
 using entropy = wrapper<mbedtls_entropy_context>;
 
 
+//-----------------------------------------------------------------------------
 namespace details {
 
 template <>
@@ -160,15 +161,18 @@ c_call_impl(const char* func_name, Func&& c_func, Args&&... args) {
         throw std::runtime_error(ss.str());
     }
 }
+
+//-----------------------------------------------------------------------------
 } // namespace details
-
 } // namespace mbedtls
+//-----------------------------------------------------------------------------
 
-///////////////////////////////////////////////////////////////////////////////
 /// helper macro, prepends function name as an string
 #define mbedtls_c_call(FUNC, ...)                                              \
     mbedtls::details::c_call_impl(#FUNC, FUNC, __VA_ARGS__)
-///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+
 /** @class mbedtls::wrapper
  * a light RAII wrapper utility for mbedtls high level functions.
  * by using this tool, you do not need to manually free mbedtls
@@ -238,4 +242,5 @@ c_call_impl(const char* func_name, Func&& c_func, Args&&... args) {
  * @endcode
  */
 
-#endif // __MBEDTLS_WRAPPER_HXX__
+//-----------------------------------------------------------------------------
+#endif // MBEDTLS_WRAPPER_HXX

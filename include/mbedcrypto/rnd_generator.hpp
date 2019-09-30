@@ -3,16 +3,15 @@
  * @copyright (C) 2016
  * @date 2016.03.07
  * @author amir zamani <azadkuh@live.com>
- *
  */
 
 #ifndef MBEDCRYPTO_RND_GENERATOR_HPP
 #define MBEDCRYPTO_RND_GENERATOR_HPP
 
 #include "mbedcrypto/types.hpp"
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 namespace mbedcrypto {
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 
 /** cryptographically secure pseudo-random byte generator.
  * this feature is based on counter mode deterministic random
@@ -119,7 +118,7 @@ protected:
     std::unique_ptr<impl> pimpl;
 }; // rnd_generator
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 } // namespace mbedcrypto
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 #endif // MBEDCRYPTO_RND_GENERATOR_HPP

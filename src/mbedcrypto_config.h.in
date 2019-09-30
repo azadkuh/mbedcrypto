@@ -4,11 +4,10 @@
  *
  * @copyright (C) 2018
  * @author amir zamani <azadkuh@live.com>
- *
  */
 
-#ifndef __MBEDCRYPTO_CONFIG_H__
-#define __MBEDCRYPTO_CONFIG_H__
+#ifndef MBEDCRYPTO_CONFIG_H
+#define MBEDCRYPTO_CONFIG_H
 //-----------------------------------------------------------------------------
 
 // mbedcrypto has been built by static c/c++ runtime
@@ -43,5 +42,6 @@
 
 // mbedcrypto has been built by Qt5 binding around QByteArray
 #cmakedefine MBEDCRYPTO_Qt5
+
 //-----------------------------------------------------------------------------
-#endif // __MBEDCRYPTO_CONFIG_H__
+#endif // MBEDCRYPTO_CONFIG_H

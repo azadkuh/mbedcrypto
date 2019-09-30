@@ -1,14 +1,15 @@
 #include "mbedcrypto/ecp.hpp"
-#include "pk_private.hpp"
+#include "./pk_private.hpp"
 
 #if defined(MBEDTLS_ECP_C)
 
-#include "mbedtls/ecdh.h"
+#include <mbedtls/ecdh.h>
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 namespace mbedcrypto {
 namespace {
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
+
 static_assert(std::is_copy_constructible<ecp>::value == false, "");
 static_assert(std::is_move_constructible<ecp>::value == true,  "");
 
@@ -17,10 +18,10 @@ static_assert(std::is_move_constructible<ecdsa>::value == true,  "");
 static_assert(std::is_copy_constructible<ecdh>::value  == false, "");
 static_assert(std::is_move_constructible<ecdh>::value  == true,  "");
 
-enum K {
-    psk_length = 150,
-};
-///////////////////////////////////////////////////////////////////////////////
+enum K { psk_length = 150, };
+
+//-----------------------------------------------------------------------------
+
 void
 copy_from(mbedtls_ecp_group& a, const mbedtls_ecp_group& b) {
     mbedcrypto_c_call(mbedtls_ecp_group_copy, &a, &b);
@@ -80,9 +81,10 @@ write_ecp_group(
     return olen;
 }
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 } // namespace anon
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
+
 struct ecp::impl : public pk::context {
     // only if the ecp is an eckey_dh
     std::unique_ptr<mbedtls_ecdh_context> ecdh_{nullptr};
@@ -176,7 +178,9 @@ private:
     }
 
 }; // ecp::impl
-///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+
 ecp::ecp(pk_t ptype) : pimpl(std::make_unique<impl>()) {
     switch (ptype) {
     case pk_t::eckey:
@@ -219,7 +223,8 @@ ecp::operator>>(struct ecp::key_info& ki) const {
     ki.d << ec_ctx->d;
 }
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
+
 buffer_t
 ecdh::make_peer_key(curve_t ctype) {
     pimpl->ecdh_generate_keys(ctype);
@@ -257,7 +262,7 @@ ecdh::make_client_peer_key(buffer_view_t server_key_exchange) {
     return pimpl->ecdh_public_point();
 }
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 } // namespace mbedcrypto
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 #endif // MBEDTLS_ECP_C

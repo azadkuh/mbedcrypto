@@ -3,7 +3,6 @@
  * @copyright (C) 2016
  * @date 2016.03.07
  * @author amir zamani <azadkuh@live.com>
- *
  */
 
 #ifndef MBEDCRYPTO_EXCEPTION_HPP
@@ -12,16 +11,17 @@
 #include "mbedcrypto/configs.hpp"
 
 #include <stdexcept>
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 namespace mbedcrypto {
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 
 /// returns as: message(code): error string of err.
 /// if err == 0, just returns the message
 std::string
 mbedtls_error_string(int err, const char* message = nullptr);
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
+
 /** the exception used in entire library.
  * reports the exceptional or underlying mbedtls errors.
  */
@@ -66,10 +66,9 @@ to_string(const exception& cerr) {
     return cerr.what();
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// derived exceptions
+//-----------------------------------------------------------------------------
 namespace exceptions {
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 
 /// invalid or unknown type, or conversion error
 struct type_error : public exception {
@@ -126,9 +125,9 @@ struct ecp_missed : public exception {
     explicit ecp_missed();
 };
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 } // namespace exceptions
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 
 /// helper function used internally for throwing an exception if a c mbedtls
 /// function fails.
@@ -140,11 +139,13 @@ c_call_impl(const char* error_tag, Func&& c_func, Args&&... args) {
         throw exception(ret, error_tag);
 }
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 } // namespace mbedcrypto
+//-----------------------------------------------------------------------------
 
 /// helper macro for calling c api of mbedtls in a managed fashion
 #define mbedcrypto_c_call(FUNC, ...)                                           \
     mbedcrypto::c_call_impl(#FUNC, FUNC, __VA_ARGS__)
-///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
 #endif // MBEDCRYPTO_EXCEPTION_HPP

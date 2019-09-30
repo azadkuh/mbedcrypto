@@ -3,19 +3,18 @@
  * @copyright (C) 2016
  * @date 2016.04.09
  * @author amir zamani <azadkuh@live.com>
- *
  */
 
-#ifndef ENUMERATOR_HXX
-#define ENUMERATOR_HXX
+#ifndef MBEDCRYPTO_ENUMERATOR_HPP
+#define MBEDCRYPTO_ENUMERATOR_HPP
 
 #include "mbedcrypto/exception.hpp"
 
 #include <algorithm>
 #include <cctype>
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 namespace mbedcrypto {
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 
 template <typename Enum, typename Native> struct enum_map {
     Enum   e;
@@ -29,7 +28,6 @@ to_native(Enum e, const Array& items) {
         if (i.e == e)
             return i.n;
     }
-
     throw exceptions::type_error{};
 }
 
@@ -40,11 +38,10 @@ from_native(Native n, const Array& items) {
         if (i.n == n)
             return i.e;
     }
-
     throw exceptions::type_error{};
 }
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 
 template <typename Enum> struct name_map {
     Enum        e;
@@ -67,7 +64,6 @@ to_string(Enum e, const Array& items) {
         if (i.e == e)
             return i.n;
     }
-
     throw exceptions::type_error{};
 }
 
@@ -79,11 +75,10 @@ from_string(const char* name, const Array& items) {
         if (uname == i.n)
             return i.e;
     }
-
     return Enum::none;
 }
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 } // namespace mbedcrypto
-///////////////////////////////////////////////////////////////////////////////
-#endif // ENUMERATOR_HXX
+//-----------------------------------------------------------------------------
+#endif // MBEDCRYPTO_ENUMERATOR_HPP

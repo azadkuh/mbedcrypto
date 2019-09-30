@@ -1,9 +1,13 @@
 /** @file types.hpp
+ * the availability of the following types depends on configuration and build
+ * options.
+ * types can be added or removed from compilation to optimize final binary size.
+ * for each type there is a utility function to check the availability at
+ * runtime.  @sa supports()
  *
  * @copyright (C) 2016
  * @date 2016.03.03
  * @author amir zamani <azadkuh@live.com>
- *
  */
 
 #ifndef MBEDCRYPTO_TYPES_HPP
@@ -12,15 +16,9 @@
 #include "mbedcrypto/exception.hpp"
 
 #include <vector>
-///////////////////////////////////////////////////////////////////////////////
-/** the availability of the following types depends on configuration and build
- * options.
- * types can be added or removed from compilation to optimize final binary size.
- * for each type there is a utility function to check the availability at
- * runtime.  @sa supports()
- */
+//-----------------------------------------------------------------------------
 namespace mbedcrypto {
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 
 /** all possible supported hash (message-digest) types in mbedcrypto.
  * hints:
@@ -190,7 +188,8 @@ enum class features {
     rsa_keygen, ///< RSA key generator. @sa pk::supports_rsa_keygen()
     ec_keygen,  ///< EC key generator. @sa pk::supports_ec_keygen()
 };
-///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
 // clang-format off
 
 /// returns true if an algorithm or a type is present at runtime.
@@ -269,7 +268,7 @@ from_string(const char* name, curve_t*) -> curve_t {
 }
 
 // clang-format on
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 } // namespace mbedcrypto
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 #endif // MBEDCRYPTO_TYPES_HPP

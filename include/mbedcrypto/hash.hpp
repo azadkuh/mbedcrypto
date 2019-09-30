@@ -3,16 +3,16 @@
  * @copyright (C) 2016
  * @date 2016.03.05
  * @author amir zamani <azadkuh@live.com>
- *
  */
 
 #ifndef MBEDCRYPTO_HASH_HPP
 #define MBEDCRYPTO_HASH_HPP
 
 #include "mbedcrypto/types.hpp"
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 namespace mbedcrypto {
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
+
 /** a class for computing hash (message digest) values for buffer or files.
  *
  * related cmake build options:
@@ -83,7 +83,7 @@ protected:
     std::unique_ptr<impl> pimpl;
 }; // hash
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 
 /** HMAC (hash-based message authentication code) implementation.
  * use the available hash algorithms to compute hmac value.
@@ -149,7 +149,7 @@ protected:
     std::unique_ptr<impl> pimpl;
 }; // hmac
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 
 inline size_t
 hash_size(hash_t type) {
@@ -186,7 +186,7 @@ to_sha512(const T& src) {
     return hash::make(hash_t::sha512, src);
 }
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 } // namespace mbedcrypto
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 #endif // MBEDCRYPTO_HASH_HPP

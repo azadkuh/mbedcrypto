@@ -3,23 +3,21 @@
  * @copyright (C) 2016
  * @date 2016.05.01
  * @author amir zamani <azadkuh@live.com>
- *
  */
 
-#ifndef __MBEDCRYPTO_PK_HPP__
-#define __MBEDCRYPTO_PK_HPP__
+#ifndef MBEDCRYPTO_PK_HPP
+#define MBEDCRYPTO_PK_HPP
 
 #include "mbedcrypto/mpi.hpp"
 #include "mbedcrypto/hash.hpp"
 
 #include <tuple>
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 namespace mbedcrypto {
-// forward declarations
 class rnd_generator;
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 namespace pk {
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 
 /** base context for pk data.
  *
@@ -58,7 +56,7 @@ struct action_flags {
     }
 }; // struct capability_flags
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 
 /// resets and clean up the memory
 void
@@ -218,7 +216,8 @@ encrypt(context&, buffer_view_t source);
 buffer_t
 decrypt(context&, buffer_view_t encrypted_value);
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
+
 /// a base class for public key implementation. @sa rsa and ecp
 struct pk_base {
     virtual ~pk_base()                         = default;
@@ -288,8 +287,8 @@ public: // key i/o
 
 }; // struct pk_base
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 } // namespace pk
 } // namespace mbedcrypto
-///////////////////////////////////////////////////////////////////////////////
-#endif // __MBEDCRYPTO_PK_HPP__
+//-----------------------------------------------------------------------------
+#endif // MBEDCRYPTO_PK_HPP
