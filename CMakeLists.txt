@@ -1,10 +1,17 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 project(mbedcrypto
     VERSION 1.0.0
     LANGUAGES C CXX
     )
 
+# make compile_commands.json for vim,clang-tidy,ycm,qtcreator, ...
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+set(DIR_DEPS "${CMAKE_CURRENT_SOURCE_DIR}/.3rdparty" CACHE PATH "3rdparties and dependencies")
+
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/setup_build.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/setup_platforms.cmake")
+
 #-----------------------------------------------------------------------------
 # options
 # cryptograohic features
@@ -16,11 +23,10 @@ option(MBEDCRYPTO_RIPEMD160 "enable ripemd160 hash"                     OFF)
 
 ## optional cipher block modes:
 ## note: ecb and cbc are mandatory (not optional)
-option(MBEDCRYPTO_CFB "enable cfb (cipher feedback mode)"                      OFF)
-option(MBEDCRYPTO_CTR "enable ctr (cipher counter mode)"                       ON)
-option(MBEDCRYPTO_GCM "enable gcm (Galois cipher mode, for aead cryptography)" ON)
-option(MBEDCRYPTO_CCM
-    "enable ccm (counter cbc-mac cipher mode, for aead cryptography)" ON)
+option(MBEDCRYPTO_CFB "enable cfb (cipher feedback mode)"                               OFF)
+option(MBEDCRYPTO_CTR "enable ctr (cipher counter mode)"                                OFF)
+option(MBEDCRYPTO_GCM "enable gcm (Galois cipher mode, for aead cryptographyf)"         OFF)
+option(MBEDCRYPTO_CCM "enable ccm (counter cbc-mac cipher mode, for aead cryptography)" OFF)
 
 ## optional cipher algorithms:
 ## note: AES is the de facto mandatory algorithm (not optional)
@@ -35,23 +41,31 @@ option(MBEDCRYPTO_PK_EXPORT  "enable export keys in pem or der format"  ON)
 option(MBEDCRYPTO_RSA_KEYGEN "enable rsa key generator"                 ON)
 option(MBEDCRYPTO_EC         "enable eckey, eckey_dh, ecdsa algorithms" OFF)
 
+# other build options
 option(MBEDCRYPTO_Qt5        "adds adaptors around Qt5/QByteArray" OFF)
 option(MBEDCRYPTO_STATIC_CRT "build by static c/c++ runtime"       ON)
 
 
 #------------------------------------------------------------------------------
-# prepends mbedcrypto's cmake helper modules
-list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/cmake")
-include(MbedcryptoPlatforms)
-
-enable_testing()
-
-#------------------------------------------------------------------------------
 # sub-projects
-add_subdirectory(src)
+# add_subdirectory(src)
 
 option(BUILD_TESTS "build test units and apps" ON)
 if(BUILD_TESTS)
-    add_subdirectory(tests)
+    # enable_testing()
+    # add_subdirectory(tests)
+endif()
+
+## misc stuff
+if(UNIX)
+    ## doxygen
+    ADD_CUSTOM_TARGET(docs
+        COMMAND doxygen ./mbedcrypto.doxyfile
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        )
+    ADD_CUSTOM_TARGET(clean_docs
+        COMMAND rm -rf ./docs
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        )
 endif()
 

@@ -124,7 +124,7 @@ $mbedcrypto> ./setup.sh all
 ```
 
 this script downloads the latest release files (master branch) of dependencies
-into `./3rdparty/` directory.
+into `./.3rdparty/` directory.
 
 ---
 

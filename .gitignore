@@ -1,6 +1,7 @@
 # tmp and build direcotry
-3rdparty/
+.3rdparty/
 .build/
+3rdparty/
 docs/
 TODO.md
 tags

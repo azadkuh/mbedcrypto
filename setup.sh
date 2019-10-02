@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DEPDIR=3rdparty
+DEPDIR=.3rdparty
 CATCH=catchorg/Catch2
 MBEDTLS=ARMmbed/mbedtls
 
@@ -15,7 +15,7 @@ into ./${DEPDIR}/
 
 as <${CATCH}> and <${MBEDTLS}> are large repositories
 with deep histories, this script just downloads the files from master branch
-rather than git cloning (or adding them as git submodules).
+rather than git cloning (or adding them as git submodules/subtree).
 "
 }
 
