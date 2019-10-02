@@ -4,13 +4,7 @@ project(mbedcrypto
     LANGUAGES C CXX
     )
 
-# make compile_commands.json for vim,clang-tidy,ycm,qtcreator, ...
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-set(DIR_DEPS "${CMAKE_CURRENT_SOURCE_DIR}/.3rdparty" CACHE PATH "3rdparties and dependencies")
-
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/setup_build.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/setup_platforms.cmake")
 
 #-----------------------------------------------------------------------------
 # options
@@ -48,24 +42,11 @@ option(MBEDCRYPTO_STATIC_CRT "build by static c/c++ runtime"       ON)
 
 #------------------------------------------------------------------------------
 # sub-projects
-# add_subdirectory(src)
+add_subdirectory(src)
 
 option(BUILD_TESTS "build test units and apps" ON)
 if(BUILD_TESTS)
     # enable_testing()
     # add_subdirectory(tests)
-endif()
-
-## misc stuff
-if(UNIX)
-    ## doxygen
-    ADD_CUSTOM_TARGET(docs
-        COMMAND doxygen ./mbedcrypto.doxyfile
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        )
-    ADD_CUSTOM_TARGET(clean_docs
-        COMMAND rm -rf ./docs
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        )
 endif()
 

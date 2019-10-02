@@ -106,6 +106,6 @@
 #cmakedefine MBEDTLS_ECDSA_C
 
 //-----------------------------------------------------------------------------
-#include "mbedtls/check_config.h"
+#include <mbedtls/check_config.h>
 //-----------------------------------------------------------------------------
 #endif // MBEDCRYPTO_MBEDTLS_CONFIG_H

@@ -1,4 +1,10 @@
 
+# make compile_commands.json for vim,clang-tidy,ycm,qtcreator, ...
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# placement of 3rdparty dependencies (see setup.sh)
+set(DIR_DEPS "${CMAKE_CURRENT_SOURCE_DIR}/.3rdparty" CACHE PATH "3rdparties and dependencies")
+
 # check for compiler and host os
 string(REGEX MATCH "Clang"  IS_CLANG "${CMAKE_CXX_COMPILER_ID}")
 string(REGEX MATCH "GNU"    IS_GNUXX "${CMAKE_CXX_COMPILER_ID}")
@@ -27,3 +33,16 @@ else()
 endif()
 message(STATUS "compiling by ${CMAKE_CXX_COMPILER_ID}"
     "(v${CMAKE_CXX_COMPILER_VERSION}) ${ARCH_TYPE}bit ...")
+
+## misc stuff
+if(UNIX)
+    ## doxygen
+    ADD_CUSTOM_TARGET(docs
+        COMMAND doxygen ./mbedcrypto.doxyfile
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        )
+    ADD_CUSTOM_TARGET(clean_docs
+        COMMAND rm -rf ./docs
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        )
+endif()

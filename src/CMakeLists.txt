@@ -1,7 +1,7 @@
 project(mbedcrypto CXX)
 
-set(MBEDTLS_SRCDIR ${CMAKE_SOURCE_DIR}/3rdparty/mbedtls/library)
-set(MBEDTLS_INCDIR ${CMAKE_SOURCE_DIR}/3rdparty/mbedtls/include)
+set(MBEDTLS_SRCDIR ${DIR_DEPS}/mbedtls/library)
+set(MBEDTLS_INCDIR ${DIR_DEPS}/mbedtls/include)
 #------------------------------------------------------------------------------
 # mbedcrypto main files
 add_library(${PROJECT_NAME}
@@ -33,18 +33,22 @@ add_library(${PROJECT_NAME}
     ${MBEDTLS_SRCDIR}/oid.c
     ${MBEDTLS_SRCDIR}/platform_util.c
     ${MBEDTLS_SRCDIR}/platform.c
-    exception.cpp
-    conversions.cpp
-    types.cpp
-    tcodec.cpp
-    hash.cpp
-    cipher.cpp
-    mpi.cpp
-    rnd_generator.cpp
-    pk.cpp
-    rsa.cpp
+    # exception.cpp
+    # conversions.cpp
+    # types.cpp
+    # tcodec.cpp
+    # hash.cpp
+    # cipher.cpp
+    # mpi.cpp
+    # rnd_generator.cpp
+    # pk.cpp
+    # rsa.cpp
     )
 
+include("${CMAKE_SOURCE_DIR}/cmake/setup_platforms.cmake")
+setup_build_options(${PROJECT_NAME})
+
+#------------------------------------------------------------------------------
 # optional mbedtls definitions and sources based on specified options
 #  message digests (hashes)
 if(MBEDCRYPTO_MD2)
@@ -108,10 +112,10 @@ if(MBEDCRYPTO_RSA_KEYGEN)
     set(MBEDTLS_GENPRIME ON)
 endif()
 if(MBEDCRYPTO_EC)
-    set(MBEDTLS_ECP_C   ON)
-    SET(MBEDTLS_ECDH_C  ON)
-    set(MBEDTLS_DHM_C   ON)
-    set(MBEDTLS_ECDSA_C ON)
+    set(MBEDTLS_ECP_C                     ON)
+    SET(MBEDTLS_ECDH_C                    ON)
+    set(MBEDTLS_DHM_C                     ON)
+    set(MBEDTLS_ECDSA_C                   ON)
     set(MBEDTLS_ECP_DP_SECP192R1_ENABLED  ON)
     set(MBEDTLS_ECP_DP_SECP224R1_ENABLED  ON)
     set(MBEDTLS_ECP_DP_SECP256R1_ENABLED  ON)
@@ -130,28 +134,23 @@ if(MBEDCRYPTO_EC)
         ${MBEDTLS_SRCDIR}/dhm.c
         ${MBEDTLS_SRCDIR}/ecdh.c
         ${MBEDTLS_SRCDIR}/ecdsa.c
-        ecp.cpp
+        # ecp.cpp
         )
 endif()
 
 #------------------------------------------------------------------------------
-configure_file(mbedcrypto_mbedtls_config.h.in
-    ${CMAKE_BINARY_DIR}/mbedcrypto_mbedtls_config.h)
-configure_file(mbedcrypto_config.h.in
-    ${CMAKE_BINARY_DIR}/mbedcrypto_config.h)
+configure_file(mbedcrypto_mbedtls_config.h.in ${CMAKE_BINARY_DIR}/mbedcrypto_mbedtls_config.h)
+configure_file(mbedcrypto_config.h.in         ${CMAKE_BINARY_DIR}/mbedcrypto_config.h)
 
-target_prepare_build_flags(${PROJECT_NAME})
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     -DMBEDTLS_CONFIG_FILE=\"mbedcrypto_mbedtls_config.h\"
     )
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_14)
 target_include_directories(${PROJECT_NAME}
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
     PRIVATE
         $<BUILD_INTERFACE:${MBEDTLS_INCDIR}>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
     )
 
