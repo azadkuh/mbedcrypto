@@ -33,6 +33,7 @@ add_library(${PROJECT_NAME}
     ${MBEDTLS_SRCDIR}/oid.c
     ${MBEDTLS_SRCDIR}/platform_util.c
     ${MBEDTLS_SRCDIR}/platform.c
+    errors.cpp
     # exception.cpp
     # conversions.cpp
     # types.cpp
