@@ -5,6 +5,8 @@
 docs/
 TODO.md
 tags
+# clang's compilation database file
+compile_commands.json
 # all dot files: .clang-format, .clang-tidy, .vimrc, .ycm_*, ...
 .*
 
