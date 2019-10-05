@@ -46,7 +46,7 @@ add_subdirectory(src)
 
 option(BUILD_TESTS "build test units and apps" ON)
 if(BUILD_TESTS)
-    # enable_testing()
-    # add_subdirectory(tests)
+    enable_testing()
+    add_subdirectory(tests)
 endif()
 
