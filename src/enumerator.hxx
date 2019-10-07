@@ -5,80 +5,98 @@
  * @author amir zamani <azadkuh@live.com>
  */
 
-#ifndef MBEDCRYPTO_ENUMERATOR_HPP
-#define MBEDCRYPTO_ENUMERATOR_HPP
+#ifndef MBEDCRYPTO_ENUMERATOR_HXX
+#define MBEDCRYPTO_ENUMERATOR_HXX
 
-#include "mbedcrypto/exception.hpp"
-
-#include <algorithm>
-#include <cctype>
+#include <cstring>
 //-----------------------------------------------------------------------------
 namespace mbedcrypto {
+namespace details {
 //-----------------------------------------------------------------------------
 
-template <typename Enum, typename Native> struct enum_map {
+inline char
+to_lower_ascii(char ch) noexcept {
+    constexpr char Shift = 'a' - 'A';
+    return (ch >= 'A' && ch <= 'Z') ? ch + Shift : ch;
+};
+
+//-----------------------------------------------------------------------------
+
+/// maps a mbedcrypto enum class to a native (mbedtls) enum
+template <typename Enum, typename Native>
+struct enum_pair {
     Enum   e;
     Native n;
 };
 
-template <typename Enum, class Array>
-auto
-to_native(Enum e, const Array& items) {
+template <
+    class Array,
+    typename Enum   = decltype(std::declval<Array>()[0].e),
+    typename Native = decltype(std::declval<Array>()[0].n)>
+bool
+to_native(Native& n, Enum e, const Array& items) noexcept {
     for (const auto& i : items) {
-        if (i.e == e)
-            return i.n;
+        if (i.e == e) {
+            n = i.n;
+            return true;
+        }
     }
-    throw exceptions::type_error{};
+    return false;
 }
 
-template <typename Native, class Array>
-auto
-from_native(Native n, const Array& items) {
+template <
+    class Array,
+    typename Enum   = decltype(std::declval<Array>()[0].e),
+    typename Native = decltype(std::declval<Array>()[0].n)>
+Enum
+from_native(Native n, const Array& items) noexcept {
     for (const auto& i : items) {
         if (i.n == n)
             return i.e;
     }
-    throw exceptions::type_error{};
+    return Enum::unknown;
 }
 
 //-----------------------------------------------------------------------------
 
-template <typename Enum> struct name_map {
+/// maps a mbedcrypto enum class to it's name
+template <typename Enum>
+struct enum_name {
     Enum        e;
     const char* n;
 };
 
-inline std::string
-to_upper(const char* p) {
-    std::string s(p);
-    std::transform(s.cbegin(), s.cend(), s.begin(), [](char c) {
-        return std::toupper(c);
-    });
-    return s;
-}
-
-template <typename Enum, class Array>
-auto
-to_string(Enum e, const Array& items) {
+template <class Array, typename Enum = typename Array::Enum>
+const char*
+to_string(Enum e, const Array& items) noexcept {
     for (const auto& i : items) {
         if (i.e == e)
             return i.n;
     }
-    throw exceptions::type_error{};
+    return nullptr;
 }
 
-template <typename Enum, class Array>
+template <class Array, typename Enum = decltype(std::declval<Array>()[0].e)>
 Enum
-from_string(const char* name, const Array& items) {
-    auto uname = to_upper(name);
+from_string(const char* name, const Array& items) noexcept {
+    auto icmp = [](const char* lhs, const char* rhs) -> bool {
+        const auto lz = std::strlen(lhs);
+        const auto rz = std::strlen(rhs);
+        if (lz == 0 || rz == 0 || lz != rz)
+            return false;
+        return std::equal(lhs, lhs + lz - 1, rhs, [](char a, char b) {
+            return to_lower_ascii(a) == to_lower_ascii(b);
+        });
+    };
     for (const auto& i : items) {
-        if (uname == i.n)
+        if (icmp(i.n, name))
             return i.e;
     }
-    return Enum::none;
+    return Enum::unknown;
 }
 
 //-----------------------------------------------------------------------------
+} // namespace details
 } // namespace mbedcrypto
 //-----------------------------------------------------------------------------
-#endif // MBEDCRYPTO_ENUMERATOR_HPP
+#endif // MBEDCRYPTO_ENUMERATOR_HXX
