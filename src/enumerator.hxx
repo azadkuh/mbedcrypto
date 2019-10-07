@@ -33,22 +33,20 @@ template <
     class Array,
     typename Enum   = decltype(std::declval<Array>()[0].e),
     typename Native = decltype(std::declval<Array>()[0].n)>
-bool
-to_native(Native& n, Enum e, const Array& items) noexcept {
+inline Native
+to_native(Enum e, const Array& items, Native bad) noexcept {
     for (const auto& i : items) {
-        if (i.e == e) {
-            n = i.n;
-            return true;
-        }
+        if (i.e == e)
+            return i.n;
     }
-    return false;
+    return bad;
 }
 
 template <
     class Array,
     typename Enum   = decltype(std::declval<Array>()[0].e),
     typename Native = decltype(std::declval<Array>()[0].n)>
-Enum
+inline Enum
 from_native(Native n, const Array& items) noexcept {
     for (const auto& i : items) {
         if (i.n == n)
@@ -67,7 +65,7 @@ struct enum_name {
 };
 
 template <class Array, typename Enum = typename Array::Enum>
-const char*
+inline const char*
 to_string(Enum e, const Array& items) noexcept {
     for (const auto& i : items) {
         if (i.e == e)
@@ -77,7 +75,7 @@ to_string(Enum e, const Array& items) noexcept {
 }
 
 template <class Array, typename Enum = decltype(std::declval<Array>()[0].e)>
-Enum
+inline Enum
 from_string(const char* name, const Array& items) noexcept {
     auto icmp = [](const char* lhs, const char* rhs) -> bool {
         const auto lz = std::strlen(lhs);
