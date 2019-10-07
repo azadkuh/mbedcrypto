@@ -363,6 +363,136 @@ from_native(mbedtls_ecp_group_id n) noexcept {
 
 //-----------------------------------------------------------------------------
 
+bool
+supports(hash_t e) noexcept {
+    return e == hash_t::unknown
+               ? false
+               : mbedtls_md_info_from_type(to_native(e)) != nullptr;
+}
+
+bool
+supports(padding_t e) noexcept {
+    if (e == padding_t::none)
+        return true;
+#if defined(MBEDTLS_CIPHER_PADDING_PKCS7)
+    else if (e == padding_t::pkcs7)
+        return true;
+#endif
+#if defined(MBEDTLS_CIPHER_PADDING_ONE_AND_ZEROS)
+    else if (e == padding_t::one_and_zeros)
+        return true;
+#endif
+#if defined(MBEDTLS_CIPHER_PADDING_ZEROS_AND_LEN)
+    else if (e == padding_t::zeros_and_len)
+        return true;
+#endif
+#if defined(MBEDTLS_CIPHER_PADDING_ZEROS)
+    else if (e == padding_t::zeros)
+        return true;
+#endif
+    return false;
+}
+
+bool
+supports(cipher_bm bm) noexcept {
+    if (bm == cipher_bm::ecb)
+        return true; // always supported
+#if defined(MBEDTLS_CIPHER_MODE_CBC)
+    else if (bm == cipher_bm::cbc)
+        return true;
+#endif
+#if defined(MBEDTLS_CIPHER_MODE_CFB)
+    else if (bm == cipher_bm::cfb)
+        return true;
+#endif
+#if defined(MBEDTLS_CIPHER_MODE_CTR)
+    else if (bm == cipher_bm::ctr)
+        return true;
+#endif
+#if defined(MBEDTLS_GCM_C)
+    else if (bm == cipher_bm::gcm)
+        return true;
+#endif
+#if defined(MBEDTLS_CCM_C)
+    else if (bm == cipher_bm::ccm)
+        return true;
+#endif
+#if defined(MBEDTLS_ARC4_C)
+    else if (bm == cipher_bm::stream)
+        return true;
+#endif
+    return false;
+}
+
+bool
+supports(cipher_t e) noexcept {
+    return e == cipher_t::unknown
+               ? false
+               : mbedtls_cipher_info_from_type(to_native(e)) != nullptr;
+}
+
+bool
+supports(pk_t e) noexcept {
+    return e == pk_t::unknown
+               ? false
+               : mbedtls_pk_info_from_type(to_native(e)) != nullptr;
+}
+
+bool
+supports(curve_t e) noexcept {
+    if (e == curve_t::unknown)
+        return false;
+#if defined(MBEDTLS_ECP_DP_SECP192R1_ENABLED)
+    else if (e == curve_t::secp192r1)
+        return true;
+#endif
+#if defined(MBEDTLS_ECP_DP_SECP224R1_ENABLED)
+    else if (e == curve_t::secp224r1)
+        return true;
+#endif
+#if defined(MBEDTLS_ECP_DP_SECP256R1_ENABLED)
+    else if (e == curve_t::secp256r1)
+        return true;
+#endif
+#if defined(MBEDTLS_ECP_DP_SECP384R1_ENABLED)
+    else if (e == curve_t::secp384r1)
+        return true;
+#endif
+#if defined(MBEDTLS_ECP_DP_SECP521R1_ENABLED)
+    else if (e == curve_t::secp521r1)
+        return true;
+#endif
+#if defined(MBEDTLS_ECP_DP_SECP192K1_ENABLED)
+    else if (e == curve_t::secp192k1)
+        return true;
+#endif
+#if defined(MBEDTLS_ECP_DP_SECP224K1_ENABLED)
+    else if (e == curve_t::secp224k1)
+        return true;
+#endif
+#if defined(MBEDTLS_ECP_DP_SECP256K1_ENABLED)
+    else if (e == curve_t::secp256k1)
+        return true;
+#endif
+#if defined(MBEDTLS_ECP_DP_BP256R1_ENABLED)
+    else if (e == curve_t::bp256r1)
+        return true;
+#endif
+#if defined(MBEDTLS_ECP_DP_BP384R1_ENABLED)
+    else if (e == curve_t::bp384r1)
+        return true;
+#endif
+#if defined(MBEDTLS_ECP_DP_BP512R1_ENABLED)
+    else if (e == curve_t::bp512r1)
+        return true;
+#endif
+#if defined(MBEDTLS_ECP_DP_CURVE25519_ENABLED)
+    else if (e == curve_t::curve25519)
+        return true;
+#endif
+    return false;
+}
+
 #if 0 // yet to be refactored
 bool
 supports(features) {
@@ -388,101 +518,6 @@ supports(features) {
     }
 }
 
-bool
-supports(hash_t e) {
-    return mbedtls_md_info_from_type(to_native(e)) != nullptr;
-}
-
-bool
-supports(padding_t e) {
-#if defined(MBEDTLS_CIPHER_PADDING_PKCS7)
-    if (e == padding_t::pkcs7)
-        return true;
-#endif
-#if defined(MBEDTLS_CIPHER_PADDING_ONE_AND_ZEROS)
-    if (e == padding_t::one_and_zeros)
-        return true;
-#endif
-#if defined(MBEDTLS_CIPHER_PADDING_ZEROS_AND_LEN)
-    if (e == padding_t::zeros_and_len)
-        return true;
-#endif
-#if defined(MBEDTLS_CIPHER_PADDING_ZEROS)
-    if (e == padding_t::zeros)
-        return true;
-#endif
-    if (e == padding_t::none)
-        return true;
-
-    return false;
-}
-
-bool
-supports(cipher_bm bm) {
-    switch (bm) {
-    case cipher_bm::none:
-    case cipher_bm::ecb:
-        return true; // always supported
-
-    case cipher_bm::cbc:
-#if defined(MBEDTLS_CIPHER_MODE_CBC)
-        return true;
-#else
-        return false;
-#endif
-
-    case cipher_bm::cfb:
-#if defined(MBEDTLS_CIPHER_MODE_CFB)
-        return true;
-#else
-        return false;
-#endif
-
-    case cipher_bm::ctr:
-#if defined(MBEDTLS_CIPHER_MODE_CTR)
-        return true;
-#else
-        return false;
-#endif
-
-    case cipher_bm::gcm:
-#if defined(MBEDTLS_GCM_C)
-        return true;
-#else
-        return false;
-#endif
-
-    case cipher_bm::ccm:
-#if defined(MBEDTLS_CCM_C)
-        return true;
-#else
-        return false;
-#endif
-
-    case cipher_bm::stream:
-#if defined(MBEDTLS_ARC4_C)
-        return true;
-#else
-        return false;
-#endif
-
-    default:
-        break;
-    }
-
-    return false;
-}
-
-bool
-supports(cipher_t e) {
-    return mbedtls_cipher_info_from_type(to_native(e)) != nullptr;
-}
-
-bool
-supports(pk_t e) {
-    return mbedtls_pk_info_from_type(to_native(e)) != nullptr;
-}
-
 // other installed_xx() are implemented in conversion.cpp
 std::vector<cipher_bm>
 installed_block_modes() {
@@ -495,139 +530,7 @@ installed_block_modes() {
     return my;
 }
 
-bool
-supports(curve_t e) {
-    switch (e) {
-    case curve_t::none:
-        return false;
-
-    case curve_t::secp192r1:
-#if defined(MBEDTLS_ECP_DP_SECP192R1_ENABLED)
-        return true;
-#else
-        return false;
-#endif
-
-    case curve_t::secp224r1:
-#if defined(MBEDTLS_ECP_DP_SECP224R1_ENABLED)
-        return true;
-#else
-        return false;
-#endif
-
-    case curve_t::secp256r1:
-#if defined(MBEDTLS_ECP_DP_SECP256R1_ENABLED)
-        return true;
-#else
-        return false;
-#endif
-
-    case curve_t::secp384r1:
-#if defined(MBEDTLS_ECP_DP_SECP384R1_ENABLED)
-        return true;
-#else
-        return false;
-#endif
-
-    case curve_t::secp521r1:
-#if defined(MBEDTLS_ECP_DP_SECP521R1_ENABLED)
-        return true;
-#else
-        return false;
-#endif
-
-    case curve_t::secp192k1:
-#if defined(MBEDTLS_ECP_DP_SECP192K1_ENABLED)
-        return true;
-#else
-        return false;
-#endif
-
-    case curve_t::secp224k1:
-#if defined(MBEDTLS_ECP_DP_SECP224K1_ENABLED)
-        return true;
-#else
-        return false;
-#endif
-
-    case curve_t::secp256k1:
-#if defined(MBEDTLS_ECP_DP_SECP256K1_ENABLED)
-        return true;
-#else
-        return false;
-#endif
-
-    case curve_t::bp256r1:
-#if defined(MBEDTLS_ECP_DP_BP256R1_ENABLED)
-        return true;
-#else
-        return false;
-#endif
-
-    case curve_t::bp384r1:
-#if defined(MBEDTLS_ECP_DP_BP384R1_ENABLED)
-        return true;
-#else
-        return false;
-#endif
-
-    case curve_t::bp512r1:
-#if defined(MBEDTLS_ECP_DP_BP512R1_ENABLED)
-        return true;
-#else
-        return false;
-#endif
-
-    case curve_t::curve25519:
-#if defined(MBEDTLS_ECP_DP_CURVE25519_ENABLED)
-        return true;
-#else
-        return false;
-#endif
-
-    default:
-        return false;
-        break;
-    }
-}
-
 //-----------------------------------------------------------------------------
-
-bool
-supports_hash(const char* name) {
-    auto e = hash_from_string(name);
-    return (e == hash_t::none) ? false : supports(e);
-}
-
-bool
-supports_padding(const char* name) {
-    // padding_t::none is an acceptable padding
-    return supports(padding_from_string(name));
-}
-
-bool
-supports_block_mode(const char* name) {
-    auto bm = block_mode_from_string(name);
-    return (bm == cipher_bm::none) ? false : supports(bm);
-}
-
-bool
-supports_cipher(const char* name) {
-    auto e = cipher_from_string(name);
-    return (e == cipher_t::none) ? false : supports(e);
-}
-
-bool
-supports_pk(const char* name) {
-    auto e = pk_from_string(name);
-    return (e == pk_t::none) ? false : supports(e);
-}
-
-bool
-supports_curve(const char* name) {
-    auto e = curve_from_string(name);
-    return (e == curve_t::none) ? false : supports(e);
-}
 
 #endif
 //-----------------------------------------------------------------------------

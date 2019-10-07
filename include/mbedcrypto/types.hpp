@@ -221,12 +221,30 @@ bool supports(curve_t) noexcept;
 bool supports(features) noexcept;
 
 // overloads: check by name
-bool supports_hash(const char*) noexcept;
-bool supports_padding(const char*) noexcept;
-bool supports_block_mode(const char*) noexcept;
-bool supports_cipher(const char*) noexcept;
-bool supports_pk(const char*) noexcept;
-bool supports_curve(const char*) noexcept;
+inline bool supports_hash(const char* name) noexcept {
+    return supports(from_string<hash_t>(name));
+}
+
+inline bool supports_padding(const char* name) noexcept {
+    return supports(from_string<padding_t>(name));
+}
+
+inline bool supports_block_mode(const char* name) noexcept{
+    return supports(from_string<cipher_bm>(name));
+}
+
+inline bool supports_cipher(const char* name) noexcept{
+    return supports(from_string<cipher_t>(name));
+}
+
+inline bool supports_pk(const char* name) noexcept{
+    return supports(from_string<pk_t>(name));
+}
+
+inline bool supports_curve(const char* name) noexcept{
+    return supports(from_string<curve_t>(name));
+}
+
 
 /// list all installed algorithms, built into library
 std::vector<hash_t>    installed_hashes();
