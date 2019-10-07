@@ -9,6 +9,20 @@
 namespace mbedcrypto {
 namespace {
 //-----------------------------------------------------------------------------
+
+template <typename Array, typename Enum = decltype(std::declval<Array>()[0].e)>
+inline auto
+list_installed(const Array& all) {
+    std::vector<Enum> v;
+    v.reserve(std::extent<Array>::value);
+    for (const auto& i : all) {
+        if (supports(i.e))
+            v.push_back(i.e);
+    }
+    return v;
+}
+
+//-----------------------------------------------------------------------------
 // clang-format off
 const details::enum_name<hash_t> gHashes[] = {
     {hash_t::md2,       "md2"},
@@ -491,6 +505,38 @@ supports(curve_t e) noexcept {
         return true;
 #endif
     return false;
+}
+
+//-----------------------------------------------------------------------------
+
+std::vector<hash_t>
+installed_hashes() {
+    return list_installed(gHashes);
+}
+
+std::vector<padding_t>
+installed_paddings() {
+    return list_installed(gPaddings);
+}
+
+std::vector<cipher_bm>
+installed_block_modes() {
+    return list_installed(gBlockModes);
+}
+
+std::vector<cipher_t>
+installed_ciphers() {
+    return list_installed(gCiphers);
+}
+
+std::vector<pk_t>
+installed_pks() {
+    return list_installed(gPks);
+}
+
+std::vector<curve_t>
+installed_curves() {
+    return list_installed(gCurves);
 }
 
 #if 0 // yet to be refactored
