@@ -13,8 +13,6 @@
 #ifndef MBEDCRYPTO_TYPES_HPP
 #define MBEDCRYPTO_TYPES_HPP
 
-#include "mbedcrypto/exception.hpp"
-
 #include <vector>
 //-----------------------------------------------------------------------------
 namespace mbedcrypto {
@@ -27,7 +25,6 @@ namespace mbedcrypto {
  * and more susceptible to hardware-accelerated attacks.
  */
 enum class hash_t {
-    none,      ///< invalid or unknown
     md2,       ///< insecure and unacceptable
     md4,       ///< not recommended
     md5,       ///<
@@ -36,8 +33,8 @@ enum class hash_t {
     sha256,    ///<
     sha384,    ///<
     sha512,    ///<
-    ripemd160, ///< no publicly known attack, but old and outdated bit size
-               ///(160)
+    ripemd160, ///< no publicly known attack, but old and outdated bitsize
+    unknown,   ///< invalid or unknown
 };
 
 /// all possible paddings, pkcs7 is included in default build.
@@ -47,6 +44,7 @@ enum class padding_t {
     one_and_zeros, ///< ISO/IEC 7816-4 padding
     zeros_and_len, ///< ANSI X.923 padding
     zeros,         ///< zero padding (not reversible!)
+    unknown,       ///< invalid or unknown
 };
 
 /** block mode: https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation.
@@ -68,14 +66,14 @@ enum class padding_t {
  * needs iv, does not require padding
  */
 enum class cipher_bm {
-    none,   ///< none or unknown
-    ecb,    ///< electronic codebook, input size = N * block_size
-    cbc,    ///< cipher block chaining, custom input size
-    cfb,    ///< cipher feedback, custom input size
-    ctr,    ///< counter, custom input size
-    gcm,    ///< Galois/counter mode
-    ccm,    ///< counter with cbc-mac
-    stream, ///< as in arc4_128 or null ciphers (insecure)
+    ecb,     ///< electronic codebook, input size = N * block_size
+    cbc,     ///< cipher block chaining, custom input size
+    cfb,     ///< cipher feedback, custom input size
+    ctr,     ///< counter, custom input size
+    gcm,     ///< Galois/counter mode
+    ccm,     ///< counter with cbc-mac
+    stream,  ///< as in arc4_128 or null ciphers (insecure)
+    unknown, ///< none or unknown
 };
 
 /** all possible supported cipher types in mbedcrypto.
@@ -87,8 +85,7 @@ enum class cipher_bm {
  * constructions.
  */
 enum class cipher_t {
-    none, ///< invalid or unknown
-    null,
+    null, ///< identity cipher (no-op cipher)
     aes_128_ecb,
     aes_192_ecb,
     aes_256_ecb,
@@ -136,19 +133,19 @@ enum class cipher_t {
     camellia_128_ccm,
     camellia_192_ccm,
     camellia_256_ccm,
+    unknown, ///< invalid or unknown
 };
 
 /// all possible public key algorithms (PKI types), RSA is included in default
 /// build.
 enum class pk_t {
-    none,       ///< unknown or invalid
     rsa,        ///< RSA (default)
     eckey,      ///< elliptic curve key
     eckey_dh,   ///< elliptic curve key for Diffie–Hellman key exchange
     ecdsa,      ///< elliptic curve key for digital signature algorithm
     rsa_alt,    ///<
-    rsassa_pss, ///< RSA standard signature algorithm, probabilistic signature
-                /// scheme
+    rsassa_pss, ///< RSA standard signature algorithm, probabilistic signature scheme
+    unknown,    ///< unknown or invalid
 };
 
 /** all supported EC curves.
@@ -159,7 +156,6 @@ enum class pk_t {
  *  sources should be used.
  */
 enum class curve_t {
-    none,
     secp192r1,  ///< 192-bits NIST curve
     secp224r1,  ///< 224-bits NIST curve
     secp256r1,  ///< 256-bits NIST curve
@@ -172,6 +168,7 @@ enum class curve_t {
     bp384r1,    ///< 384-bits Brainpool curve
     bp512r1,    ///< 512-bits Brainpool curve
     curve25519, ///< Curve25519. limited support (only for ecdh)
+    unknown,    ///< unknown or invalid
 };
 
 /** additional features which the mbedcrypto provieds.
@@ -181,10 +178,8 @@ enum class curve_t {
  */
 enum class features {
     aes_ni,     ///< hardware accelerated AES. @sa cipher::supports_aes_ni()
-    aead,       ///< authenticated encryption by additional data. @sa
-                /// cipher::supports_aead()
-    pk_export,  ///< pem/der export of pri/pub keys. @sa
-                /// pk::supports_key_export()
+    aead,       ///< authenticated encryption by additional data. @sa cipher::supports_aead()
+    pk_export,  ///< pem/der export of pri/pub keys. @sa pk::supports_key_export()
     rsa_keygen, ///< RSA key generator. @sa pk::supports_rsa_keygen()
     ec_keygen,  ///< EC key generator. @sa pk::supports_ec_keygen()
 };
@@ -192,80 +187,54 @@ enum class features {
 //-----------------------------------------------------------------------------
 // clang-format off
 
-/// returns true if an algorithm or a type is present at runtime.
-bool supports(hash_t);
-bool supports(padding_t);
-bool supports(cipher_bm);
-bool supports(cipher_t);
-bool supports(pk_t);
-bool supports(curve_t);
-bool supports(features);
+const char* to_string(hash_t) noexcept;
+const char* to_string(padding_t) noexcept;
+const char* to_string(cipher_bm) noexcept;
+const char* to_string(cipher_t) noexcept;
+const char* to_string(pk_t) noexcept;
+const char* to_string(curve_t) noexcept;
+
+// these funcs support both lower and upper case names.
+void from_string(const char*, hash_t&) noexcept;
+void from_string(const char*, padding_t&) noexcept;
+void from_string(const char*, cipher_bm&) noexcept;
+void from_string(const char*, cipher_t&) noexcept;
+void from_string(const char*, pk_t&) noexcept;
+void from_string(const char*, curve_t&) noexcept;
+
+template<typename Enum>
+inline Enum from_string(const char* name) noexcept {
+    auto e = Enum::unknown;
+    from_string(name, e);
+    return e;
+}
+
+//-----------------------------------------------------------------------------
+
+// return true if an algorithm or a type is present in this configuration (build).
+bool supports(hash_t) noexcept;
+bool supports(padding_t) noexcept;
+bool supports(cipher_bm) noexcept;
+bool supports(cipher_t) noexcept;
+bool supports(pk_t) noexcept;
+bool supports(curve_t) noexcept;
+bool supports(features) noexcept;
+
+// overloads: check by name
+bool supports_hash(const char*) noexcept;
+bool supports_padding(const char*) noexcept;
+bool supports_block_mode(const char*) noexcept;
+bool supports_cipher(const char*) noexcept;
+bool supports_pk(const char*) noexcept;
+bool supports_curve(const char*) noexcept;
 
 /// list all installed algorithms, built into library
-auto installed_hashes()      -> std::vector<hash_t>;
-auto installed_paddings()    -> std::vector<padding_t>;
-auto installed_block_modes() -> std::vector<cipher_bm>;
-auto installed_ciphers()     -> std::vector<cipher_t>;
-auto installed_pks()         -> std::vector<pk_t>;
-auto installed_curves()      -> std::vector<curve_t>;
-
-
-// returns true if an algorithm or a type is present at runtime (by name
-// string).
-// both lower or upper case names are supported.
-bool supports_hash(const char*);
-bool supports_padding(const char*);
-bool supports_block_mode(const char*);
-bool supports_cipher(const char*);
-bool supports_pk(const char*);
-bool supports_curve(const char*);
-
-auto to_string(hash_t)    -> const char*;
-auto to_string(padding_t) -> const char*;
-auto to_string(cipher_bm) -> const char*;
-auto to_string(cipher_t)  -> const char*;
-auto to_string(pk_t)      -> const char*;
-auto to_string(curve_t)   -> const char*;
-
-auto hash_from_string(const char*)       -> hash_t;
-auto padding_from_string(const char*)    -> padding_t;
-auto block_mode_from_string(const char*) -> cipher_bm;
-auto cipher_from_string(const char*)     -> cipher_t;
-auto pk_from_string(const char*)         -> pk_t;
-auto curve_from_string(const char*)      -> curve_t;
-
-template <typename T> T
-from_string(const char* name, T* = nullptr);
-
-template <> inline auto
-from_string(const char* name, hash_t*) -> hash_t {
-    return hash_from_string(name);
-}
-
-template <> inline auto
-from_string(const char* name, padding_t*) -> padding_t {
-    return padding_from_string(name);
-}
-
-template <> inline auto
-from_string(const char* name, cipher_bm*) -> cipher_bm {
-    return block_mode_from_string(name);
-}
-
-template <> inline auto
-from_string(const char* name, cipher_t*) -> cipher_t {
-    return cipher_from_string(name);
-}
-
-template <> inline auto
-from_string(const char* name, pk_t*) -> pk_t {
-    return pk_from_string(name);
-}
-
-template <> inline auto
-from_string(const char* name, curve_t*) -> curve_t {
-    return curve_from_string(name);
-}
+std::vector<hash_t>    installed_hashes();
+std::vector<padding_t> installed_paddings();
+std::vector<cipher_bm> installed_block_modes();
+std::vector<cipher_t>  installed_ciphers();
+std::vector<pk_t>      installed_pks();
+std::vector<curve_t>   installed_curves();
 
 // clang-format on
 //-----------------------------------------------------------------------------

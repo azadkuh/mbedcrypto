@@ -34,9 +34,8 @@ add_library(${PROJECT_NAME}
     ${MBEDTLS_SRCDIR}/platform_util.c
     ${MBEDTLS_SRCDIR}/platform.c
     errors.cpp
-    # exception.cpp
+    types.cpp
     # conversions.cpp
-    # types.cpp
     # tcodec.cpp
     # hash.cpp
     # cipher.cpp
