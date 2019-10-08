@@ -20,6 +20,15 @@ to_lower_ascii(char ch) noexcept {
     return (ch >= 'A' && ch <= 'Z') ? ch + Shift : ch;
 };
 
+inline bool
+icompare(const char* a, size_t alen, const char* b, size_t blen) noexcept {
+    if (alen != blen)
+        return false;
+    return std::equal(a, a + alen, b, [](char x, char y) {
+        return to_lower_ascii(x) == to_lower_ascii(y);
+    });
+}
+
 //-----------------------------------------------------------------------------
 
 /// maps a mbedcrypto enum class to a native (mbedtls) enum
@@ -77,18 +86,11 @@ to_string(Enum e, const Array& items) noexcept {
 template <class Array, typename Enum = decltype(std::declval<Array>()[0].e)>
 inline Enum
 from_string(const char* name, const Array& items) noexcept {
-    auto icmp = [](const char* lhs, const char* rhs) -> bool {
-        const auto lz = std::strlen(lhs);
-        const auto rz = std::strlen(rhs);
-        if (lz == 0 || rz == 0 || lz != rz)
-            return false;
-        return std::equal(lhs, lhs + lz - 1, rhs, [](char a, char b) {
-            return to_lower_ascii(a) == to_lower_ascii(b);
-        });
-    };
-    for (const auto& i : items) {
-        if (icmp(i.n, name))
-            return i.e;
+    if (name != nullptr) {
+        for (const auto& i : items) {
+            if (icompare(i.n, std::strlen(i.n), name, std::strlen(name)))
+                return i.e;
+        }
     }
     return Enum::unknown;
 }
