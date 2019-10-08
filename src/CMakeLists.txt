@@ -141,8 +141,8 @@ endif()
 configure_file(mbedcrypto_mbedtls_config.h.in ${CMAKE_BINARY_DIR}/mbedcrypto_mbedtls_config.h)
 configure_file(mbedcrypto_config.h.in         ${CMAKE_BINARY_DIR}/mbedcrypto_config.h)
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE
-    -DMBEDTLS_CONFIG_FILE=\"mbedcrypto_mbedtls_config.h\"
+target_compile_definitions(${PROJECT_NAME} PUBLIC
+    $<BUILD_INTERFACE:MBEDTLS_CONFIG_FILE=\"mbedcrypto_mbedtls_config.h\">
     )
 target_include_directories(${PROJECT_NAME}
     PUBLIC

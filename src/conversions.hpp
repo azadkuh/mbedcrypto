@@ -9,6 +9,7 @@
 #ifndef MBEDCRYPTO_CONVERSIONS_HPP
 #define MBEDCRYPTO_CONVERSIONS_HPP
 
+#include "mbedcrypto_mbedtls_config.h"
 #include "mbedcrypto/types.hpp"
 
 #include <mbedtls/cipher.h>

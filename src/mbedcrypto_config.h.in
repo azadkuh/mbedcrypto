@@ -16,6 +16,7 @@
 // message digest (hash)
 #cmakedefine MBEDCRYPTO_MD2
 #cmakedefine MBEDCRYPTO_MD4
+#cmakedefine MBEDCRYPTO_RIPEMD160
 
 // cipher modes:
 // cipher feedback mode
