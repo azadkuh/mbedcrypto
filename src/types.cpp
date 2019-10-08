@@ -16,7 +16,7 @@ list_installed(const Array& all) {
     std::vector<Enum> v;
     v.reserve(std::extent<Array>::value);
     for (const auto& i : all) {
-        if (supports(i.e))
+        if (i.e != Enum::unknown && supports(i.e))
             v.push_back(i.e);
     }
     return v;
@@ -137,7 +137,7 @@ const details::enum_name<curve_t> gCurves[] = {
 
 //-----------------------------------------------------------------------------
 
-const details::enum_pair<hash_t, mbedtls_md_type_t> gHashePairs[] = {
+const details::enum_pair<hash_t, mbedtls_md_type_t> gHashPairs[] = {
     {hash_t::md2,       MBEDTLS_MD_MD2},
     {hash_t::md4,       MBEDTLS_MD_MD4},
     {hash_t::md5,       MBEDTLS_MD_MD5},
@@ -317,7 +317,7 @@ from_string(const char* name, curve_t& e) noexcept {
 
 mbedtls_md_type_t
 to_native(hash_t e) noexcept {
-    return details::to_native(e, gHashePairs, MBEDTLS_MD_NONE);
+    return details::to_native(e, gHashPairs, MBEDTLS_MD_NONE);
 }
 
 mbedtls_cipher_padding_t
@@ -347,7 +347,7 @@ to_native(curve_t e) noexcept {
 
 hash_t
 from_native(mbedtls_md_type_t n) noexcept {
-    return details::from_native(n, gHashePairs);
+    return details::from_native(n, gHashPairs);
 }
 
 padding_t
@@ -507,6 +507,27 @@ supports(curve_t e) noexcept {
     return false;
 }
 
+bool
+supports(features) noexcept {
+    return false;
+#if 0 // yet to be refactored
+    switch (f) {
+    case features::aes_ni:
+        return cipher::supports_aes_ni();
+    case features::aead:
+        return cipher::supports_aead();
+    case features::pk_export:
+        return pk::supports_key_export();
+    case features::rsa_keygen:
+        return pk::supports_rsa_keygen();
+    case features::ec_keygen:
+        return pk::supports_ec_keygen();
+    default:
+        return false;
+    }
+#endif
+}
+
 //-----------------------------------------------------------------------------
 
 std::vector<hash_t>
@@ -539,46 +560,6 @@ installed_curves() {
     return list_installed(gCurves);
 }
 
-#if 0 // yet to be refactored
-bool
-supports(features) {
-    return false;
-    switch (f) {
-    case features::aes_ni:
-        return cipher::supports_aes_ni();
-
-    case features::aead:
-        return cipher::supports_aead();
-
-    case features::pk_export:
-        return pk::supports_key_export();
-
-    case features::rsa_keygen:
-        return pk::supports_rsa_keygen();
-
-    case features::ec_keygen:
-        return pk::supports_ec_keygen();
-
-    default:
-        return false;
-    }
-}
-
-// other installed_xx() are implemented in conversion.cpp
-std::vector<cipher_bm>
-installed_block_modes() {
-    std::vector<cipher_bm> my;
-    for (auto bm : gBlockModes) {
-        if (supports(bm.e))
-            my.push_back(bm.e);
-    }
-
-    return my;
-}
-
-//-----------------------------------------------------------------------------
-
-#endif
 //-----------------------------------------------------------------------------
 } // namespace mbedcrypto
 //-----------------------------------------------------------------------------
