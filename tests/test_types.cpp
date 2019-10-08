@@ -1,25 +1,24 @@
 #include <catch2/catch.hpp>
 
-#include "generator.hpp"
-#include "mbedcrypto/cipher.hpp"
-#include "mbedcrypto/pk.hpp"
-#include "mbedcrypto_mbedtls_config.h"
+#include "src/conversions.hpp"
 
 #include <initializer_list>
 #include <iostream>
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 namespace {
-using cchars = const char*;
+//-----------------------------------------------------------------------------
 using namespace mbedcrypto;
-///////////////////////////////////////////////////////////////////////////////
-auto hasHash = [](hash_t h) {
-    REQUIRE(supports(h));
-    cchars name = to_string(h);
 
+void
+hasHash(hash_t h) {
+    INFO("hash(" << to_string(h) << ")");
+    REQUIRE(supports(h));
+    const char* name = to_string(h);
+    INFO("hash(" << to_string(h) << "): " << name);
     REQUIRE(supports_hash(name));
     auto v = from_string<hash_t>(name);
     REQUIRE(v == h);
-};
+}
 
 std::ostream&
 operator<<(std::ostream& s, features f) {
@@ -31,12 +30,11 @@ operator<<(std::ostream& s, features f) {
     return s;
 }
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 } // namespace anon
-///////////////////////////////////////////////////////////////////////////////
-TEST_CASE("mbedcrypto types checkings", "[types]") {
-    using namespace mbedcrypto;
+//-----------------------------------------------------------------------------
 
+TEST_CASE("mbedcrypto types checkings", "[types]") {
     SECTION("list installed algorithms") {
         auto hashes = installed_hashes();
         REQUIRE(hashes.size() > 0);
@@ -94,63 +92,110 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
     }
 
     SECTION("hashes") {
-        REQUIRE_FALSE(supports(hash_t::none));
+        const std::initializer_list<hash_t> Items = {
+            hash_t::md2,
+            hash_t::md4,
+            hash_t::md5,
+            hash_t::sha1,
+            hash_t::sha224,
+            hash_t::sha256,
+            hash_t::sha384,
+            hash_t::sha512,
+            hash_t::ripemd160,
+            hash_t::unknown,
+        };
+
+        for (auto i : Items) {
+            const char* name = to_string(i);
+            REQUIRE(name != nullptr);
+            auto v = from_string<hash_t>(name);
+            INFO("hash(" << to_string(v) << "): " << name);
+            REQUIRE(v == i);
+        }
+
+        REQUIRE_FALSE(supports(hash_t::unknown));
 
 #if defined(MBEDTLS_MD2_C)
         hasHash(hash_t::md2);
 #else
         REQUIRE_FALSE(supports(hash_t::md2));
 #endif
-
 #if defined(MBEDTLS_MD4_C)
         hasHash(hash_t::md4);
-#else  // MBEDTLS_MD4_C
+#else
         REQUIRE_FALSE(supports(hash_t::md4));
-#endif // MBEDTLS_MD4_C
-
+#endif
 #if defined(MBEDTLS_MD5_C)
         hasHash(hash_t::md5);
-#else  // MBEDTLS_MD5_C
+#else
         REQUIRE_FALSE(supports(hash_t::md5));
-#endif // MBEDTLS_MD5_C
-
+#endif
 #if defined(MBEDTLS_SHA1_C)
         hasHash(hash_t::sha1);
-#else  // MBEDTLS_SHA1_C
+#else
         REQUIRE_FALSE(supports(hash_t::sha1));
-#endif // MBEDTLS_SHA1_C
-
+#endif
 #if defined(MBEDTLS_SHA256_C)
         hasHash(hash_t::sha224);
         hasHash(hash_t::sha256);
-#else  // MBEDTLS_SHA256_C
+#else
         REQUIRE_FALSE(supports(hash_t::sha224));
         REQUIRE_FALSE(supports(hash_t::sha256));
-#endif // MBEDTLS_SHA256_C
-
+#endif
 #if defined(MBEDTLS_SHA512_C)
         hasHash(hash_t::sha384);
         hasHash(hash_t::sha512);
-#else  // MBEDTLS_SHA512_C
+#else
         REQUIRE_FALSE(supports(hash_t::sha384));
         REQUIRE_FALSE(supports(hash_t::sha512));
-#endif // MBEDTLS_SHA512_C
-
+#endif
 #if defined(MBEDTLS_RIPEMD160_C)
         hasHash(hash_t::ripemd160);
-#else // MBEDTLS_RIPEMD160_C
+#else
         REQUIRE_FALSE(supports(hash_t::ripemd160));
-#endif // MBEDTLS_RIPEMD160_C
+#endif
+    }
 
-        std::cout << std::endl;
+    SECTION("paddings") {
+        const std::initializer_list<padding_t> Items = {
+            padding_t::none,
+            padding_t::pkcs7,
+            padding_t::one_and_zeros,
+            padding_t::zeros_and_len,
+            padding_t::zeros,
+            padding_t::unknown,
+        };
+
+        for (auto i : Items) {
+            const char* name = to_string(i);
+            REQUIRE(name != nullptr);
+            auto v = from_string<padding_t>(name);
+            REQUIRE(v == i);
+        }
+    }
+
+    SECTION("block modes") {
+        const std::initializer_list<cipher_bm> Items = {
+            cipher_bm::ecb,
+            cipher_bm::cbc,
+            cipher_bm::cfb,
+            cipher_bm::ctr,
+            cipher_bm::gcm,
+            cipher_bm::ccm,
+            cipher_bm::stream,
+            cipher_bm::unknown,
+        };
+
+        for (auto i : Items) {
+            const char* name = to_string(i);
+            REQUIRE(name != nullptr);
+            auto v = from_string<cipher_bm>(name);
+            REQUIRE(v == i);
+        }
     }
 
     SECTION("ciphers") {
-        REQUIRE(supports(features::aes_ni) == cipher::supports_aes_ni());
-        REQUIRE(supports(features::aead) == cipher::supports_aead());
-
         const std::initializer_list<cipher_t> Items = {
-            cipher_t::none,
             cipher_t::null,
             cipher_t::aes_128_ecb,
             cipher_t::aes_192_ecb,
@@ -199,64 +244,19 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
             cipher_t::camellia_128_ccm,
             cipher_t::camellia_192_ccm,
             cipher_t::camellia_256_ccm,
+            cipher_t::unknown,
         };
 
         for (auto i : Items) {
-            cchars name = to_string(i);
-            if (name == nullptr)
-                continue;
-
+            const auto* name = to_string(i);
+            REQUIRE(name != nullptr);
             auto v = from_string<cipher_t>(name);
             REQUIRE(v == i);
         }
     }
 
-    SECTION("paddings") {
-        const std::initializer_list<padding_t> Items = {
-            padding_t::none,
-            padding_t::pkcs7,
-            padding_t::one_and_zeros,
-            padding_t::zeros_and_len,
-            padding_t::zeros,
-        };
-
-        for (auto i : Items) {
-            cchars name = to_string(i);
-            if (name == nullptr)
-                continue;
-
-            auto v = from_string<padding_t>(name);
-            REQUIRE(v == i);
-        }
-    }
-
-    SECTION("block modes") {
-        const std::initializer_list<cipher_bm> Items = {
-            cipher_bm::none,
-            cipher_bm::ecb,
-            cipher_bm::cbc,
-            cipher_bm::cfb,
-            cipher_bm::ctr,
-            cipher_bm::gcm,
-            cipher_bm::ccm,
-            cipher_bm::stream,
-        };
-
-        for (auto i : Items) {
-            cchars name = to_string(i);
-            if (name == nullptr)
-                continue;
-
-            auto v = from_string<cipher_bm>(name);
-            REQUIRE(v == i);
-        }
-    }
-
     SECTION("pk features") {
-        REQUIRE(supports(features::pk_export) == pk::supports_key_export());
-        REQUIRE(supports(features::rsa_keygen) == pk::supports_rsa_keygen());
-        REQUIRE(supports(features::ec_keygen) == pk::supports_ec_keygen());
-
+#if 0 // not implemented yet
         auto check = pk::supports_key_export();
 #if defined(MBEDTLS_PEM_WRITE_C)
         REQUIRE(check);
@@ -277,11 +277,11 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
 #else  // MBEDTLS_ECP_C
         REQUIRE_FALSE(check);
 #endif // MBEDTLS_ECP_C
+#endif
     }
 
     SECTION("curve names") {
         const std::initializer_list<curve_t> Items = {
-            curve_t::none,
             curve_t::secp192r1,
             curve_t::secp224r1,
             curve_t::secp256r1,
@@ -294,13 +294,12 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
             curve_t::bp384r1,
             curve_t::bp512r1,
             curve_t::curve25519,
+            curve_t::unknown,
         };
 
         for (auto i : Items) {
-            cchars name = to_string(i);
-            if (name == nullptr)
-                continue;
-
+            const auto* name = to_string(i);
+            REQUIRE(name != nullptr);
             auto v = from_string<curve_t>(name);
             REQUIRE(v == i);
         }

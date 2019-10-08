@@ -4,6 +4,7 @@ add_executable(${PROJECT_NAME}
     ./main.cpp
     ./test_binutils.cpp
     ./test_errors.cpp
+    ./test_types.cpp
     # ./tdd/generator.cpp
     # ./tdd/test_cipher.cpp
     # ./tdd/test_ecp.cpp
@@ -13,11 +14,11 @@ add_executable(${PROJECT_NAME}
     # ./tdd/test_random.cpp
     # ./tdd/test_rsa.cpp
     # ./tdd/test_tcodec.cpp
-    # ./tdd/test_types.cpp
     )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_BINARY_DIR}
+    ${CMAKE_SOURCE_DIR}
     ${DIR_DEPS}/
     ${DIR_DEPS}/mbedtls/include
     )
