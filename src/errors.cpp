@@ -47,6 +47,10 @@ struct mbedcrypto_category : std::error_category
             return "bad api call or invalid argument";
         case static_cast<int>(error_t::not_supported):
             return "not supported by this build";
+        case static_cast<int>(error_t::invalid_size):
+            return "invalid size";
+        case static_cast<int>(error_t::invalid_content):
+            return "invalid content/data";
         case static_cast<int>(error_t::bad_hash):
             return "invalid or unsupported hash type";
         case static_cast<int>(error_t::bad_cipher):
