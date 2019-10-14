@@ -30,19 +30,21 @@ TEST_CASE("mbedcrypto errors", "[errors]") {
         error_t     err;
         const char* msg;
     } all[] = {
-        {error_t::success,       "success"},
-        {error_t::type,          "invalid or unknown type"},
-        {error_t::usage,         "bad api call or invalid argument"},
-        {error_t::not_supported, "not supported by this build"},
-        {error_t::bad_hash,      "invalid or unsupported hash type"},
-        {error_t::bad_cipher,    "invalid or unsupported cipher type"},
-        {error_t::aead,          "requires CCM or GCM modules, check build options"},
-        {error_t::gcm,           "requires CGM module, check build options"},
-        {error_t::pk,            "invalid or unsupported PK type"},
-        {error_t::pk_export,     "requires PE_EXPORT module, check build options"},
-        {error_t::rsa_keygen,    "requires RSA_KEYGEN, check build options"},
-        {error_t::ecp,           "invalid or unsupported EC (elliptic curve) type"},
-        {error_t::unknown,       "unknown error"},
+        {error_t::success,         "success"},
+        {error_t::type,            "invalid or unknown type"},
+        {error_t::usage,           "bad api call or invalid argument"},
+        {error_t::not_supported,   "not supported by this build"},
+        {error_t::invalid_size,    "invalid size"},
+        {error_t::invalid_content, "invalid content/data"},
+        {error_t::bad_hash,        "invalid or unsupported hash type"},
+        {error_t::bad_cipher,      "invalid or unsupported cipher type"},
+        {error_t::aead,            "requires CCM or GCM modules, check build options"},
+        {error_t::gcm,             "requires CGM module, check build options"},
+        {error_t::pk,              "invalid or unsupported PK type"},
+        {error_t::pk_export,       "requires PE_EXPORT module, check build options"},
+        {error_t::rsa_keygen,      "requires RSA_KEYGEN, check build options"},
+        {error_t::ecp,             "invalid or unsupported EC (elliptic curve) type"},
+        {error_t::unknown,         "unknown error"},
     };
 
     for (const auto& a : all) {

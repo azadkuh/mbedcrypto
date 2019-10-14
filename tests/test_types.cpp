@@ -255,31 +255,6 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
         }
     }
 
-    SECTION("pk features") {
-#if 0 // not implemented yet
-        auto check = pk::supports_key_export();
-#if defined(MBEDTLS_PEM_WRITE_C)
-        REQUIRE(check);
-#else  // MBEDTLS_PEM_WRITE_C
-        REQUIRE_FALSE(check);
-#endif // MBEDTLS_PEM_WRITE_C
-
-        check = supports(features::rsa_keygen);
-#if defined(MBEDTLS_GENPRIME)
-        REQUIRE(check);
-#else
-        REQUIRE_FALSE(check);
-#endif // MBEDTLS_GENPRIME
-
-        check = supports(features::ec_keygen);
-#if defined(MBEDTLS_ECP_C)
-        REQUIRE(check);
-#else  // MBEDTLS_ECP_C
-        REQUIRE_FALSE(check);
-#endif // MBEDTLS_ECP_C
-#endif
-    }
-
     SECTION("curve names") {
         const std::initializer_list<curve_t> Items = {
             curve_t::secp192r1,
@@ -304,4 +279,30 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
             REQUIRE(v == i);
         }
     }
+
+#if 0 // not implemented yet
+    SECTION("pk features") {
+        auto check = pk::supports_key_export();
+#if defined(MBEDTLS_PEM_WRITE_C)
+        REQUIRE(check);
+#else  // MBEDTLS_PEM_WRITE_C
+        REQUIRE_FALSE(check);
+#endif // MBEDTLS_PEM_WRITE_C
+
+        check = supports(features::rsa_keygen);
+#if defined(MBEDTLS_GENPRIME)
+        REQUIRE(check);
+#else
+        REQUIRE_FALSE(check);
+#endif // MBEDTLS_GENPRIME
+
+        check = supports(features::ec_keygen);
+#if defined(MBEDTLS_ECP_C)
+        REQUIRE(check);
+#else  // MBEDTLS_ECP_C
+        REQUIRE_FALSE(check);
+#endif // MBEDTLS_ECP_C
+    }
+#endif
+
 }
