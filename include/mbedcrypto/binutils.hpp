@@ -9,6 +9,7 @@
 #ifndef MBEDCRYPTO_BINUTILS_HPP
 #define MBEDCRYPTO_BINUTILS_HPP
 
+#include "mbedcrypto/meta.hxx"
 #include <string>
 
 #if defined(QT_CORE_LIB)
@@ -39,24 +40,28 @@ struct bin_view_t {
     template <
         typename T,
         typename Size,
-        typename =
-            std::enable_if_t<sizeof(T) == 1 && std::is_integral<Size>::value>>
+        typename = std::enable_if_t<sizeof(T) == 1 && std::is_integral<Size>::value>
+        >
     bin_view_t(const T* buffer, Size length) noexcept
         : data{reinterpret_cast<const uint8_t*>(buffer)},
           size{static_cast<size_t>(length)} {}
 
     /// accepts any container with data() and size() member functions.
     /// ex: std::string, std::span, std::array, std::vector, QByteArray, ...
-    template <
-        typename Container,
-        typename = std::enable_if_t<std::is_constructible<
+    template <typename Container>
+    using is_supported_t = std::enable_if_t<
+        std::is_constructible<
             bin_view_t,
             decltype(std::declval<Container>().data()),
-            decltype(std::declval<Container>().size())>::value>>
+            decltype(std::declval<Container>().size())
+        >::value
+    >;
+
+    template <typename Container, typename = is_supported_t<Container>>
     bin_view_t(const Container& c) noexcept : bin_view_t{c.data(), c.size()} {}
 }; // struct bin_view_t
 
-inline bool
+constexpr inline bool
 is_empty(const bin_view_t& bv) noexcept {
     return bv.size == 0 || bv.data == nullptr;
 }
