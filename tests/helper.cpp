@@ -1,13 +1,13 @@
-#include "generator.hpp"
+#include "./helper.hpp"
 
 #include <fstream>
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 namespace mbedcrypto {
 namespace test {
 namespace {
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 
-const unsigned char BinaryShort[] = {
+constexpr uint8_t BinaryShort[] = {
     0x68, 0x40, 0x4c, 0x76, 0x37, 0x71, 0x88, 0x14, 0x3a, 0xe9, 0x67, 0x3f,
     0x94, 0x13, 0xda, 0xdd, 0x03, 0x80, 0x9d, 0x31, 0x00, 0xff, 0xd7, 0x78,
     0xba, 0xac, 0x90, 0xf0, 0xa3, 0x0e, 0xc0, 0xca, 0x71, 0x4f, 0xe4, 0x23,
@@ -15,7 +15,7 @@ const unsigned char BinaryShort[] = {
     0x00, 0x25, 0xf6, 0x2c, 0x74, 0x10, 0x77, 0x59, 0xdf, 0xb2, 0x18};
 
 // with many possible null bytes in the middle
-const unsigned char BinaryLong[] = {
+constexpr uint8_t BinaryLong[] = {
     0xf3, 0x1b, 0x00, 0xa1, 0x98, 0xbf, 0xd0, 0xe9, 0xf6, 0x2a, 0xea, 0x28,
     0xe0, 0x53, 0xc7, 0x69, 0xee, 0xdf, 0x81, 0x00, 0x00, 0xb0, 0x67, 0x00,
     0x67, 0xf5, 0xf1, 0xec, 0xff, 0x8e, 0x8d, 0xfe, 0xe3, 0x5a, 0xc8, 0xb2,
@@ -30,7 +30,7 @@ const unsigned char BinaryLong[] = {
 };
 
 // signature of long_text with the private key and sha1
-const unsigned char SignatureSha1[] = {
+constexpr uint8_t SignatureSha1[] = {
     0xb9, 0x33, 0x2d, 0xd3, 0xea, 0xd2, 0xbf, 0x6d, 0x98, 0x31, 0xe0, 0x16,
     0xf3, 0xf1, 0x4a, 0x47, 0x37, 0x56, 0x85, 0x74, 0x7d, 0x08, 0x03, 0x88,
     0x21, 0x97, 0xb4, 0x1c, 0x30, 0xc7, 0x68, 0x1c, 0x23, 0x67, 0xf4, 0x90,
@@ -55,23 +55,17 @@ const unsigned char SignatureSha1[] = {
     0xab, 0xaf, 0x3f, 0x44,
 };
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 } // namespace anon
-///////////////////////////////////////////////////////////////////////////////
-
-void
-dump_to_file(const buffer_t& data, const char* filename) {
-    std::fstream f(filename, std::fstream::out | std::fstream::binary);
-    f << data;
-}
+//-----------------------------------------------------------------------------
 
 const char*
-short_text() {
+short_text() noexcept {
     return "mbedtls cryptography";
 }
 
 const char*
-long_text() {
+long_text() noexcept {
     return "Lorem ipsum dolor sit amet, consectetur adipiscing elit,"
            " sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
            " Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris"
@@ -82,21 +76,25 @@ long_text() {
            " sunt in culpa qui officia deserunt mollit anim id est laborum.";
 }
 
-buffer_t
-short_binary() {
-    constexpr size_t length = sizeof(BinaryShort);
-    return buffer_t(reinterpret_cast<const char*>(BinaryShort), length);
+bin_view_t
+short_binary() noexcept {
+    return bin_view_t{BinaryShort, sizeof(BinaryShort)};
 }
 
-buffer_t
-long_binary() {
-    constexpr size_t length = sizeof(BinaryLong);
-    return buffer_t(reinterpret_cast<const char*>(BinaryLong), length);
+bin_view_t
+long_binary() noexcept {
+    return bin_view_t{BinaryLong, sizeof(BinaryLong)};
 }
 
-buffer_t
-rsa_private_key() {
-    buffer_t k(R"xx(-----BEGIN RSA PRIVATE KEY-----
+void
+dump_to_file(bin_view_t input, const char* filename) {
+    std::fstream f{filename, std::fstream::out | std::fstream::binary};
+    f.write(reinterpret_cast<const char*>(input.data), input.size);
+}
+
+bin_view_t
+rsa_private_key() noexcept {
+    constexpr char Key[] = R"xx(-----BEGIN RSA PRIVATE KEY-----
 MIIEogIBAAKCAQEA4EjipWXxJPtz0KYDz5+fYWkGly7ieRJ2Zql9BkaIOjz3By/K
 L+jkYbUIwOQ+jM+FComsII9Y6309Db74sfwtykJoyUGTvMfHsZ/0VmgWOwPcUZ6v
 nw45D6YuOzoTRLSErR/Vd2EIjNlhYlHg8cy6j/M7IqlCrBfz5xdTVYkqU+c0dZ/z
@@ -122,15 +120,13 @@ ifoW5/jcSZTC6dhBxvMBI8nFyaxGzf76BrQFOLlTvg6eTDd2hY4FWHBst6k0OCAD
 CbLZAoGAEnJrPPR7CctuWHkWQeDcP38CmGkPYWPHWBOEf6GpSazKXPBXeSa+nNbt
 0k+n2u+8kymX+iYWsGVdGv3RKXFIzI4R9408SR5OZI1jAF6BZweYaE2RcVaferB3
 wyeaiI5gpvmQb/KVreVvagVNR7TJHO6ybG/rc2ssfVIAXmKHtOI=
------END RSA PRIVATE KEY-----)xx");
-
-    k.push_back('\0');
-    return k;
+-----END RSA PRIVATE KEY-----)xx";
+    return bin_view_t{reinterpret_cast<const uint8_t*>(Key), sizeof(Key)};
 }
 
-buffer_t
-rsa_private_key_password() {
-    buffer_t k(R"xx(-----BEGIN RSA PRIVATE KEY-----
+bin_view_t
+rsa_private_key_password() noexcept {
+    constexpr char Key[] = R"xx(-----BEGIN RSA PRIVATE KEY-----
 Proc-Type: 4,ENCRYPTED
 DEK-Info: AES-256-CBC,142902F647920CE4B7AE3C2913FDFA10
 
@@ -159,15 +155,13 @@ f/YCdO3rxvJqv2CeTxqJfYIg++js18Q0aZltNmX/3fw8D7RNCWZzmOJ6S5qwOlNZ
 XTuhmduauf2SGodpU4emhZDUkHJKAmYAsFg/BL0K09lLogHniNmYDoi+I26Dbte3
 Et0P926W1pf7lVnPoj8w2C7VWGOkY/o/bGZFYWEe00jTvZGo2cO0uYI/ivfSFSoc
 RAQ8ivI/WxzhB6YT3yG4jf/oPAMiC8WZEYhIqQd/yfZRRCGaGvjMnw4jYG+vVy+D
------END RSA PRIVATE KEY-----)xx");
-
-    k.push_back('\0');
-    return k;
+-----END RSA PRIVATE KEY-----)xx";
+    return bin_view_t{reinterpret_cast<const uint8_t*>(Key), sizeof(Key)};
 }
 
-buffer_t
-rsa_public_key() {
-    buffer_t k(R"xx(-----BEGIN PUBLIC KEY-----
+bin_view_t
+rsa_public_key() noexcept {
+    constexpr char Key[] = R"xx(-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4EjipWXxJPtz0KYDz5+f
 YWkGly7ieRJ2Zql9BkaIOjz3By/KL+jkYbUIwOQ+jM+FComsII9Y6309Db74sfwt
 ykJoyUGTvMfHsZ/0VmgWOwPcUZ6vnw45D6YuOzoTRLSErR/Vd2EIjNlhYlHg8cy6
@@ -175,19 +169,17 @@ j/M7IqlCrBfz5xdTVYkqU+c0dZ/z7FbbTgCA/9VjCPH3NjtJ34OWYY4HIok+ml8e
 rvlZkiBEIRW/rKiOUMBKy4fgGeWZZBsMaf4wkO8O8fBvfT1CZvxsQnAzN/boRm8t
 00GT5VmyHsgEHU3rKIf31yA834x5WqgOl7WV6GvGnrG9sWOH3/rJClxTadG3HiIa
 rQIDAQAB
------END PUBLIC KEY-----)xx");
-
-    k.push_back('\0');
-    return k;
+-----END PUBLIC KEY-----)xx";
+    return bin_view_t{reinterpret_cast<const uint8_t*>(Key), sizeof(Key)};
 }
 
-buffer_t
-long_text_signature() {
-    constexpr size_t length = sizeof(SignatureSha1);
-    return buffer_t(reinterpret_cast<const char*>(SignatureSha1), length);
+bin_view_t
+long_text_signature() noexcept {
+    return bin_view_t{reinterpret_cast<const uint8_t*>(SignatureSha1),
+                      sizeof(SignatureSha1)};
 }
 
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 } // namespace test
 } // namespace mbedcrypto
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------

@@ -2,11 +2,11 @@ project(mbedcrypto_tests)
 
 add_executable(${PROJECT_NAME}
     ./main.cpp
+    ./helper.cpp
     ./test_meta.cpp
     ./test_binutils.cpp
     ./test_errors.cpp
     ./test_types.cpp
-    # ./tdd/generator.cpp
     # ./tdd/test_cipher.cpp
     # ./tdd/test_ecp.cpp
     # ./tdd/test_exception.cpp

@@ -14,6 +14,8 @@ static_assert(std::is_nothrow_constructible<bin_view_t, const char*,    int>::va
 static_assert(std::is_nothrow_constructible<bin_view_t, const uint8_t*, size_t>::value, "");
 static_assert(std::is_nothrow_constructible<bin_view_t, unsigned char*, short>::value,  "");
 
+static_assert(std::is_constructible<bin_view_t, const char*>::value,  "");
+
 // incompatible pointer or size type
 static_assert(!std::is_nothrow_constructible<bin_view_t, const short*, size_t>::value, "");
 static_assert(!std::is_nothrow_constructible<bin_view_t, const void*,  size_t>::value, "");
@@ -49,5 +51,14 @@ TEST_CASE("binary utils", "[binutils]") {
         char buff[8] = {0};
         REQUIRE(is_empty(bin_view_t{buff, 0}));
         REQUIRE_FALSE(is_empty(bin_view_t{buff, 4}));
+    }
+    SECTION("iterators") {
+        bin_view_t src{"0123456789"};
+        char i = 0;
+        for (const auto& u : src) {
+            REQUIRE(u == i + '0');
+            ++i;
+        }
+        REQUIRE(i == 10);
     }
 }
