@@ -46,6 +46,10 @@ struct bin_view_t {
         : data{reinterpret_cast<const uint8_t*>(buffer)},
           size{static_cast<size_t>(length)} {}
 
+    bin_view_t(const char* text_src)
+        : data{reinterpret_cast<const uint8_t*>(text_src)},
+          size{std::strlen(text_src)} {}
+
     /// accepts any container with data() and size() member functions.
     /// ex: std::string, std::span, std::array, std::vector, QByteArray, ...
     template <typename Container>
@@ -59,7 +63,17 @@ struct bin_view_t {
 
     template <typename Container, typename = is_supported_t<Container>>
     bin_view_t(const Container& c) noexcept : bin_view_t{c.data(), c.size()} {}
+
+public: // iterators
+    using iterator       = const uint8_t*;
+    using const_iterator = const uint8_t*;
+    iterator       begin()  noexcept       { return data;        }
+    iterator       end()    noexcept       { return data + size; }
+    const_iterator cbegin() const noexcept { return data;        }
+    const_iterator cend()   const noexcept { return data + size; }
 }; // struct bin_view_t
+
+//-----------------------------------------------------------------------------
 
 constexpr inline bool
 is_empty(const bin_view_t& bv) noexcept {
