@@ -121,7 +121,8 @@ CbLZAoGAEnJrPPR7CctuWHkWQeDcP38CmGkPYWPHWBOEf6GpSazKXPBXeSa+nNbt
 0k+n2u+8kymX+iYWsGVdGv3RKXFIzI4R9408SR5OZI1jAF6BZweYaE2RcVaferB3
 wyeaiI5gpvmQb/KVreVvagVNR7TJHO6ybG/rc2ssfVIAXmKHtOI=
 -----END RSA PRIVATE KEY-----)xx";
-    return bin_view_t{reinterpret_cast<const uint8_t*>(Key), sizeof(Key)};
+    // sizeof(Key) - 1 excludes null byte, same as std::strlen(Key)
+    return bin_view_t{reinterpret_cast<const uint8_t*>(Key), sizeof(Key) - 1};
 }
 
 bin_view_t
@@ -156,7 +157,7 @@ XTuhmduauf2SGodpU4emhZDUkHJKAmYAsFg/BL0K09lLogHniNmYDoi+I26Dbte3
 Et0P926W1pf7lVnPoj8w2C7VWGOkY/o/bGZFYWEe00jTvZGo2cO0uYI/ivfSFSoc
 RAQ8ivI/WxzhB6YT3yG4jf/oPAMiC8WZEYhIqQd/yfZRRCGaGvjMnw4jYG+vVy+D
 -----END RSA PRIVATE KEY-----)xx";
-    return bin_view_t{reinterpret_cast<const uint8_t*>(Key), sizeof(Key)};
+    return bin_view_t{reinterpret_cast<const uint8_t*>(Key), sizeof(Key) - 1};
 }
 
 bin_view_t
@@ -170,7 +171,7 @@ rvlZkiBEIRW/rKiOUMBKy4fgGeWZZBsMaf4wkO8O8fBvfT1CZvxsQnAzN/boRm8t
 00GT5VmyHsgEHU3rKIf31yA834x5WqgOl7WV6GvGnrG9sWOH3/rJClxTadG3HiIa
 rQIDAQAB
 -----END PUBLIC KEY-----)xx";
-    return bin_view_t{reinterpret_cast<const uint8_t*>(Key), sizeof(Key)};
+    return bin_view_t{reinterpret_cast<const uint8_t*>(Key), sizeof(Key) - 1};
 }
 
 bin_view_t
