@@ -61,4 +61,18 @@ TEST_CASE("binary utils", "[binutils]") {
         }
         REQUIRE(i == 10);
     }
+    SECTION("comparison") {
+        std::array<char, 32> arr;
+        for (size_t i = 0; i < arr.size(); ++i)
+           arr[i] = i % 10; // also includes some null bytes
+
+        bin_view_t  bin{arr};
+        REQUIRE(bin.size == arr.size());
+
+        std::string str{arr.data(), arr.size()};
+        REQUIRE(str.size() == arr.size());
+
+        REQUIRE(str == bin);
+        REQUIRE(bin == str);
+    }
 }

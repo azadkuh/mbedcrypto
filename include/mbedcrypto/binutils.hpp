@@ -80,6 +80,17 @@ is_empty(const bin_view_t& bv) noexcept {
     return bv.size == 0 || bv.data == nullptr;
 }
 
+inline bool
+operator==(const std::string& a, bin_view_t b) {
+    return b.size == a.size()
+        && a.compare(0, b.size, reinterpret_cast<const char*>(b.data), b.size) == 0;
+}
+
+inline bool
+operator==(bin_view_t a, const std::string& b) {
+    return (b == a);
+}
+
 //-----------------------------------------------------------------------------
 } // namespace mbedcrypto
 //-----------------------------------------------------------------------------
