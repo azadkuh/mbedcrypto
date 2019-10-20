@@ -8,10 +8,10 @@ add_executable(${PROJECT_NAME}
     ./test_errors.cpp
     ./test_types.cpp
     ./test_text_codec.cpp
+    ./test_hash.cpp
     # ./tdd/test_cipher.cpp
     # ./tdd/test_ecp.cpp
     # ./tdd/test_exception.cpp
-    # ./tdd/test_hash.cpp
     # ./tdd/test_qt5.cpp
     # ./tdd/test_random.cpp
     # ./tdd/test_rsa.cpp
