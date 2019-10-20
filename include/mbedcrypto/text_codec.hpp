@@ -87,17 +87,19 @@ from_hex(Container& output, bin_view_t input) {
     return from_hex(input, reinterpret_cast<uint8_t*>(&output[0]), size);
 }
 
-inline std::pair<buffer_t, std::error_code>
+template <typename Container>
+inline std::pair<Container, std::error_code>
 to_hex(bin_view_t input) {
-    buffer_t output;
-    auto     ec = to_hex(output, input);
+    Container output;
+    auto      ec = to_hex(output, input);
     return {output, ec};
 }
 
-inline std::pair<buffer_t, std::error_code>
+template <typename Container>
+inline std::pair<Container, std::error_code>
 from_hex(bin_view_t input) {
-    buffer_t output;
-    auto     ec = from_hex(output, input);
+    Container output;
+    auto      ec = from_hex(output, input);
     return {output, ec};
 }
 
@@ -129,17 +131,19 @@ from_base64(Container& output, bin_view_t input) {
     return from_base64(input, reinterpret_cast<uint8_t*>(&output[0]), size);
 }
 
-inline std::pair<buffer_t, std::error_code>
+template <typename Container>
+inline std::pair<Container, std::error_code>
 to_base64(bin_view_t input) {
-    buffer_t output;
-    auto     ec = to_base64(output, input);
+    Container output;
+    auto      ec = to_base64(output, input);
     return {output, ec};
 }
 
-inline std::pair<buffer_t, std::error_code>
+template <typename Container>
+inline std::pair<Container, std::error_code>
 from_base64(bin_view_t input) {
-    buffer_t output;
-    auto     ec = from_base64(output, input);
+    Container output;
+    auto      ec = from_base64(output, input);
     return {output, ec};
 }
 

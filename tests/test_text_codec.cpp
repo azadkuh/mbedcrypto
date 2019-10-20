@@ -113,10 +113,10 @@ TEST_CASE("hex tests", "[hex]") {
 TEST_CASE("base64 tests", "[base64]") {
     SECTION("empty inputs") {
         const bin_view_t empty{};
-        auto e = to_base64(empty);
+        auto e = to_base64<std::string>(empty);
         REQUIRE_FALSE(e.second);
         REQUIRE(e.first.empty());
-        auto d = from_base64(empty);
+        auto d = from_base64<std::string>(empty);
         REQUIRE_FALSE(e.second);
         REQUIRE(e.first.empty());
     }
@@ -168,7 +168,7 @@ TEST_CASE("base64 tests", "[base64]") {
             REQUIRE(vec.empty());
         }
         SECTION("pair results") {
-            auto p = from_base64(SillyInput);
+            auto p = from_base64<std::string>(SillyInput);
             REQUIRE(p.second == make_error_code(error_t::bad_input));
             REQUIRE(p.first.empty());
         }
@@ -183,12 +183,12 @@ TEST_CASE("base64 tests", "[base64]") {
             REQUIRE(vec.size() == osize);
             //REQUIRE(std::equal(vec.cbegin(), vec.cend(), Base64LongText, Base64LongText + osize));
 
-            auto p = to_base64(test::long_text());
+            auto p = to_base64<std::string>(test::long_text());
             REQUIRE_FALSE(p.second);
             REQUIRE(p.first == Base64LongText);
         }
         SECTION("from_base64") {
-            auto p = from_base64(Base64LongText);
+            auto p = from_base64<std::string>(Base64LongText);
             REQUIRE_FALSE(p.second);
             REQUIRE(p.first == test::long_text());
         }
