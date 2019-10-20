@@ -51,7 +51,7 @@ TEST_CASE("hex tests", "[hex]") {
         SECTION("to_hex") {
             auto ec = to_hex(test::short_binary(), nullptr, osize);
             REQUIRE_FALSE(ec);
-            REQUIRE(osize == test::short_binary().size * 2);
+            REQUIRE(osize == test::short_binary().size * 2 + 1); // null-terminator
         }
         SECTION("from_hex") {
             auto ec = from_hex(HexShortBin, nullptr, osize);
@@ -66,7 +66,7 @@ TEST_CASE("hex tests", "[hex]") {
         SECTION("to_hex") {
             auto ec = to_hex(test::short_binary(), &output[0], osize);
             REQUIRE(ec    == make_error_code(error_t::small_output));
-            REQUIRE(osize == std::strlen(HexShortBin));
+            REQUIRE(osize == sizeof(HexShortBin)); // null-terminator
         }
         SECTION("from_hex") {
             auto ec = from_hex(HexShortBin, reinterpret_cast<uint8_t*>(&output[0]), osize);

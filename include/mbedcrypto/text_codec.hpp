@@ -15,15 +15,18 @@
 namespace mbedcrypto {
 //-----------------------------------------------------------------------------
 
-/** makes the hex string from any non-empty input.
+/** makes a hex string from any non-empty input.
  * if output == nullptr, then fills the required output size into output_size.
  * if output_size is smaller than required size, returns error and fills the
  * proper output_size.
+ *
+ * also appends a null-terminator to output, but output_size is the strlen() of
+ * the output (excludes null-terminator)
  */
 std::error_code
 to_hex(bin_view_t input, char* output, size_t& output_size) noexcept;
 
-/** converts from a hex string (accepts lower/upper case).
+/** decodes from a hex string (accepts lower/upper case).
  * if output == nullptr, then fills the required output size into output_size.
  * if output_size is smaller than required size, returns error and fills the
  * proper output_size.
@@ -33,22 +36,28 @@ to_hex(bin_view_t input, char* output, size_t& output_size) noexcept;
 std::error_code
 from_hex(bin_view_t input, uint8_t* output, size_t& output_size) noexcept;
 
+//-----------------------------------------------------------------------------
+// hex helper overloads
+
 template <typename Container>
 inline std::error_code
 to_hex(Container& output, bin_view_t input) {
     size_t size = 0;
-    auto ec = to_hex(input, nullptr, size);
+    auto   ec   = to_hex(input, nullptr, size);
     if (ec)
         return ec;
-    output.resize(size);
-    return to_hex(input, reinterpret_cast<char*>(&output[0]), size);
+    output.resize(size); // includes null-terminator
+    ec = to_hex(input, reinterpret_cast<char*>(&output[0]), size);
+    if (size && !ec) // remove null-terminator
+        output.resize(size);
+    return ec;
 }
 
 template <typename Container>
 inline std::error_code
 from_hex(Container& output, bin_view_t input) {
     size_t size = 0;
-    auto ec = from_hex(input, nullptr, size);
+    auto   ec   = from_hex(input, nullptr, size);
     if (ec)
         return ec;
     output.resize(size);
@@ -58,14 +67,14 @@ from_hex(Container& output, bin_view_t input) {
 inline std::pair<buffer_t, std::error_code>
 to_hex(bin_view_t input) {
     buffer_t output;
-    auto ec = to_hex(output, input);
+    auto     ec = to_hex(output, input);
     return {output, ec};
 }
 
 inline std::pair<buffer_t, std::error_code>
 from_hex(bin_view_t input) {
     buffer_t output;
-    auto ec = from_hex(output, input);
+    auto     ec = from_hex(output, input);
     return {output, ec};
 }
 

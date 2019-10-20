@@ -22,7 +22,7 @@ to_hex(bin_view_t input, char* output, size_t& osize) noexcept {
         return make_error_code(error_t::empty_input);
 
     const auto capacity = osize;
-    osize               = input.size << 1;
+    osize               = (input.size << 1) + 1; // inlcude null-terminator
 
     if (output == nullptr || capacity == 0) {
     } else if (capacity < osize) {
@@ -32,6 +32,7 @@ to_hex(bin_view_t input, char* output, size_t& osize) noexcept {
             output[i << 1]       = hex_lower(input.data[i] >> 4);
             output[(i << 1) + 1] = hex_lower(input.data[i] & 0x0f);
         }
+        output[--osize] = 0; // null-terminate
     }
 
     return std::error_code{};
@@ -48,9 +49,9 @@ from_hex(bin_view_t input, uint8_t* output, size_t& osize) noexcept {
     osize               = input.size >> 1;
 
     if (output == nullptr || capacity == 0) {
-    } else if (capacity < osize)
+    } else if (capacity < osize) {
         return make_error_code(error_t::small_output);
-    else {
+    } else {
         const auto* src = reinterpret_cast<const char*>(input.data);
         for (size_t i = 0; i < input.size; ++i, ++src) {
             char ch = *src;
