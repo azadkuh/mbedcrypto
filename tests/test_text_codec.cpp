@@ -110,3 +110,88 @@ TEST_CASE("hex tests", "[hex]") {
     }
 }
 
+TEST_CASE("base64 tests", "[base64]") {
+    SECTION("empty inputs") {
+        const bin_view_t empty{};
+        auto e = to_base64(empty);
+        REQUIRE_FALSE(e.second);
+        REQUIRE(e.first.empty());
+        auto d = from_base64(empty);
+        REQUIRE_FALSE(e.second);
+        REQUIRE(e.first.empty());
+    }
+
+    SECTION("find output size") {
+        size_t osize = 0;
+        SECTION("to_base64") {
+            auto ec = to_base64(test::short_text(), nullptr, osize);
+            REQUIRE_FALSE(ec);
+            REQUIRE(osize == sizeof(Base64ShortText)); // both include null-terminator
+        }
+        SECTION("from_base64") {
+            auto ec = from_base64(Base64ShortText, nullptr, osize);
+            REQUIRE_FALSE(ec);
+            REQUIRE(osize == std::strlen(test::short_text()));
+        }
+    }
+
+    SECTION("small output buffer") {
+        SECTION("to_base64") {
+            std::array<char, 8> small;
+            size_t osize = small.size();
+            auto ec = to_base64(test::short_text(), &small[0], osize);
+            REQUIRE(ec    == make_error_code(error_t::small_output));
+            REQUIRE(osize == sizeof(Base64ShortText)); // both include null-terminator
+        }
+        SECTION("from_base64") {
+            std::array<uint8_t, 4> small;
+            size_t osize = small.size();
+            auto ec = from_base64(Base64ShortText, &small[0], osize);
+            REQUIRE(ec    == make_error_code(error_t::small_output));
+            REQUIRE(osize == std::strlen(test::short_text()));
+        }
+    }
+
+    SECTION("invalid base64 input") {
+        constexpr char SillyInput[] = "(.)<==>(.)";
+        SECTION("raw api") {
+            std::array<uint8_t, 64> arr;
+            size_t osize = arr.size();
+            auto ec = from_base64(SillyInput, &arr[0], osize);
+            REQUIRE(ec    == make_error_code(error_t::bad_input));
+            REQUIRE(osize == 0);
+        }
+        SECTION("container") {
+            std::vector<uint8_t> vec;
+            auto ec = from_base64(vec, SillyInput);
+            REQUIRE(ec == make_error_code(error_t::bad_input));
+            REQUIRE(vec.empty());
+        }
+        SECTION("pair results") {
+            auto p = from_base64(SillyInput);
+            REQUIRE(p.second == make_error_code(error_t::bad_input));
+            REQUIRE(p.first.empty());
+        }
+    }
+
+    SECTION("encoding/decoding") {
+        SECTION("to_base64") {
+            std::vector<char> vec;
+            auto ec = to_base64(vec, test::long_text());
+            REQUIRE_FALSE(ec);
+            const auto osize = std::strlen(Base64LongText);
+            REQUIRE(vec.size() == osize);
+            //REQUIRE(std::equal(vec.cbegin(), vec.cend(), Base64LongText, Base64LongText + osize));
+
+            auto p = to_base64(test::long_text());
+            REQUIRE_FALSE(p.second);
+            REQUIRE(p.first == Base64LongText);
+        }
+        SECTION("from_base64") {
+            auto p = from_base64(Base64LongText);
+            REQUIRE_FALSE(p.second);
+            REQUIRE(p.first == test::long_text());
+        }
+    }
+}
+

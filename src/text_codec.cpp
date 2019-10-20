@@ -12,6 +12,15 @@ hex_lower(uint8_t u) noexcept {
     return "0123456789abcdef"[u & 0x0f];
 }
 
+inline std::error_code
+base64_error(int ret) noexcept {
+    if (ret == MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL)
+        return make_error_code(error_t::small_output);
+    else if (ret == MBEDTLS_ERR_BASE64_INVALID_CHARACTER)
+        return make_error_code(error_t::bad_input);
+    return mbedtls::make_error_code(ret);
+}
+
 //-----------------------------------------------------------------------------
 } // namespace anon
 //-----------------------------------------------------------------------------
@@ -71,6 +80,44 @@ from_hex(bin_view_t input, uint8_t* output, size_t& osize) noexcept {
     }
 
     return std::error_code{};
+}
+
+//-----------------------------------------------------------------------------
+
+std::error_code
+to_base64(bin_view_t input, char* output, size_t& osize) noexcept {
+    int ret = 0;
+    if (output == nullptr || osize == 0) {
+        ret = mbedtls_base64_encode(nullptr, 0, &osize, input.data, input.size);
+        if (ret == MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL)
+            ret = 0; // it's ok as we intentionally passed a nullptr output
+    } else {
+        size_t olen = 0;
+        ret         = mbedtls_base64_encode(
+            reinterpret_cast<uint8_t*>(output),
+            osize,
+            &olen,
+            input.data,
+            input.size);
+        osize = olen;
+    }
+    return (ret != 0) ? base64_error(ret) : std::error_code{};
+}
+
+std::error_code
+from_base64(bin_view_t input, uint8_t* output, size_t& osize) noexcept {
+    int ret = 0;
+    if (output == nullptr || osize == 0) {
+        ret = mbedtls_base64_decode(nullptr, 0, &osize, input.data, input.size);
+        if (ret == MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL)
+            ret = 0; // it's ok as we intentionally passed a nullptr output
+    } else {
+        size_t olen = 0;
+        ret =
+            mbedtls_base64_decode(output, osize, &olen, input.data, input.size);
+        osize = olen;
+    }
+    return (ret != 0) ? base64_error(ret) : std::error_code{};
 }
 
 //-----------------------------------------------------------------------------
