@@ -3,7 +3,7 @@
 #include "src/conversions.hpp"
 
 #include <initializer_list>
-#include <iostream>
+#include <cstdio>
 //-----------------------------------------------------------------------------
 namespace {
 //-----------------------------------------------------------------------------
@@ -20,77 +20,87 @@ hasHash(hash_t h) {
     REQUIRE(v == h);
 }
 
-std::ostream&
-operator<<(std::ostream& s, features f) {
-    if (supports(f))
-        s << "supports";
-    else
-        s << "does not support";
-
-    return s;
+const char*
+has(features f) noexcept {
+    return supports(f) ? "supports" : "does not support";
 }
 
 //-----------------------------------------------------------------------------
 } // namespace anon
 //-----------------------------------------------------------------------------
 
-TEST_CASE("mbedcrypto types checkings", "[types]") {
-    SECTION("list installed algorithms") {
-        auto hashes = installed_hashes();
-        REQUIRE(hashes.size() > 0);
-        std::cout << "\nsupports " << hashes.size() << " hash algorithms: ";
-        for (auto h : hashes) {
-            std::cout << to_string(h) << " , ";
-        }
+TEST_CASE("mbedcrypto size of types", "[types]") {
+    // change in enum sizes should break these numbers
+    REQUIRE(9  == all_hashes().size());
+    REQUIRE(5  == all_paddings().size());
+    REQUIRE(10 == all_block_modes().size());
+    REQUIRE(73 == all_ciphers().size());
+    REQUIRE(6  == all_pks().size());
+    REQUIRE(12 == all_curves().size());
+}
 
-        auto paddings = installed_paddings();
-        REQUIRE(paddings.size() > 0);
-        std::cout << "\nsupports " << paddings.size()
-                  << " padding algorithms: ";
-        for (auto p : paddings) {
-            std::cout << to_string(p) << " , ";
-        }
-
-        auto block_modes = installed_block_modes();
-        REQUIRE(block_modes.size() > 0);
-        std::cout << "\nsupports " << block_modes.size() << " block modes: ";
-        for (auto bm : block_modes) {
-            std::cout << to_string(bm) << " , ";
-        }
-
-        auto ciphers = installed_ciphers();
-        REQUIRE(ciphers.size() > 0);
-        std::cout << "\nsupports " << ciphers.size() << " cipher algorithms: ";
-        for (auto c : ciphers) {
-            std::cout << to_string(c) << " , ";
-        }
-        std::cout << "\n this system " << features::aes_ni
-                  << " AESNI (hardware accelerated AES)";
-        std::cout << "\n this build " << features::aead
-                  << " AEAD (authenticated encryption with additional data)";
-
-        auto pks = installed_pks();
-        std::cout << "\nsupports " << pks.size()
-                  << " pk (public key) algorithms: ";
-        for (auto p : pks) {
-            std::cout << to_string(p) << " , ";
-        }
-        std::cout << "\n this build " << features::pk_export
-                  << " PK export (*.pem, *.der) facility";
-        std::cout << "\n this build " << features::rsa_keygen
-                  << " RSA key generation";
-        std::cout << "\n this build " << features::ec_keygen
-                  << " EC (elliptic curve) key generation";
-
-        auto curves = installed_curves();
-        std::cout << "\nsupports " << curves.size() << " elliptic curves: ";
-        for (auto c : curves) {
-            std::cout << to_string(c) << " , ";
-        }
-
-        std::cout << std::endl;
+TEST_CASE("list supported algorithms", "[types]") {
+    {
+        auto list = supported_hashes();
+        REQUIRE(list.size() > 0);
+        std::printf("\nsupports %2zu (out of %2zu) hash algorithms: ",
+                list.size(), all_hashes().size());
+        for (auto l : list)
+            std::printf("%s, ", to_string(l));
     }
+    {
+        auto list = supported_paddings();
+        REQUIRE(list.size() > 0);
+        std::printf("\nsupports %2zu (out of %2zu) padding algorithms: ",
+                list.size(), all_paddings().size());
+        for (auto l : list)
+            std::printf("%s, ", to_string(l));
+    }
+    {
+        auto list = supported_block_modes();
+        REQUIRE(list.size() > 0);
+        std::printf("\nsupports %2zu (out of %2zu) block modes: ",
+                list.size(), all_block_modes().size());
+        for (auto l : list)
+            std::printf("%s, ", to_string(l));
+    }
+    {
+        auto list = supported_ciphers();
+        REQUIRE(list.size() > 0);
+        std::printf("\nsupports %2zu (out of %2zu) cipher algorithms: ",
+                list.size(), all_ciphers().size());
+        for (auto l : list)
+            std::printf("%s, ", to_string(l));
+    }
+    {
+        auto list = supported_pks();
+        REQUIRE(list.size() > 0);
+        std::printf("\nsupports %2zu (out of %2zu) pk (public key) algorithms: ",
+                list.size(), all_pks().size());
+        for (auto l : list)
+            std::printf("%s, ", to_string(l));
+    }
+    {
+        auto list = supported_curves(); // may be empty
+        std::printf("\nsupports %2zu (out of %2zu) elliptic curves: ",
+                list.size(), all_curves().size());
+        for (auto l : list)
+            std::printf("%s, ", to_string(l));
+    }
+    std::printf("\nthis build %s AES-NI (hardware accelarated)",
+            has(features::aes_ni));
+    std::printf("\nthis build %s AEAD (authenticated encryption by additional data)",
+            has(features::aead));
+    std::printf("\nthis build %s PK export (*.pem, *.der) facility",
+            has(features::pk_export));
+    std::printf("\nthis build %s RSA key generation",
+            has(features::rsa_keygen));
+    std::printf("\nthis build %s EC (elliptic curve) key generation",
+            has(features::ec_keygen));
+    std::puts("");
+}
 
+TEST_CASE("mbedcrypto types checkings", "[types]") {
     SECTION("hashes") {
         const std::initializer_list<hash_t> Items = {
             hash_t::md2,
