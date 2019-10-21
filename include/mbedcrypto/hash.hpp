@@ -34,6 +34,15 @@ make_hash(
     uint8_t*   output,
     size_t&    output_size) noexcept;
 
+/// makes the HMAC of an input/key pair.
+std::error_code
+make_hmac(
+    bin_view_t input,
+    bin_view_t key,
+    hash_t     algorithm,
+    uint8_t*   output,
+    size_t&    output_size) noexcept;
+
 /// makes the hash value for a file.
 /// the output and output_size should be large enough @sa hash_size()
 std::error_code
@@ -71,10 +80,10 @@ struct hash
     std::error_code start(hash_t) noexcept;
     /** feeds a chunk of data into an ongoing message-digest computation.
      * call start() before calling this function. you may call this function
-     * multiple times.  afterwards, call finish().
+     * multiple times. afterwards, call finish().
      */
     std::error_code update(bin_view_t chunk) noexcept;
-    /** finishes the digest operation and writes out into output.
+    /** finishes the digest operation and writes into output.
      * if output == nullptr or output_size == 0, returns the required hash size
      * into output_size.
      */
@@ -90,18 +99,55 @@ struct hash
 
     // move only
     hash();
-    ~hash();
-
     hash(hash&&) noexcept = default;
+    ~hash();
     hash& operator=(hash&&) noexcept = default;
 
 protected:
     struct impl;
     std::unique_ptr<impl> pimpl;
-}; // class hash
+}; // struct hash
 
 //-----------------------------------------------------------------------------
-// helper api
+
+struct hmac
+{
+    /// resets and starts digesting by specified algorithm.
+    std::error_code start(bin_view_t key, hash_t) noexcept;
+    /// resets and restart with the previous settings
+    std::error_code start() noexcept;
+    /** feeds a chunk of data into an ongoing hmac computation.
+     * call start() before calling this function. you may call this function
+     * multiple times. afterwards, call finish().
+     */
+    std::error_code update(bin_view_t chunk) noexcept;
+    /** finishes the hmac operation and writes into output.
+     * if output == nullptr or output_size == 0, returns the required hash size
+     * into output_size.
+     */
+    std::error_code finish(uint8_t* output, size_t& output_size) noexcept;
+
+    template <class Container>
+    std::error_code finish(Container& output) {
+        size_t osize = 0;
+        finish(nullptr, osize);
+        output.resize(osize);
+        return finish(reinterpret_cast<uint8_t*>(&output[0]), osize);
+    }
+
+    // move only
+    hmac();
+    hmac(hmac&&) noexcept = default;
+    ~hmac();
+    hmac& operator=(hmac&&) noexcept = default;
+
+protected:
+    struct impl;
+    std::unique_ptr<impl> pimpl;
+}; // struct hmac
+
+//-----------------------------------------------------------------------------
+// hash overloads
 
 template <class Container>
 inline std::error_code
@@ -137,6 +183,25 @@ make_sha512(bin_view_t input) {
     return make_hash<Container>(input, hash_t::sha512);
 }
 
+//-----------------------------------------------------------------------------
+// hmac overloads
+
+template <class Container>
+inline std::error_code
+make_hmac(Container& digest, bin_view_t input, bin_view_t key, hash_t algo) {
+    auto size = hash_size(algo);
+    digest.resize(size);
+    return make_hmac(
+        input, key, algo, reinterpret_cast<uint8_t*>(&digest[0]), size);
+}
+
+template <class Container>
+inline std::pair<Container, std::error_code>
+make_hmac(bin_view_t input, bin_view_t key, hash_t algo) {
+    Container digest;
+    auto      ec = make_hmac(digest, input, key, algo);
+    return {digest, ec};
+}
 
 //-----------------------------------------------------------------------------
 } // namespace mbedcrypto
