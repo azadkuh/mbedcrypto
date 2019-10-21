@@ -275,13 +275,21 @@ inline bool supports_curve(const char* name) noexcept{
 }
 
 
-/// list all installed algorithms, built into library
-std::vector<hash_t>    installed_hashes();
-std::vector<padding_t> installed_paddings();
-std::vector<cipher_bm> installed_block_modes();
-std::vector<cipher_t>  installed_ciphers();
-std::vector<pk_t>      installed_pks();
-std::vector<curve_t>   installed_curves();
+/// list all algorithms (regardless of build options)
+std::vector<hash_t>    all_hashes();
+std::vector<padding_t> all_paddings();
+std::vector<cipher_bm> all_block_modes();
+std::vector<cipher_t>  all_ciphers();
+std::vector<pk_t>      all_pks();
+std::vector<curve_t>   all_curves();
+
+/// list all supported algorithms (enabled by build options)
+std::vector<hash_t>    supported_hashes();
+std::vector<padding_t> supported_paddings();
+std::vector<cipher_bm> supported_block_modes();
+std::vector<cipher_t>  supported_ciphers();
+std::vector<pk_t>      supported_pks();
+std::vector<curve_t>   supported_curves();
 
 // clang-format on
 //-----------------------------------------------------------------------------

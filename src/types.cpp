@@ -11,7 +11,19 @@ namespace {
 
 template <typename Array, typename Enum = decltype(std::declval<Array>()[0].e)>
 inline auto
-list_installed(const Array& all) {
+list_all(const Array& all) {
+    std::vector<Enum> v;
+    v.reserve(std::extent<Array>::value);
+    for (const auto& i : all) {
+        if (i.e != Enum::unknown)
+            v.push_back(i.e);
+    }
+    return v;
+}
+
+template <typename Array, typename Enum = decltype(std::declval<Array>()[0].e)>
+inline auto
+list_supported(const Array& all) {
     std::vector<Enum> v;
     v.reserve(std::extent<Array>::value);
     for (const auto& i : all) {
@@ -603,33 +615,63 @@ supports(features f) noexcept {
 //-----------------------------------------------------------------------------
 
 std::vector<hash_t>
-installed_hashes() {
-    return list_installed(gHashes);
+all_hashes() {
+    return list_all(gHashes);
 }
 
 std::vector<padding_t>
-installed_paddings() {
-    return list_installed(gPaddings);
+all_paddings() {
+    return list_all(gPaddings);
 }
 
 std::vector<cipher_bm>
-installed_block_modes() {
-    return list_installed(gBlockModes);
+all_block_modes() {
+    return list_all(gBlockModes);
 }
 
 std::vector<cipher_t>
-installed_ciphers() {
-    return list_installed(gCiphers);
+all_ciphers() {
+    return list_all(gCiphers);
 }
 
 std::vector<pk_t>
-installed_pks() {
-    return list_installed(gPks);
+all_pks() {
+    return list_all(gPks);
 }
 
 std::vector<curve_t>
-installed_curves() {
-    return list_installed(gCurves);
+all_curves() {
+    return list_all(gCurves);
+}
+
+std::vector<hash_t>
+supported_hashes() {
+    return list_supported(gHashes);
+}
+
+std::vector<padding_t>
+supported_paddings() {
+    return list_supported(gPaddings);
+}
+
+std::vector<cipher_bm>
+supported_block_modes() {
+    return list_supported(gBlockModes);
+}
+
+std::vector<cipher_t>
+supported_ciphers() {
+    return list_supported(gCiphers);
+}
+
+std::vector<pk_t>
+supported_pks() {
+    return list_supported(gPks);
+}
+
+std::vector<curve_t>
+supported_curves() {
+    return list_supported(gCurves);
 }
 
 //-----------------------------------------------------------------------------
