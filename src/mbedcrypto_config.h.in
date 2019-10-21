@@ -27,9 +27,11 @@
 #cmakedefine MBEDCRYPTO_BM_CCM
 
 // cipher algorithms
-#cmakedefine MBEDCRYPTO_DES
+#cmakedefine MBEDCRYPTO_ARIA
 #cmakedefine MBEDCRYPTO_BLOWFISH
 #cmakedefine MBEDCRYPTO_CAMELLIA
+#cmakedefine MBEDCRYPTO_CHACHA20
+#cmakedefine MBEDCRYPTO_DES
 #cmakedefine MBEDCRYPTO_ARC4
 
 // PEM/DER key export

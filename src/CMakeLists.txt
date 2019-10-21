@@ -86,9 +86,9 @@ if(MBEDCRYPTO_BM_CCM)
 endif()
 
 #  cipher algorithms
-if(MBEDCRYPTO_DES)
-    set(MBEDTLS_DES_C ON)
-    target_sources(${PROJECT_NAME} PRIVATE ${MBEDTLS_SRCDIR}/des.c)
+if(MBEDCRYPTO_ARIA)
+    set(MBEDTLS_ARIA_C ON)
+    target_sources(${PROJECT_NAME} PRIVATE ${MBEDTLS_SRCDIR}/aria.c)
 endif()
 if(MBEDCRYPTO_BLOWFISH)
     set(MBEDTLS_BLOWFISH_C ON)
@@ -97,6 +97,20 @@ endif()
 if(MBEDCRYPTO_CAMELLIA)
     set(MBEDTLS_CAMELLIA_C ON)
     target_sources(${PROJECT_NAME} PRIVATE ${MBEDTLS_SRCDIR}/camellia.c)
+endif()
+if(MBEDCRYPTO_CHACHA20)
+    set(MBEDTLS_CHACHA20_C   ON)
+    set(MBEDTLS_CHACHAPOLY_C ON)
+    set(MBEDTLS_POLY1305_C   ON)
+    target_sources(${PROJECT_NAME} PRIVATE
+        ${MBEDTLS_SRCDIR}/chacha20.c
+        ${MBEDTLS_SRCDIR}/chachapoly.c
+        ${MBEDTLS_SRCDIR}/poly1305.c
+        )
+endif()
+if(MBEDCRYPTO_DES)
+    set(MBEDTLS_DES_C ON)
+    target_sources(${PROJECT_NAME} PRIVATE ${MBEDTLS_SRCDIR}/des.c)
 endif()
 if(MBEDCRYPTO_ARC4)
     set(MBEDTLS_ARC4_C ON)

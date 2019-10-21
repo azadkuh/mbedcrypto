@@ -86,6 +86,7 @@ enum class cipher_bm {
  * - @warning arc4 is a stream cipher with serious weaknesses in its initial
  * stream output, Its use is strongly discouraged. arc4 does not use mode
  * constructions.
+ * naming: chipher id + key bit len + possible blocking mode
  */
 enum class cipher_t {
     null, ///< identity cipher (no-op cipher)
@@ -136,6 +137,31 @@ enum class cipher_t {
     camellia_128_ccm,
     camellia_192_ccm,
     camellia_256_ccm,
+    aria_128_ecb,
+    aria_192_ecb,
+    aria_256_ecb,
+    aria_128_cbc,
+    aria_192_cbc,
+    aria_256_cbc,
+    aria_128_cfb128,
+    aria_192_cfb128,
+    aria_256_cfb128,
+    aria_128_ctr,
+    aria_192_ctr,
+    aria_256_ctr,
+    aria_128_gcm,
+    aria_192_gcm,
+    aria_256_gcm,
+    aria_128_ccm,
+    aria_192_ccm,
+    aria_256_ccm,
+    aes_128_ofb,
+    aes_192_ofb,
+    aes_256_ofb,
+    aes_128_xts,
+    aes_256_xts,
+    chacha20,
+    chacha20_poly1305,
     unknown, ///< invalid or unknown
 };
 

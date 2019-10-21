@@ -150,7 +150,7 @@ $mbedcrypto.build/> make install
 ```
 
 ### build options
-to trim the library size, only SHA/AES/RSA algorithms are included.
+to trim the library size, only SHA/AES/RSA algorithms are included by default.
 you can add other algorithms by these cmake options:
 
 | options               | message                                                         |
@@ -164,9 +164,11 @@ you can add other algorithms by these cmake options:
 | MBEDCRYPTO_BM_XTS     | enable xts (cipher stealing mode for aes-xts)                   |
 | MBEDCRYPTO_BM_GCM     | enable gcm (Galois cipher mode, for aead cryptography)          |
 | MBEDCRYPTO_BM_CCM     | enable ccm (counter cbc-mac cipher mode, for aead cryptography) |
-| MBEDCRYPTO_DES        | enable des and triple-des cipher (weak)                         |
+| MBEDCRYPTO_ARIA       | enable aria cipher                                              |
 | MBEDCRYPTO_BLOWFISH   | enable blowfish cipher                                          |
 | MBEDCRYPTO_CAMELLIA   | enable camellia cipher                                          |
+| MBEDCRYPTO_CHACHA20   | enable chacha20 & chacha20_poly ciphers                         |
+| MBEDCRYPTO_DES        | enable des and triple-des cipher (weak)                         |
 | MBEDCRYPTO_ARC4       | enable arc4 cipher (insecure)                                   |
 | MBEDCRYPTO_PK_EXPORT  | enable export keys in pem or der format                         |
 | MBEDCRYPTO_RSA_KEYGEN | enable rsa key generator                                        |

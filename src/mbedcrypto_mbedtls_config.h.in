@@ -75,12 +75,16 @@
 #cmakedefine MBEDTLS_CIPHER_MODE_CTR
 #cmakedefine MBEDTLS_CIPHER_MODE_XTS
 
+#cmakedefine MBEDTLS_ARIA_C
 #cmakedefine MBEDTLS_DES_C
 #cmakedefine MBEDTLS_BLOWFISH_C
 #cmakedefine MBEDTLS_CAMELLIA_C
 #cmakedefine MBEDTLS_ARC4_C
 #cmakedefine MBEDTLS_GCM_C
 #cmakedefine MBEDTLS_CCM_C
+#cmakedefine MBEDTLS_CHACHA20_C
+#cmakedefine MBEDTLS_CHACHAPOLY_C
+#cmakedefine MBEDTLS_POLY1305_C
 
 // pk
 #cmakedefine MBEDTLS_ASN1_WRITE_C

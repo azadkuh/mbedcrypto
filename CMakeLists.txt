@@ -26,10 +26,12 @@ option(MBEDCRYPTO_BM_CCM "enable ccm (counter cbc-mac cipher mode, for aead cryp
 
 ## optional cipher algorithms:
 ## note: AES is the de facto mandatory algorithm (not optional)
-option(MBEDCRYPTO_DES      "enable des and triple-des cipher" OFF)
-option(MBEDCRYPTO_BLOWFISH "enable blowfish cipher"           OFF)
-option(MBEDCRYPTO_CAMELLIA "enable camellia cipher"           OFF)
-option(MBEDCRYPTO_ARC4     "enable arc4 cipher (insecure)"    OFF)
+option(MBEDCRYPTO_ARIA     "enable aria cipher"                      OFF)
+option(MBEDCRYPTO_BLOWFISH "enable blowfish cipher"                  OFF)
+option(MBEDCRYPTO_CAMELLIA "enable camellia cipher"                  OFF)
+option(MBEDCRYPTO_CHACHA20 "enable chacha20 & chacha20_poly ciphers" OFF)
+option(MBEDCRYPTO_DES      "enable des and triple-des cipher"        OFF)
+option(MBEDCRYPTO_ARC4     "enable arc4 cipher (insecure)"           OFF)
 
 ## optional pk algorithm
 ## note: rsa is mandatory (not optional)
