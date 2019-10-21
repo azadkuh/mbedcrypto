@@ -71,7 +71,9 @@
 
 // cipher
 #cmakedefine MBEDTLS_CIPHER_MODE_CFB
+#cmakedefine MBEDTLS_CIPHER_MODE_OFB
 #cmakedefine MBEDTLS_CIPHER_MODE_CTR
+#cmakedefine MBEDTLS_CIPHER_MODE_XTS
 
 #cmakedefine MBEDTLS_DES_C
 #cmakedefine MBEDTLS_BLOWFISH_C

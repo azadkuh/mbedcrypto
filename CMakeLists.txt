@@ -17,10 +17,12 @@ option(MBEDCRYPTO_RIPEMD160 "enable ripemd160 hash"                     OFF)
 
 ## optional cipher block modes:
 ## note: ecb and cbc are mandatory (not optional)
-option(MBEDCRYPTO_CFB "enable cfb (cipher feedback mode)"                               OFF)
-option(MBEDCRYPTO_CTR "enable ctr (cipher counter mode)"                                OFF)
-option(MBEDCRYPTO_GCM "enable gcm (Galois cipher mode, for aead cryptographyf)"         OFF)
-option(MBEDCRYPTO_CCM "enable ccm (counter cbc-mac cipher mode, for aead cryptography)" OFF)
+option(MBEDCRYPTO_BM_CFB "enable cfb (cipher feedback mode)"                               OFF)
+option(MBEDCRYPTO_BM_OFB "enable ofb (output feedback mode)"                               OFF)
+option(MBEDCRYPTO_BM_CTR "enable ctr (cipher counter mode)"                                OFF)
+option(MBEDCRYPTO_BM_XTS "enable xts (cipher text stealing mode)"                          OFF)
+option(MBEDCRYPTO_BM_GCM "enable gcm (Galois cipher mode, for aead cryptography)"          OFF)
+option(MBEDCRYPTO_BM_CCM "enable ccm (counter cbc-mac cipher mode, for aead cryptography)" OFF)
 
 ## optional cipher algorithms:
 ## note: AES is the de facto mandatory algorithm (not optional)

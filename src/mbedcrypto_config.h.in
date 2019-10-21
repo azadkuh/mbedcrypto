@@ -18,17 +18,15 @@
 #cmakedefine MBEDCRYPTO_MD4
 #cmakedefine MBEDCRYPTO_RIPEMD160
 
-// cipher modes:
-// cipher feedback mode
-#cmakedefine MBEDCRYPTO_CFB
-// cipher counter mdoe
-#cmakedefine MBEDCRYPTO_CTR
-// Galois cipher mode (for AEAD)
-#cmakedefine MBEDCRYPTO_GCM
-// counter cbc-mac mode (for AEAD)
-#cmakedefine MBEDCRYPTO_CCM
+// cipher blocking modes:
+#cmakedefine MBEDCRYPTO_BM_CFB
+#cmakedefine MBEDCRYPTO_BM_OFB
+#cmakedefine MBEDCRYPTO_BM_CTR
+#cmakedefine MBEDCRYPTO_BM_XTS
+#cmakedefine MBEDCRYPTO_BM_GCM
+#cmakedefine MBEDCRYPTO_BM_CCM
 
-// DES and 3DES
+// cipher algorithms
 #cmakedefine MBEDCRYPTO_DES
 #cmakedefine MBEDCRYPTO_BLOWFISH
 #cmakedefine MBEDCRYPTO_CAMELLIA
