@@ -66,14 +66,17 @@ enum class padding_t {
  * needs iv, does not require padding
  */
 enum class cipher_bm {
-    ecb,     ///< electronic codebook, input size = N * block_size
-    cbc,     ///< cipher block chaining, custom input size
-    cfb,     ///< cipher feedback, custom input size
-    ctr,     ///< counter, custom input size
-    gcm,     ///< Galois/counter mode
-    ccm,     ///< counter with cbc-mac
-    stream,  ///< as in arc4_128 or null ciphers (insecure)
-    unknown, ///< none or unknown
+    ecb,        ///< electronic codebook, input size = N * block_size
+    cbc,        ///< cipher block chaining, custom input size
+    cfb,        ///< cipher feedback, custom input size
+    ofb,        ///< output feedback, custom input size
+    ctr,        ///< counter, custom input size
+    gcm,        ///< Galois/counter mode
+    ccm,        ///< counter with cbc-mac
+    xts,        ///< cipher text stealing of aes-xts
+    stream,     ///< as in arc4_128 or null ciphers (insecure)
+    chachapoly, ///< only is used in chaha-poly ciphers
+    unknown,    ///< none or unknown
 };
 
 /** all possible supported cipher types in mbedcrypto.

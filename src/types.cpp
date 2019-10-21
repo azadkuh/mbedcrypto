@@ -46,14 +46,17 @@ const details::enum_name<padding_t> gPaddings[] = {
 };
 
 const details::enum_name<cipher_bm> gBlockModes[] = {
-    {cipher_bm::ecb,     "ecb"},
-    {cipher_bm::cbc,     "cbc"},
-    {cipher_bm::cfb,     "cfb"},
-    {cipher_bm::ctr,     "ctr"},
-    {cipher_bm::gcm,     "gcm"},
-    {cipher_bm::ccm,     "ccm"},
-    {cipher_bm::stream,  "stream"},
-    {cipher_bm::unknown, "unknown"},
+    {cipher_bm::ecb,        "ecb"},
+    {cipher_bm::cbc,        "cbc"},
+    {cipher_bm::cfb,        "cfb"},
+    {cipher_bm::ofb,        "ofb"},
+    {cipher_bm::ctr,        "ctr"},
+    {cipher_bm::gcm,        "gcm"},
+    {cipher_bm::ccm,        "ccm"},
+    {cipher_bm::xts,        "xts"},
+    {cipher_bm::stream,     "stream"},
+    {cipher_bm::chachapoly, "chachapoly"},
+    {cipher_bm::unknown,    "unknown"},
 };
 
 const details::enum_name<cipher_t> gCiphers[] = {
@@ -159,14 +162,17 @@ const details::enum_pair<padding_t, mbedtls_cipher_padding_t> gPaddingPairs[] = 
 };
 
 const details::enum_pair<cipher_bm, mbedtls_cipher_mode_t> gBlockModePairs[] = {
-    {cipher_bm::ecb,     MBEDTLS_MODE_ECB},
-    {cipher_bm::cbc,     MBEDTLS_MODE_CBC},
-    {cipher_bm::cfb,     MBEDTLS_MODE_CFB},
-    {cipher_bm::ctr,     MBEDTLS_MODE_CTR},
-    {cipher_bm::gcm,     MBEDTLS_MODE_GCM},
-    {cipher_bm::stream,  MBEDTLS_MODE_STREAM},
-    {cipher_bm::ccm,     MBEDTLS_MODE_CCM},
-    {cipher_bm::unknown, MBEDTLS_MODE_NONE},
+    {cipher_bm::ecb,        MBEDTLS_MODE_ECB},
+    {cipher_bm::cbc,        MBEDTLS_MODE_CBC},
+    {cipher_bm::cfb,        MBEDTLS_MODE_CFB},
+    {cipher_bm::ofb,        MBEDTLS_MODE_OFB},
+    {cipher_bm::ctr,        MBEDTLS_MODE_CTR},
+    {cipher_bm::gcm,        MBEDTLS_MODE_GCM},
+    {cipher_bm::ccm,        MBEDTLS_MODE_CCM},
+    {cipher_bm::xts,        MBEDTLS_MODE_XTS},
+    {cipher_bm::stream,     MBEDTLS_MODE_STREAM},
+    {cipher_bm::chachapoly, MBEDTLS_MODE_CHACHAPOLY},
+    {cipher_bm::unknown,    MBEDTLS_MODE_NONE},
 };
 
 const details::enum_pair<cipher_t, mbedtls_cipher_type_t> gCipherPairs[] = {
@@ -418,6 +424,10 @@ supports(cipher_bm bm) noexcept {
     else if (bm == cipher_bm::cfb)
         return true;
 #endif
+#if defined(MBEDTLS_CIPHER_MODE_OFB)
+    else if (bm == cipher_bm::ofb)
+        return true;
+#endif
 #if defined(MBEDTLS_CIPHER_MODE_CTR)
     else if (bm == cipher_bm::ctr)
         return true;
@@ -430,8 +440,16 @@ supports(cipher_bm bm) noexcept {
     else if (bm == cipher_bm::ccm)
         return true;
 #endif
-#if defined(MBEDTLS_ARC4_C)
+#if defined(MBEDTLS_CIPHER_MODE_XTS)
+    else if (bm == cipher_bm::xts)
+        return true;
+#endif
+#if defined(MBEDTLS_CIPHER_MODE_STREAM)
     else if (bm == cipher_bm::stream)
+        return true;
+#endif
+#if defined(MBEDTLS_CHACHAPOLY_C)
+    else if (bm == cipher_bm::chachapoly)
         return true;
 #endif
     return false;

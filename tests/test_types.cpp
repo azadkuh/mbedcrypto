@@ -179,10 +179,13 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
             cipher_bm::ecb,
             cipher_bm::cbc,
             cipher_bm::cfb,
+            cipher_bm::ofb,
             cipher_bm::ctr,
             cipher_bm::gcm,
             cipher_bm::ccm,
+            cipher_bm::xts,
             cipher_bm::stream,
+            cipher_bm::chachapoly,
             cipher_bm::unknown,
         };
 
