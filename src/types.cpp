@@ -1,10 +1,9 @@
 #include "mbedcrypto/types.hpp"
-// #include "mbedcrypto/cipher.hpp"
-// #include "mbedcrypto/pk.hpp"
 
 #include "./enumerator.hxx"
 #include "./conversions.hpp"
 
+#include <mbedtls/aesni.h>
 //-----------------------------------------------------------------------------
 namespace mbedcrypto {
 namespace {
@@ -508,14 +507,19 @@ supports(curve_t e) noexcept {
 }
 
 bool
-supports(features) noexcept {
+supports(features f) noexcept {
+    if (f == features::aes_ni) {
+#if defined(MBEDTLS_HAVE_X86_64) && defined(MBEDTLS_AESNI_C)
+        return mbedtls_aesni_has_support(MBEDTLS_AESNI_AES) == 1;
+#endif
+    } else if (f == features::aead) {
+#if defined(MBEDTLS_CIPHER_MODE_AEAD)
+        return true;
+#endif
+    }
     return false;
 #if 0 // yet to be refactored
     switch (f) {
-    case features::aes_ni:
-        return cipher::supports_aes_ni();
-    case features::aead:
-        return cipher::supports_aead();
     case features::pk_export:
         return pk::supports_key_export();
     case features::rsa_keygen:
