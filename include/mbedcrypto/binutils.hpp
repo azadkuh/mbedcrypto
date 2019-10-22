@@ -29,7 +29,10 @@ using buffer_t = std::string;
 
 //-----------------------------------------------------------------------------
 
-/// a view for binary (or text) data.
+/** a view (immutable) interface for binary (or text) data.
+ * can accept raw buffers and different containers (std::string, std::vector,
+ * QByteArray, std::span, std::string_view, std::array, ...).
+ */
 struct bin_view_t {
     const uint8_t* data = nullptr;
     size_t         size = 0;
@@ -38,20 +41,20 @@ struct bin_view_t {
 
     /// accepts char, unsigned char, ... or any other single-byte type
     template <
-        typename T,
-        typename Size,
+        typename T,      // T should be single-byte as char or uint8_t
+        typename Size,   // Size should be integral as size_t or int
         typename = std::enable_if_t<sizeof(T) == 1 && std::is_integral<Size>::value>
         >
     bin_view_t(const T* buffer, Size length) noexcept
         : data{reinterpret_cast<const uint8_t*>(buffer)},
           size{static_cast<size_t>(length)} {}
 
+    /// accepts null-terminated strings
     bin_view_t(const char* text_src)
         : data{reinterpret_cast<const uint8_t*>(text_src)},
           size{std::strlen(text_src)} {}
 
     /// accepts any container with data() and size() member functions.
-    /// ex: std::string, std::span, std::array, std::vector, QByteArray, ...
     template <typename Container>
     using is_supported_t = std::enable_if_t<
         std::is_constructible<
@@ -81,14 +84,20 @@ is_empty(const bin_view_t& bv) noexcept {
 }
 
 inline bool
-operator==(const std::string& a, bin_view_t b) {
-    return b.size == a.size()
-        && a.compare(0, b.size, reinterpret_cast<const char*>(b.data), b.size) == 0;
+operator==(bin_view_t a, bin_view_t b) {
+    return a.size == b.size && std::memcmp(a.data, b.data, a.size) == 0;
 }
 
+template <typename Container>
 inline bool
-operator==(bin_view_t a, const std::string& b) {
-    return (b == a);
+operator==(const Container& a, bin_view_t b) {
+    return bin_view_t{a} == b;
+}
+
+template <typename Container>
+inline bool
+operator==(bin_view_t a, const Container& b) {
+    return a == bin_view_t{b};
 }
 
 //-----------------------------------------------------------------------------
