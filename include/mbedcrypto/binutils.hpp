@@ -29,6 +29,71 @@ using buffer_t = std::string;
 
 //-----------------------------------------------------------------------------
 
+/** an editor (mutable) interface for binary (or text) data.
+ * can accept most resizable containers as: std::string, std::vector,
+ * QByteArray, ...
+ */
+struct bin_edit_t final
+{
+    uint8_t* data = nullptr;
+    size_t   size = 0;
+
+    void resize(size_t sz) { pimpl->resize(*this, sz); }
+
+public: // iterator
+    using iterator       = uint8_t*;
+    using const_iterator = const uint8_t*;
+    iterator       begin()  noexcept       { return data;        }
+    iterator       end()    noexcept       { return data + size; }
+    const_iterator cbegin() const noexcept { return data;        }
+    const_iterator cend()   const noexcept { return data + size; }
+
+public:
+    template <typename T,                                  // T
+        typename S = decltype(std::declval<T>().size()),   // has size()
+        typename O = decltype(std::declval<T>()[42]),      // has operator[size_t/int]()
+        typename = decltype(std::declval<T>().resize(42)), // has resize(size_t/int)
+        typename = std::enable_if_t<                       // also:
+            std::is_reference<O>::value                    // operator[] returns a reference
+            && !std::is_const<O>::value                    // operator[] is a mutable reference
+            && sizeof(std::remove_reference_t<O>) == 1     // operator[] returns a single-byte reference
+            && std::is_integral<S>::value                  // size() returns an integral
+    >>
+    bin_edit_t(T& ref) : pimpl{/*placement*/new(stack) model<T>{*this, ref}} {}
+
+    ~bin_edit_t() { pimpl->~concept_t(); }
+    bin_edit_t() noexcept             = delete;
+    bin_edit_t(const bin_edit_t&)     = delete;
+    bin_edit_t(bin_edit_t&&) noexcept = delete;
+
+protected:
+    struct concept_t {
+        virtual ~concept_t() = default;
+        virtual void resize(bin_edit_t&, size_t) = 0;
+    };
+
+    template <typename T> struct model final : concept_t {
+        T& container;
+        explicit model(bin_edit_t& self, T& t) : container{t} {
+            assign(self);
+        }
+        void resize(bin_edit_t& self, size_t sz) override {
+            container.resize(sz);
+            assign(self);
+        }
+        void assign(bin_edit_t& self) {
+            self.data = reinterpret_cast<uint8_t*>(&container[0]);
+            self.size = container.size();
+        }
+    };
+
+    constexpr static size_t Size = 2 * sizeof(void*);
+    char       stack[Size] = {};
+    concept_t* pimpl       = nullptr;
+}; // struct bin_edit_t
+
+//-----------------------------------------------------------------------------
+
 /** a view (immutable) interface for binary (or text) data.
  * can accept raw buffers and different containers (std::string, std::vector,
  * QByteArray, std::span, std::string_view, std::array, ...).
@@ -66,6 +131,8 @@ struct bin_view_t {
 
     template <typename Container, typename = is_supported_t<Container>>
     bin_view_t(const Container& c) noexcept : bin_view_t{c.data(), c.size()} {}
+
+    bin_view_t(const bin_edit_t& be) noexcept : bin_view_t{be.data, be.size} {}
 
 public: // iterators
     using iterator       = const uint8_t*;
