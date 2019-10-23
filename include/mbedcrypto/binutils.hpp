@@ -19,6 +19,10 @@
 namespace mbedcrypto {
 //-----------------------------------------------------------------------------
 
+/** resizes a container, @sa obuffer_t::resize().
+ * write an overload for any container you want to use as output if it has
+ * different signature than T::resize(size_t)
+ */
 template <typename T, typename = decltype(std::declval<T&>().resize(42))>
 inline void
 resize(T& ref, size_t sz) {
@@ -69,7 +73,7 @@ struct bin_edit_t
     >
     bin_edit_t(Container& c) noexcept : bin_edit_t{&c[0], c.size()} {}
 
-public: // iterator
+public: // iterators
     using iterator       = uint8_t*;
     using const_iterator = const uint8_t*;
     iterator       begin()  noexcept       { return data;        }
@@ -134,8 +138,8 @@ public: // iterators
 //-----------------------------------------------------------------------------
 
 /** an mutable wrapper interface for binary (or text) containers.
- * accepts most resizable containers as: std::string, std::vector,
- * QByteArray, ...
+ * accepts most resizable containers such as: std::string, std::vector<uint8_t>,
+ * QByteArray, QVector<uint8_t>, ...
  */
 struct obuffer_t final : bin_edit_t
 {
@@ -154,7 +158,7 @@ struct obuffer_t final : bin_edit_t
     obuffer_t(const obuffer_t&)     = delete;
     obuffer_t(obuffer_t&&) noexcept = delete;
 
-protected:
+protected: // type-erased and generic holder to a resizable container reference.
     struct concept_t {
         virtual ~concept_t() = default;
         virtual void resize(bin_edit_t&, size_t) = 0;
