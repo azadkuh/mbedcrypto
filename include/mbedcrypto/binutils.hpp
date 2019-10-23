@@ -9,7 +9,6 @@
 #ifndef MBEDCRYPTO_BINUTILS_HPP
 #define MBEDCRYPTO_BINUTILS_HPP
 
-#include "mbedcrypto/meta.hxx"
 #include <string>
 
 #if defined(QT_CORE_LIB)

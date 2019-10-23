@@ -3,7 +3,6 @@ project(mbedcrypto_tests)
 add_executable(${PROJECT_NAME}
     ./main.cpp
     ./helper.cpp
-    ./test_meta.cpp
     ./test_binutils.cpp
     ./test_errors.cpp
     ./test_types.cpp
