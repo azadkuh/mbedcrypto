@@ -19,25 +19,55 @@
 namespace mbedcrypto {
 //-----------------------------------------------------------------------------
 
-/// std::string is able to hold both TEXT and Binary data.
-/// as encryption is frequently being used with both text strings and binaries,
-/// std::string is more convenient than std::vector<unsigned char> or
-/// std::basic_string<unsigned char>.
-/// although std::vector<unsigned char> is a better options for binary contents.
-using buffer_t = std::string;
+template <typename T, typename = decltype(std::declval<T&>().resize(42))>
+inline void
+resize(T& ref, size_t sz) {
+    ref.resize(sz);
+}
+
+#if defined(QT_CORE_LIB)
+template <>
+inline void
+resize(QByteArray& ref, size_t sz) {
+    ref.resize(static_cast<int>(sz));
+}
+#endif
 
 //-----------------------------------------------------------------------------
 
-/** an editor (mutable) interface for binary (or text) data.
- * can accept most resizable containers as: std::string, std::vector,
- * QByteArray, ...
+/** an editable (mutable) interface for binary (or text) data.
+ * can accept raw buffers and different containers (std::string, std::vector,
+ * QByteArray, std::span, std::string_view, std::array, ...).
  */
-struct bin_edit_t final
+struct bin_edit_t
 {
     uint8_t* data = nullptr;
     size_t   size = 0;
 
-    void resize(size_t sz) { pimpl->resize(*this, sz); }
+    bin_edit_t() noexcept = default;
+
+    template <
+        typename Elem,
+        typename Size,
+        typename = std::enable_if_t<
+            sizeof(Elem) == 1                   // Elem has to be single-byte
+            && !std::is_const<Elem>::value      // Elem should be mutable
+            && std::is_integral<Size>::value    // Size should be integral
+        >
+    >
+    bin_edit_t(Elem* buffer, Size length) noexcept
+        : data{reinterpret_cast<uint8_t*>(buffer)},
+          size{static_cast<size_t>(length)} {}
+
+    template <typename Container,
+         typename S = decltype(std::declval<const Container&>().size()),
+         typename P = decltype(&std::declval<Container&>()[42]),
+         typename = std::enable_if_t<
+             std::is_pointer<P>::value &&
+             std::is_constructible<bin_edit_t, P, S>::value
+         >
+    >
+    bin_edit_t(Container& c) noexcept : bin_edit_t{&c[0], c.size()} {}
 
 public: // iterator
     using iterator       = uint8_t*;
@@ -46,55 +76,12 @@ public: // iterator
     iterator       end()    noexcept       { return data + size; }
     const_iterator cbegin() const noexcept { return data;        }
     const_iterator cend()   const noexcept { return data + size; }
-
-public:
-    template <typename T,                                  // T
-        typename S = decltype(std::declval<T>().size()),   // has size()
-        typename O = decltype(std::declval<T>()[42]),      // has operator[size_t/int]()
-        typename = decltype(std::declval<T>().resize(42)), // has resize(size_t/int)
-        typename = std::enable_if_t<                       // also:
-            std::is_reference<O>::value                    // operator[] returns a reference
-            && !std::is_const<O>::value                    // operator[] is a mutable reference
-            && sizeof(std::remove_reference_t<O>) == 1     // operator[] returns a single-byte reference
-            && std::is_integral<S>::value                  // size() returns an integral
-    >>
-    bin_edit_t(T& ref) : pimpl{/*placement*/new(stack) model<T>{*this, ref}} {}
-
-    ~bin_edit_t() { pimpl->~concept_t(); }
-    bin_edit_t() noexcept             = delete;
-    bin_edit_t(const bin_edit_t&)     = delete;
-    bin_edit_t(bin_edit_t&&) noexcept = delete;
-
-protected:
-    struct concept_t {
-        virtual ~concept_t() = default;
-        virtual void resize(bin_edit_t&, size_t) = 0;
-    };
-
-    template <typename T> struct model final : concept_t {
-        T& container;
-        explicit model(bin_edit_t& self, T& t) : container{t} {
-            assign(self);
-        }
-        void resize(bin_edit_t& self, size_t sz) override {
-            container.resize(sz);
-            assign(self);
-        }
-        void assign(bin_edit_t& self) {
-            self.data = reinterpret_cast<uint8_t*>(&container[0]);
-            self.size = container.size();
-        }
-    };
-
-    constexpr static size_t Size = 2 * sizeof(void*);
-    char       stack[Size] = {};
-    concept_t* pimpl       = nullptr;
 }; // struct bin_edit_t
 
 //-----------------------------------------------------------------------------
 
 /** a view (immutable) interface for binary (or text) data.
- * can accept raw buffers and different containers (std::string, std::vector,
+ * accepts raw buffers and different containers (std::string, std::vector,
  * QByteArray, std::span, std::string_view, std::array, ...).
  */
 struct bin_view_t {
@@ -105,11 +92,13 @@ struct bin_view_t {
 
     /// accepts char, unsigned char, ... or any other single-byte type
     template <
-        typename T,      // T should be single-byte as char or uint8_t
-        typename Size,   // Size should be integral as size_t or int
-        typename = std::enable_if_t<sizeof(T) == 1 && std::is_integral<Size>::value>
+        typename Elem, // Elem should be single-byte as char or uint8_t
+        typename Size, // Size should be integral as size_t or int
+        typename = std::enable_if_t<
+            sizeof(Elem) == 1 && std::is_integral<Size>::value
         >
-    bin_view_t(const T* buffer, Size length) noexcept
+    >
+    bin_view_t(const Elem* buffer, Size length) noexcept
         : data{reinterpret_cast<const uint8_t*>(buffer)},
           size{static_cast<size_t>(length)} {}
 
@@ -123,8 +112,8 @@ struct bin_view_t {
     using is_supported_t = std::enable_if_t<
         std::is_constructible<
             bin_view_t,
-            decltype(std::declval<Container>().data()),
-            decltype(std::declval<Container>().size())
+            decltype(std::declval<const Container&>().data()),
+            decltype(std::declval<const Container&>().size())
         >::value
     >;
 
@@ -141,6 +130,55 @@ public: // iterators
     const_iterator cbegin() const noexcept { return data;        }
     const_iterator cend()   const noexcept { return data + size; }
 }; // struct bin_view_t
+
+//-----------------------------------------------------------------------------
+
+/** an mutable wrapper interface for binary (or text) containers.
+ * accepts most resizable containers as: std::string, std::vector,
+ * QByteArray, ...
+ */
+struct obuffer_t final : bin_edit_t
+{
+    void resize(size_t sz) { pimpl->resize(*this, sz); }
+
+    template <
+        typename Container,
+        typename = decltype(mbedcrypto::resize(std::declval<Container&>(), 42)),
+        typename = std::enable_if_t<std::is_constructible<bin_edit_t, Container&>::value>
+    >
+    obuffer_t(Container& ref)
+        : pimpl{/*placement*/ new (stack) model<Container>{*this, ref}} {}
+
+    ~obuffer_t() { pimpl->~concept_t(); }
+    obuffer_t() noexcept            = delete;
+    obuffer_t(const obuffer_t&)     = delete;
+    obuffer_t(obuffer_t&&) noexcept = delete;
+
+protected:
+    struct concept_t {
+        virtual ~concept_t() = default;
+        virtual void resize(bin_edit_t&, size_t) = 0;
+    };
+
+    template <typename Container> struct model final : concept_t {
+        Container& container;
+        explicit model(bin_edit_t& self, Container& t) : container{t} {
+            assign(self);
+        }
+        void resize(bin_edit_t& self, size_t sz) override {
+            mbedcrypto::resize(container, sz);
+            assign(self);
+        }
+        void assign(bin_edit_t& self) {
+            self.data = reinterpret_cast<uint8_t*>(&container[0]);
+            self.size = container.size();
+        }
+    };
+
+    constexpr static size_t Size = 2 * sizeof(void*);
+    char       stack[Size] = {};
+    concept_t* pimpl       = nullptr;
+}; // struct obuffer_t
 
 //-----------------------------------------------------------------------------
 

@@ -35,9 +35,9 @@ add_library(${PROJECT_NAME}
     ${MBEDTLS_SRCDIR}/platform.c
     errors.cpp
     types.cpp
-    text_codec.cpp
-    hash.cpp
-    cipher.cpp
+    # text_codec.cpp
+    # hash.cpp
+    # cipher.cpp
     # mpi.cpp
     # rnd_generator.cpp
     # pk.cpp

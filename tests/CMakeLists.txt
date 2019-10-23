@@ -4,11 +4,11 @@ add_executable(${PROJECT_NAME}
     ./main.cpp
     ./helper.cpp
     ./test_binutils.cpp
-    ./test_errors.cpp
-    ./test_types.cpp
-    ./test_text_codec.cpp
-    ./test_hash.cpp
-    ./test_cipher.cpp
+    # ./test_errors.cpp
+    # ./test_types.cpp
+    # ./test_text_codec.cpp
+    # ./test_hash.cpp
+    # ./test_cipher.cpp
     # ./tdd/test_ecp.cpp
     # ./tdd/test_exception.cpp
     # ./tdd/test_qt5.cpp
