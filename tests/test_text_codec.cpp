@@ -39,70 +39,70 @@ constexpr char Base64LongText[] =
 
 TEST_CASE("hex tests", "[hex]") {
     SECTION("empty inputs") {
-        size_t osize = 0;
-        auto ec = to_hex(bin_view_t{}, nullptr, osize);
+        bin_edit_t output;
+        auto ec = to_hex(output, bin_view_t{});
         REQUIRE(ec == make_error_code(error_t::empty_input));
-        ec = from_hex(bin_view_t{}, nullptr, osize);
+        ec = from_hex(output, bin_view_t{});
         REQUIRE(ec == make_error_code(error_t::empty_input));
     }
 
     SECTION("find output size") {
-        size_t osize = 0;
+        bin_edit_t output;
         SECTION("to_hex") {
-            auto ec = to_hex(test::short_binary(), nullptr, osize);
-            REQUIRE_FALSE(ec);
-            REQUIRE(osize == test::short_binary().size * 2 + 1); // null-terminator
+            auto ec = to_hex(output, test::short_binary());
+            REQUIRE_FALSE(ec); // to find the required size
+            REQUIRE(output.size == test::short_binary().size * 2 + 1); // null-terminator
         }
         SECTION("from_hex") {
-            auto ec = from_hex(HexShortBin, nullptr, osize);
+            auto ec = from_hex(output, HexShortBin);
             REQUIRE_FALSE(ec);
-            REQUIRE(osize * 2 == std::strlen(HexShortBin));
+            REQUIRE(output.size * 2 == std::strlen(HexShortBin));
         }
     }
 
     SECTION("small output buffer") {
         std::array<char, 16> output;
-        size_t osize = output.size();
+        bin_edit_t wrapper{output};
         SECTION("to_hex") {
-            auto ec = to_hex(test::short_binary(), &output[0], osize);
-            REQUIRE(ec    == make_error_code(error_t::small_output));
-            REQUIRE(osize == sizeof(HexShortBin)); // null-terminator
+            auto ec = to_hex(wrapper, test::short_binary());
+            REQUIRE(ec           == make_error_code(error_t::small_output));
+            REQUIRE(wrapper.size == sizeof(HexShortBin)); // null-terminator
         }
         SECTION("from_hex") {
-            auto ec = from_hex(HexShortBin, reinterpret_cast<uint8_t*>(&output[0]), osize);
-            REQUIRE(ec    == make_error_code(error_t::small_output));
-            REQUIRE(osize == test::short_binary().size);
+            auto ec = from_hex(wrapper, HexShortBin);
+            REQUIRE(ec           == make_error_code(error_t::small_output));
+            REQUIRE(wrapper.size == test::short_binary().size);
         }
     }
 
     SECTION("invalid hex size") {
         std::array<uint8_t, 16> output;
         output.fill(0);
-        size_t osize = output.size();
+        bin_edit_t wrapper{output};
         SECTION("bad size") {
-            auto ec = from_hex("badc0de", &output[0], osize); // invalid size: not even size
+            auto ec = from_hex(wrapper, "badc0de"); // invalid size: not even size
             REQUIRE(ec == make_error_code(error_t::bad_input));
         }
         SECTION("bad char") {
-            auto ec = from_hex("abadcode", &output[0], osize); // invalid char: o
-            REQUIRE(ec        == make_error_code(error_t::bad_input));
-            REQUIRE(osize     == 2); // 2 proper decoding
-            REQUIRE(output[0] == 0xab);
-            REQUIRE(output[1] == 0xad);
-            REQUIRE(output[2] == 0xc0); // where the error happens
-            REQUIRE(output[3] == 0x00);
+            auto ec = from_hex(wrapper, "abadcode"); // invalid char: o
+            REQUIRE(ec           == make_error_code(error_t::bad_input));
+            REQUIRE(wrapper.size == 2); // 2 proper decoding
+            REQUIRE(output[0]    == 0xab);
+            REQUIRE(output[1]    == 0xad);
+            REQUIRE(output[2]    == 0xc0); // where the error happens
+            REQUIRE(output[3]    == 0x00);
         }
     }
 
     SECTION("proper conversion") {
         std::string output;
         SECTION("to_hex") {
-            auto ec = to_hex(output, test::short_binary());
+            auto ec = to_hex(obuffer_t{output}, test::short_binary());
             REQUIRE_FALSE(ec); // no error
             REQUIRE(output == HexShortBin);
         }
         SECTION("from_hex") {
-            auto ec = from_hex(output, HexShortBin);
+            auto ec = from_hex(obuffer_t{output}, HexShortBin);
             REQUIRE_FALSE(ec);
             REQUIRE(output.size() == test::short_binary().size);
             REQUIRE(output == test::short_binary());
@@ -116,39 +116,39 @@ TEST_CASE("base64 tests", "[base64]") {
         auto e = to_base64<std::string>(empty);
         REQUIRE_FALSE(e.second);
         REQUIRE(e.first.empty());
-        auto d = from_base64<std::string>(empty);
+        auto d = from_base64<std::vector<uint8_t>>(empty);
         REQUIRE_FALSE(e.second);
         REQUIRE(e.first.empty());
     }
 
     SECTION("find output size") {
-        size_t osize = 0;
+        bin_edit_t output;
         SECTION("to_base64") {
-            auto ec = to_base64(test::short_text(), nullptr, osize);
+            auto ec = to_base64(output, test::short_text());
             REQUIRE_FALSE(ec);
-            REQUIRE(osize == sizeof(Base64ShortText)); // both include null-terminator
+            REQUIRE(output.size == sizeof(Base64ShortText)); // both include null-terminator
         }
         SECTION("from_base64") {
-            auto ec = from_base64(Base64ShortText, nullptr, osize);
+            auto ec = from_base64(output, Base64ShortText);
             REQUIRE_FALSE(ec);
-            REQUIRE(osize == std::strlen(test::short_text()));
+            REQUIRE(output.size == std::strlen(test::short_text()));
         }
     }
 
     SECTION("small output buffer") {
         SECTION("to_base64") {
             std::array<char, 8> small;
-            size_t osize = small.size();
-            auto ec = to_base64(test::short_text(), &small[0], osize);
-            REQUIRE(ec    == make_error_code(error_t::small_output));
-            REQUIRE(osize == sizeof(Base64ShortText)); // both include null-terminator
+            bin_edit_t wrapper{small};
+            auto ec = to_base64(wrapper, test::short_text());
+            REQUIRE(ec           == make_error_code(error_t::small_output));
+            REQUIRE(wrapper.size == sizeof(Base64ShortText)); // both include null-terminator
         }
         SECTION("from_base64") {
             std::array<uint8_t, 4> small;
-            size_t osize = small.size();
-            auto ec = from_base64(Base64ShortText, &small[0], osize);
-            REQUIRE(ec    == make_error_code(error_t::small_output));
-            REQUIRE(osize == std::strlen(test::short_text()));
+            bin_edit_t wrapper{small};
+            auto ec = from_base64(wrapper, Base64ShortText);
+            REQUIRE(ec           == make_error_code(error_t::small_output));
+            REQUIRE(wrapper.size == std::strlen(test::short_text()));
         }
     }
 
@@ -156,14 +156,14 @@ TEST_CASE("base64 tests", "[base64]") {
         constexpr char SillyInput[] = "(.)<==>(.)";
         SECTION("raw api") {
             std::array<uint8_t, 64> arr;
-            size_t osize = arr.size();
-            auto ec = from_base64(SillyInput, &arr[0], osize);
-            REQUIRE(ec    == make_error_code(error_t::bad_input));
-            REQUIRE(osize == 0);
+            bin_edit_t wrapper{arr};
+            auto ec = from_base64(wrapper, SillyInput);
+            REQUIRE(ec           == make_error_code(error_t::bad_input));
+            REQUIRE(wrapper.size == 0);
         }
         SECTION("container") {
             std::vector<uint8_t> vec;
-            auto ec = from_base64(vec, SillyInput);
+            auto ec = from_base64(obuffer_t{vec}, SillyInput);
             REQUIRE(ec == make_error_code(error_t::bad_input));
             REQUIRE(vec.empty());
         }
@@ -177,11 +177,11 @@ TEST_CASE("base64 tests", "[base64]") {
     SECTION("encoding/decoding") {
         SECTION("to_base64") {
             std::vector<char> vec;
-            auto ec = to_base64(vec, test::long_text());
+            auto ec = to_base64(obuffer_t{vec}, test::long_text());
             REQUIRE_FALSE(ec);
             const auto osize = std::strlen(Base64LongText);
             REQUIRE(vec.size() == osize);
-            //REQUIRE(std::equal(vec.cbegin(), vec.cend(), Base64LongText, Base64LongText + osize));
+            REQUIRE(std::equal(vec.cbegin(), vec.cend(), Base64LongText, Base64LongText + osize));
 
             auto p = to_base64<std::string>(test::long_text());
             REQUIRE_FALSE(p.second);
