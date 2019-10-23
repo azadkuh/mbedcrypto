@@ -7,9 +7,9 @@ namespace mbedcrypto {
 namespace {
 //-----------------------------------------------------------------------------
 
-constexpr inline char
+constexpr inline uint8_t
 hex_lower(uint8_t u) noexcept {
-    return "0123456789abcdef"[u & 0x0f];
+    return static_cast<uint8_t>("0123456789abcdef"[u & 0x0f]);
 }
 
 inline std::error_code
@@ -26,39 +26,52 @@ base64_error(int ret) noexcept {
 //-----------------------------------------------------------------------------
 
 std::error_code
-to_hex(bin_view_t input, char* output, size_t& osize) noexcept {
+to_hex(bin_edit_t& output, bin_view_t input) noexcept {
     if (is_empty(input))
         return make_error_code(error_t::empty_input);
 
-    const auto capacity = osize;
-    osize               = (input.size << 1) + 1; // inlcude null-terminator
+    const auto capacity = output.size;
+    output.size         = (input.size << 1) + 1; // inlcude null-terminator
 
-    if (output == nullptr || capacity == 0) {
-    } else if (capacity < osize) {
+    if (output.data == nullptr || capacity == 0) {
+    } else if (capacity < output.size) {
         return make_error_code(error_t::small_output);
     } else {
         for (size_t i = 0; i < input.size; ++i) {
-            output[i << 1]       = hex_lower(input.data[i] >> 4);
-            output[(i << 1) + 1] = hex_lower(input.data[i] & 0x0f);
+            output.data[i << 1]       = hex_lower(input.data[i] >> 4);
+            output.data[(i << 1) + 1] = hex_lower(input.data[i] & 0x0f);
         }
-        output[--osize] = 0; // null-terminate
+        output.data[--output.size] = 0; // null-terminate
     }
 
     return std::error_code{};
 }
 
 std::error_code
-from_hex(bin_view_t input, uint8_t* output, size_t& osize) noexcept {
+to_hex(obuffer_t&& output, bin_view_t input) {
+    bin_edit_t expected;
+    auto       ec = to_hex(expected, input);
+    if (ec)
+        return ec;
+    output.resize(expected.size);
+    ec = to_hex(static_cast<bin_edit_t&>(output), input);
+    if (output.size && !ec) // remove null-terminator
+        output.resize(output.size);
+    return ec;
+}
+
+std::error_code
+from_hex(bin_edit_t& output, bin_view_t input) noexcept {
     if (is_empty(input))
         return make_error_code(error_t::empty_input);
     else if ((input.size & 0x1) == 1) // len must be even
         return make_error_code(error_t::bad_input);
 
-    const auto capacity = osize;
-    osize               = input.size >> 1;
+    const auto capacity = output.size;
+    output.size         = input.size >> 1;
 
-    if (output == nullptr || capacity == 0) {
-    } else if (capacity < osize) {
+    if (output.data == nullptr || capacity == 0) {
+    } else if (capacity < output.size) {
         return make_error_code(error_t::small_output);
     } else {
         const auto* src = reinterpret_cast<const char*>(input.data);
@@ -71,10 +84,10 @@ from_hex(bin_view_t input, uint8_t* output, size_t& osize) noexcept {
             else if (ch >= 'a' && ch <= 'f')
                 ch -= 'W'; // 'a' - 10
             else {
-                osize = i >> 1; // bytes have been decoded so far
+                output.size = i >> 1; // bytes have been decoded so far
                 return make_error_code(error_t::bad_input);
             }
-            auto& des = output[i >> 1];
+            auto& des = output.data[i >> 1];
             des       = (i & 1) ? (des + ch) : (ch << 4);
         }
     }
@@ -82,42 +95,73 @@ from_hex(bin_view_t input, uint8_t* output, size_t& osize) noexcept {
     return std::error_code{};
 }
 
+std::error_code
+from_hex(obuffer_t&& output, bin_view_t input) {
+    bin_edit_t expected;
+    auto ec = from_hex(expected, input);
+    if (ec)
+        return ec;
+    output.resize(expected.size);
+    return from_hex(static_cast<bin_edit_t&>(output), input);
+}
+
 //-----------------------------------------------------------------------------
 
 std::error_code
-to_base64(bin_view_t input, char* output, size_t& osize) noexcept {
+to_base64(bin_edit_t& output, bin_view_t input) noexcept {
     int ret = 0;
-    if (output == nullptr || osize == 0) {
-        ret = mbedtls_base64_encode(nullptr, 0, &osize, input.data, input.size);
+    if (output.data == nullptr || output.size == 0) {
+        ret = mbedtls_base64_encode(
+            nullptr, 0, &output.size, input.data, input.size);
         if (ret == MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL)
             ret = 0; // it's ok as we intentionally passed a nullptr output
     } else {
         size_t olen = 0;
         ret         = mbedtls_base64_encode(
-            reinterpret_cast<uint8_t*>(output),
-            osize,
-            &olen,
-            input.data,
-            input.size);
-        osize = olen;
+            output.data, output.size, &olen, input.data, input.size);
+        output.size = olen;
     }
     return (ret != 0) ? base64_error(ret) : std::error_code{};
 }
 
 std::error_code
-from_base64(bin_view_t input, uint8_t* output, size_t& osize) noexcept {
+to_base64(obuffer_t&& output, bin_view_t input) {
+    bin_edit_t expected;
+    auto ec = to_base64(expected, input);
+    if (ec)
+        return ec;
+    output.resize(expected.size);
+    ec = to_base64(static_cast<bin_edit_t&>(output), input);
+    if (output.size && !ec) // remove null-terminator
+        output.resize(output.size);
+    return ec;
+}
+
+std::error_code
+from_base64(bin_edit_t& output, bin_view_t input) noexcept {
     int ret = 0;
-    if (output == nullptr || osize == 0) {
-        ret = mbedtls_base64_decode(nullptr, 0, &osize, input.data, input.size);
+    if (output.data == nullptr || output.size == 0) {
+        ret = mbedtls_base64_decode(
+            nullptr, 0, &output.size, input.data, input.size);
         if (ret == MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL)
             ret = 0; // it's ok as we intentionally passed a nullptr output
     } else {
         size_t olen = 0;
-        ret =
-            mbedtls_base64_decode(output, osize, &olen, input.data, input.size);
-        osize = olen;
+        ret         = mbedtls_base64_decode(
+            output.data, output.size, &olen, input.data, input.size);
+        output.size = olen;
     }
     return (ret != 0) ? base64_error(ret) : std::error_code{};
+}
+
+std::error_code
+from_base64(obuffer_t&& output, bin_view_t input) {
+    bin_edit_t expected;
+    auto ec = from_base64(expected, input);
+    if (ec)
+        return ec;
+    output.resize(expected.size);
+    return from_base64(static_cast<bin_edit_t&>(output), input);
 }
 
 //-----------------------------------------------------------------------------

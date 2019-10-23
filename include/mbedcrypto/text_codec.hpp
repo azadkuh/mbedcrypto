@@ -16,82 +16,64 @@ namespace mbedcrypto {
 //-----------------------------------------------------------------------------
 
 /** makes a hex string from any non-empty input.
- * if output == nullptr, then fills the required output size into output_size.
- * if output_size is smaller than required size, returns error and fills the
+ * if output.data == nullptr, then fills the required output size into
+ * output.size.
+ * if output.size is smaller than required size, returns error and fills the
  * proper output_size.
  *
- * also appends a null-terminator to output, but output_size is the strlen() of
+ * also appends a null-terminator to output, but output.size is the strlen() of
  * the output (excludes null-terminator)
  */
-std::error_code
-to_hex(bin_view_t input, char* output, size_t& output_size) noexcept;
+std::error_code to_hex(bin_edit_t& output, bin_view_t input) noexcept;
+/// overload with contaienr apdapter
+std::error_code to_hex(obuffer_t&& output, bin_view_t input);
 
 /** decodes from a hex string (accepts lower/upper case).
- * if output == nullptr, then fills the required output size into output_size.
- * if output_size is smaller than required size, returns error and fills the
- * proper output_size.
+ * if output.data == nullptr, then fills the required output size into
+ * output.size.
+ * if output.size is smaller than required size, returns error and fills the
+ * proper output.size.
  *
- * the input hex string should be even in size, and
+ * the input hex string should be even in size and excludes 0x
  */
-std::error_code
-from_hex(bin_view_t input, uint8_t* output, size_t& output_size) noexcept;
-
+std::error_code from_hex(bin_edit_t& output, bin_view_t input) noexcept;
+/// overload with contaienr apdapter
+std::error_code from_hex(obuffer_t&& output, bin_view_t input);
 //-----------------------------------------------------------------------------
 
 /** makes a base64 string from any input.
- * if output == nullptr, then fills the required output size into output_size.
- * if output_size is smaller than required size, returns error and fills the
- * proper output_size.
+ * if output.data == nullptr, then fills the required output size into
+ * output.size.
+ * if output.size is smaller than required size, returns error and fills the
+ * proper output.size.
  * empty input will result an empty output.
  *
- * also appends a null-terminator to output, but output_size is the strlen() of
+ * also appends a null-terminator to output, but output.size is the strlen() of
  * the output (excludes null-terminator)
  */
-std::error_code
-to_base64(bin_view_t input, char* output, size_t& output_size) noexcept;
+std::error_code to_base64(bin_edit_t& output, bin_view_t input) noexcept;
+/// overload with contaienr apdapter
+std::error_code to_base64(obuffer_t&& output, bin_view_t input);
 
 /** decodes from a base64 string.
- * if output == nullptr, then fills the required output size into output_size.
- * if output_size is smaller than required size, returns error and fills the
- * proper output_size.
- * empty input will result an empty output.
+ * if output.data == nullptr, then fills the required output size into
+ * output.size.
+ * if output.size is smaller than required size, returns error and fills the
+ * proper output.size.
+ * empty input will result an empty output
  */
-std::error_code
-from_base64(bin_view_t input, uint8_t* output, size_t& output_size) noexcept;
+std::error_code from_base64(bin_edit_t& output, bin_view_t input) noexcept;
+/// overload with contaienr apdapter
+std::error_code from_base64(obuffer_t&& output, bin_view_t input);
 
 //-----------------------------------------------------------------------------
 // hex helper overloads
 
 template <typename Container>
-inline std::error_code
-to_hex(Container& output, bin_view_t input) {
-    size_t size = 0;
-    auto   ec   = to_hex(input, nullptr, size);
-    if (ec)
-        return ec;
-    output.resize(size); // includes null-terminator
-    ec = to_hex(input, reinterpret_cast<char*>(&output[0]), size);
-    if (size && !ec) // remove null-terminator
-        output.resize(size);
-    return ec;
-}
-
-template <typename Container>
-inline std::error_code
-from_hex(Container& output, bin_view_t input) {
-    size_t size = 0;
-    auto   ec   = from_hex(input, nullptr, size);
-    if (ec)
-        return ec;
-    output.resize(size);
-    return from_hex(input, reinterpret_cast<uint8_t*>(&output[0]), size);
-}
-
-template <typename Container>
 inline std::pair<Container, std::error_code>
 to_hex(bin_view_t input) {
     Container output;
-    auto      ec = to_hex(output, input);
+    auto      ec = to_hex(obuffer_t{output}, input);
     return {output, ec};
 }
 
@@ -99,7 +81,7 @@ template <typename Container>
 inline std::pair<Container, std::error_code>
 from_hex(bin_view_t input) {
     Container output;
-    auto      ec = from_hex(output, input);
+    auto      ec = from_hex(obuffer_t{output}, input);
     return {output, ec};
 }
 
@@ -107,35 +89,10 @@ from_hex(bin_view_t input) {
 // base64 helper overloads
 
 template <typename Container>
-inline std::error_code
-to_base64(Container& output, bin_view_t input) {
-    size_t size = 0;
-    auto   ec   = to_base64(input, nullptr, size);
-    if (ec)
-        return ec;
-    output.resize(size); // includes null-terminator
-    ec = to_base64(input, reinterpret_cast<char*>(&output[0]), size);
-    if (size && !ec) // remove null-terminator
-        output.resize(size);
-    return ec;
-}
-
-template <typename Container>
-inline std::error_code
-from_base64(Container& output, bin_view_t input) {
-    size_t size = 0;
-    auto   ec   = from_base64(input, nullptr, size);
-    if (ec)
-        return ec;
-    output.resize(size);
-    return from_base64(input, reinterpret_cast<uint8_t*>(&output[0]), size);
-}
-
-template <typename Container>
 inline std::pair<Container, std::error_code>
 to_base64(bin_view_t input) {
     Container output;
-    auto      ec = to_base64(output, input);
+    auto      ec = to_base64(obuffer_t{output}, input);
     return {output, ec};
 }
 
@@ -143,7 +100,7 @@ template <typename Container>
 inline std::pair<Container, std::error_code>
 from_base64(bin_view_t input) {
     Container output;
-    auto      ec = from_base64(output, input);
+    auto      ec = from_base64(obuffer_t{output}, input);
     return {output, ec};
 }
 
