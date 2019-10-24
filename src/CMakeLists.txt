@@ -36,7 +36,7 @@ add_library(${PROJECT_NAME}
     errors.cpp
     types.cpp
     text_codec.cpp
-    # hash.cpp
+    hash.cpp
     # cipher.cpp
     # mpi.cpp
     # rnd_generator.cpp

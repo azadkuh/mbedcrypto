@@ -7,7 +7,7 @@ add_executable(${PROJECT_NAME}
     ./test_errors.cpp
     ./test_types.cpp
     ./test_text_codec.cpp
-    # ./test_hash.cpp
+    ./test_hash.cpp
     # ./test_cipher.cpp
     # ./tdd/test_ecp.cpp
     # ./tdd/test_exception.cpp

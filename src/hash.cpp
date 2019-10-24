@@ -67,42 +67,50 @@ hash_size(hash_t algo) noexcept {
 }
 
 std::error_code
-make_hash(
-    bin_view_t input, hash_t algo, uint8_t* output, size_t& osize) noexcept {
-    const auto  capacity = osize;
+make_hash(bin_edit_t& output, bin_view_t input, hash_t algo) noexcept {
+    const auto  capacity = output.size;
     const auto* info     = find_native_info(algo);
-    osize                = mbedtls_md_get_size(info);
-    if (osize == 0) {
+    output.size          = mbedtls_md_get_size(info);
+    if (output.size == 0) {
         return make_error_code(error_t::not_supported);
-    } else if (output == nullptr || capacity == 0) {
-    } else if (capacity < osize) {
+    } else if (output.data == nullptr || capacity == 0) {
+    } else if (capacity < output.size) {
         return make_error_code(error_t::small_output);
     } else {
-        int ret = mbedtls_md(info, input.data, input.size, output);
+        int ret = mbedtls_md(info, input.data, input.size, output.data);
         if (ret != 0)
             return mbedtls::make_error_code(ret);
     }
     return std::error_code{};
+}
+
+std::error_code
+make_hash(obuffer_t&& output, bin_view_t input, hash_t algo) {
+    bin_edit_t exptected;
+    auto       ec = make_hash(exptected, input, algo);
+    if (ec)
+        return ec;
+    output.resize(exptected.size);
+    return make_hash(static_cast<bin_edit_t&>(output), input, algo);
 }
 
 std::error_code
 make_hmac(
-    bin_view_t input,
-    bin_view_t key,
-    hash_t     algo,
-    uint8_t*   output,
-    size_t&    osize) noexcept {
-    const auto  capacity = osize;
+    bin_edit_t& output,
+    bin_view_t  input,
+    bin_view_t  key,
+    hash_t      algo) noexcept {
+    const auto  capacity = output.size;
     const auto* info     = find_native_info(algo);
-    osize                = mbedtls_md_get_size(info);
-    if (osize == 0) {
+    output.size          = mbedtls_md_get_size(info);
+    if (output.size == 0) {
         return make_error_code(error_t::not_supported);
-    } else if (output == nullptr || capacity == 0) {
-    } else if (capacity < osize) {
+    } else if (output.data == nullptr || capacity == 0) {
+    } else if (capacity < output.size) {
         return make_error_code(error_t::small_output);
     } else {
         int ret = mbedtls_md_hmac(
-            info, key.data, key.size, input.data, input.size, output);
+            info, key.data, key.size, input.data, input.size, output.data);
         if (ret != 0)
             return mbedtls::make_error_code(ret);
     }
@@ -110,26 +118,49 @@ make_hmac(
 }
 
 std::error_code
-make_file_hash(
-    const char* fname, hash_t algo, uint8_t* output, size_t& osize) noexcept {
+make_hmac(obuffer_t&& output, bin_view_t input, bin_view_t key, hash_t algo) {
+    bin_edit_t exptected;
+    auto       ec = make_hmac(exptected, input, key, algo);
+    if (ec)
+        return ec;
+    output.resize(exptected.size);
+    return make_hmac(static_cast<bin_edit_t&>(output), input, key, algo);
+}
+
+std::error_code
+make_file_hash(bin_edit_t& output, const char* fname, hash_t algo) noexcept {
 #if !defined(MBEDTLS_FS_IO)
-    osize = 0;
+    output.size = 0;
     return make_error_code(error_t::not_supported);
 #else
-    const auto  capacity = osize;
+    const auto  capacity = output.size;
     const auto* info     = find_native_info(algo);
-    osize                = mbedtls_md_get_size(info);
-    if (osize == 0) {
+    output.size          = mbedtls_md_get_size(info);
+    if (output.size == 0) {
         return make_error_code(error_t::not_supported);
-    } else if (output == nullptr || capacity == 0) {
-    } else if (capacity < osize) {
+    } else if (output.data == nullptr || capacity == 0) {
+    } else if (capacity < output.size) {
         return make_error_code(error_t::small_output);
     } else {
-        int ret = mbedtls_md_file(info, fname, output);
+        int ret = mbedtls_md_file(info, fname, output.data);
         if (ret != 0)
             return mbedtls::make_error_code(ret);
     }
     return std::error_code{};
+#endif
+}
+
+std::error_code
+make_file_hash(obuffer_t&& output, const char* fname, hash_t algo) noexcept {
+#if !defined(MBEDTLS_FS_IO)
+    return make_error_code(error_t::not_supported);
+#else
+    bin_edit_t exptected;
+    auto       ec = make_file_hash(exptected, fname, algo);
+    if (ec)
+        return ec;
+    output.resize(exptected.size);
+    return make_file_hash(static_cast<bin_edit_t&>(output), fname, algo);
 #endif
 }
 
@@ -157,18 +188,24 @@ hash::update(bin_view_t chunk) noexcept {
 }
 
 std::error_code
-hash::finish(uint8_t* output, size_t& osize) noexcept {
-    const auto capacity = osize;
-    osize               = pimpl->size();
-    if (output == nullptr || capacity == 0) {
-    } else if (capacity < osize) {
+hash::finish(bin_edit_t& output) noexcept {
+    const auto capacity = output.size;
+    output.size         = pimpl->size();
+    if (output.data == nullptr || capacity == 0) {
+    } else if (capacity < output.size) {
         return make_error_code(error_t::small_output);
     } else {
-        int ret = mbedtls_md_finish(&pimpl->ctx, output);
+        int ret = mbedtls_md_finish(&pimpl->ctx, output.data);
         if (ret != 0)
             return mbedtls::make_error_code(ret);
     }
     return std::error_code{};
+}
+
+std::error_code
+hash::finish(obuffer_t&& output) {
+    output.resize(pimpl->size());
+    return finish(static_cast<bin_edit_t&>(output));
 }
 
 //-----------------------------------------------------------------------------
@@ -201,18 +238,24 @@ hmac::update(bin_view_t chunk) noexcept {
 }
 
 std::error_code
-hmac::finish(uint8_t* output, size_t& osize) noexcept {
-    const auto capacity = osize;
-    osize               = pimpl->size();
-    if (output == nullptr || capacity == 0) {
-    } else if (capacity < osize) {
+hmac::finish(bin_edit_t& output) noexcept {
+    const auto capacity = output.size;
+    output.size         = pimpl->size();
+    if (output.data == nullptr || capacity == 0) {
+    } else if (capacity < output.size) {
         return make_error_code(error_t::small_output);
     } else {
-        int ret = mbedtls_md_hmac_finish(&pimpl->ctx, output);
+        int ret = mbedtls_md_hmac_finish(&pimpl->ctx, output.data);
         if (ret != 0)
             return mbedtls::make_error_code(ret);
     }
     return std::error_code{};
+}
+
+std::error_code
+hmac::finish(obuffer_t&& output) {
+    output.resize(pimpl->size());
+    return finish(static_cast<bin_edit_t&>(output));
 }
 
 //-----------------------------------------------------------------------------

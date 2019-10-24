@@ -26,31 +26,36 @@ namespace mbedcrypto {
 size_t hash_size(hash_t) noexcept;
 
 /// makes the hash value for a buffer in single operation.
-/// the output and output_size should be large enough @sa hash_size()
+/// the output,data and output.size should be large enough @sa hash_size()
 std::error_code
-make_hash(
-    bin_view_t input,
-    hash_t     algorithm,
-    uint8_t*   output,
-    size_t&    output_size) noexcept;
+make_hash(bin_edit_t& output, bin_view_t input, hash_t algorithm) noexcept;
+/// overload with contaienr apdapter
+std::error_code
+make_hash(obuffer_t&& output, bin_view_t input, hash_t algorithm);
 
 /// makes the HMAC of an input/key pair.
 std::error_code
 make_hmac(
-    bin_view_t input,
-    bin_view_t key,
-    hash_t     algorithm,
-    uint8_t*   output,
-    size_t&    output_size) noexcept;
+    bin_edit_t& output,
+    bin_view_t  input,
+    bin_view_t  key,
+    hash_t      algorithm) noexcept;
+/// overload with contaienr apdapter
+std::error_code
+make_hmac(
+    obuffer_t&& output,
+    bin_view_t  input,
+    bin_view_t  key,
+    hash_t      algorithm);
 
 /// makes the hash value for a file.
 /// the output and output_size should be large enough @sa hash_size()
 std::error_code
 make_file_hash(
-    const char* filename,
-    hash_t      algorithm,
-    uint8_t*    output,
-    size_t&     output_size) noexcept;
+    bin_edit_t& output, const char* filename, hash_t algorithm) noexcept;
+/// overload with contaienr apdapter
+std::error_code
+make_file_hash(obuffer_t& output, const char* filename, hash_t algorithm);
 
 //-----------------------------------------------------------------------------
 
@@ -84,18 +89,12 @@ struct hash
      */
     std::error_code update(bin_view_t chunk) noexcept;
     /** finishes the digest operation and writes into output.
-     * if output == nullptr or output_size == 0, returns the required hash size
-     * into output_size.
+     * if output.data == nullptr or output.size == 0, returns the required hash
+     * size into output.size.
      */
-    std::error_code finish(uint8_t* output, size_t& output_size) noexcept;
-
-    template <class Container>
-    std::error_code finish(Container& output) {
-        size_t osize = 0;
-        finish(nullptr, osize);
-        output.resize(osize);
-        return finish(reinterpret_cast<uint8_t*>(&output[0]), osize);
-    }
+    std::error_code finish(bin_edit_t& output) noexcept;
+    /// overload with container adapter
+    std::error_code finish(obuffer_t&& output);
 
     // move only
     hash();
@@ -122,18 +121,12 @@ struct hmac
      */
     std::error_code update(bin_view_t chunk) noexcept;
     /** finishes the hmac operation and writes into output.
-     * if output == nullptr or output_size == 0, returns the required hash size
-     * into output_size.
+     * if output.data == nullptr or output.size == 0, returns the required hash
+     * size into output.size.
      */
-    std::error_code finish(uint8_t* output, size_t& output_size) noexcept;
-
-    template <class Container>
-    std::error_code finish(Container& output) {
-        size_t osize = 0;
-        finish(nullptr, osize);
-        output.resize(osize);
-        return finish(reinterpret_cast<uint8_t*>(&output[0]), osize);
-    }
+    std::error_code finish(bin_edit_t& output) noexcept;
+    /// overload with container adapter
+    std::error_code finish(obuffer_t&& output);
 
     // move only
     hmac();
@@ -150,18 +143,10 @@ protected:
 // hash overloads
 
 template <class Container>
-inline std::error_code
-make_hash(Container& digest, bin_view_t input, hash_t algo) {
-    auto size = hash_size(algo);
-    digest.resize(size);
-    return make_hash(input, algo, reinterpret_cast<uint8_t*>(&digest[0]), size);
-}
-
-template <class Container>
 inline std::pair<Container, std::error_code>
 make_hash(bin_view_t input, hash_t algo) {
     Container digest;
-    auto      ec = make_hash(digest, input, algo);
+    auto      ec = make_hash(obuffer_t{digest}, input, algo);
     return {digest, ec};
 }
 
@@ -187,19 +172,10 @@ make_sha512(bin_view_t input) {
 // hmac overloads
 
 template <class Container>
-inline std::error_code
-make_hmac(Container& digest, bin_view_t input, bin_view_t key, hash_t algo) {
-    auto size = hash_size(algo);
-    digest.resize(size);
-    return make_hmac(
-        input, key, algo, reinterpret_cast<uint8_t*>(&digest[0]), size);
-}
-
-template <class Container>
 inline std::pair<Container, std::error_code>
 make_hmac(bin_view_t input, bin_view_t key, hash_t algo) {
     Container digest;
-    auto      ec = make_hmac(digest, input, key, algo);
+    auto      ec = make_hmac(obuffer_t{digest}, input, key, algo);
     return {digest, ec};
 }
 
