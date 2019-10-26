@@ -73,6 +73,44 @@ supports_aead() noexcept {
 }
 
 //-----------------------------------------------------------------------------
+namespace cipher {
+//-----------------------------------------------------------------------------
+
+struct info_t {
+    cipher_t   type    = cipher_t::unknown;
+    padding_t  padding = padding_t::unknown;
+    bin_view_t key; ///< symmetric key, @sa key_bitlen()
+    bin_view_t iv;  ///< initial vector if type support, @sa iv_size()
+    bin_view_t ad;  ///< optional additional data, @sa supports_aead()
+};
+
+/// check if it has valid and compatible fields.
+bool is_valid(const info_t&) noexcept;
+
+//-----------------------------------------------------------------------------
+
+/** encrypts input and writes into output by a one-shot call.
+ * the input can be any size depend on cipher_bm / padding_t of cipher::info.
+ * if ouput.data == nullptr or output.size == 0, then computes the required
+ * output size and report by updating the output.size.
+ */
+std::error_code
+encrypt(bin_edit_t& output, bin_view_t input, const info_t& ci) noexcept;
+
+/// overlad with container adapter.
+std::error_code
+encrypt(obuffer_t&& output, bin_view_t input, const info_t& ci);
+
+/// decrypts input and writes into output, @sa encrypt()
+std::error_code
+decrypt(bin_edit_t& output, bin_view_t input, const info_t& ci) noexcept;
+
+/// overlad with container adapter.
+std::error_code
+decrypt(obuffer_t&& output, bin_view_t input, const info_t& ci);
+
+//-----------------------------------------------------------------------------
+} // namespace cipher
 } // namespace mbedcrypto
 //-----------------------------------------------------------------------------
 #endif // MBEDCRYPTO_CIPHER_HPP
