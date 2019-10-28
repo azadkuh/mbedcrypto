@@ -40,22 +40,23 @@ struct mbedcrypto_category : std::error_category
     std::string message(int err) const override {
         switch (static_cast<error_t>(err)) {
         // clang-format off
-        case error_t::success:       return "success";
-        case error_t::type:          return "invalid or unknown type";
-        case error_t::usage:         return "bad api call or invalid argument";
-        case error_t::not_supported: return "not supported by this build";
-        case error_t::empty_input:   return "input buffer has invalid size or data";
-        case error_t::bad_input:     return "not supported by this build";
-        case error_t::small_output:  return "output buffer is empty or too small";
-        case error_t::bad_hash:      return "invalid or unsupported hash type";
-        case error_t::bad_cipher:    return "invalid or unsupported cipher type";
-        case error_t::aead:          return "requires CCM or GCM modules, check build options";
-        case error_t::gcm:           return "requires CGM module, check build options";
-        case error_t::pk:            return "invalid or unsupported PK type";
-        case error_t::pk_export:     return "requires PE_EXPORT module, check build options";
-        case error_t::rsa_keygen:    return "requires RSA_KEYGEN, check build options";
-        case error_t::ecp:           return "invalid or unsupported EC (elliptic curve) type";
-        default:                     return "unknown error";
+        case error_t::success:         return "success";
+        case error_t::type:            return "invalid or unknown type";
+        case error_t::usage:           return "bad api call or invalid argument";
+        case error_t::not_supported:   return "not supported by this build";
+        case error_t::empty_input:     return "input buffer has invalid size or data";
+        case error_t::bad_input:       return "not supported by this build";
+        case error_t::small_output:    return "output buffer is empty or too small";
+        case error_t::bad_hash:        return "invalid or unsupported hash type";
+        case error_t::bad_cipher:      return "invalid or unsupported cipher type";
+        case error_t::bad_cipher_args: return "incompatible or bad cipher input arguments";
+        case error_t::aead:            return "requires CCM or GCM modules, check build options";
+        case error_t::gcm:             return "requires CGM module, check build options";
+        case error_t::pk:              return "invalid or unsupported PK type";
+        case error_t::pk_export:       return "requires PE_EXPORT module, check build options";
+        case error_t::rsa_keygen:      return "requires RSA_KEYGEN, check build options";
+        case error_t::ecp:             return "invalid or unsupported EC (elliptic curve) type";
+        default:                       return "unknown error";
         // clang-format off
         }
     }

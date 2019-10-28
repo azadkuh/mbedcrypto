@@ -40,6 +40,7 @@ enum class error_t : int {
     small_output    = 30,  ///< output buffer is empty or too small
     bad_hash        = 100, ///< invalid or unsupported hash type
     bad_cipher      = 200, ///< invalid or unsupported cipher type
+    bad_cipher_args = 201, ///< incompatible or bad cipher input arguments
     aead            = 210, ///< requires CCM or GCM modules, check build options
     gcm             = 211, ///< requires CGM module, check build options
     pk              = 500, ///< invalid or unsupported PK type
