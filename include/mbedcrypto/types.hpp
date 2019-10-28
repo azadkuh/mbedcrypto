@@ -38,6 +38,7 @@ enum class hash_t {
 };
 
 /// all possible paddings, pkcs7 is included in default build.
+/// helps cipher_bm::cbc to accept any input size.
 enum class padding_t {
     none,          ///< never pad (full blocks only)
     pkcs7,         ///< PKCS7 padding (default)
@@ -47,35 +48,38 @@ enum class padding_t {
     unknown,       ///< invalid or unknown
 };
 
-/** block mode: https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation.
- * hints:
- * - ebc so fast, not cryptographically strong
- * input size must be = N * block_size, so no padding is required
- * - cbc is slow and cryptographically strong
- * needs iv and padding
- * - cfb needs iv, no padding
- * - ctr is fast and strong only with ciphers that have block_size() >= 128bits
- * needs iv, does not require padding, transforms a block to stream
- * @warning in ctr and all other counter based modes,
- * the iv should be used only once per operation to be secure
- * - gcm is fast and strong if tag size is not smaller than 96bits
- * also used in aead (authenticated encryption with additional data)
- * needs iv, does not require padding
- * - ccm is fast, strong if the iv never be used more than once for a given key
- * only used in aead (authenticated encryption with additional data)
- * needs iv, does not require padding
+/** ciphering block mode.
+ * @sa https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation.
+ *
+ * hits:
+ * | block_mode | uses iv | aead | input size             |
+ * | :---       | :---    | :--- | :---                   |
+ * | ecb        |         |      | N * block_size()       |
+ * | cbc        | +       |      | any size via padding_t |
+ * | cfb        | +       |      | any size               |
+ * | ofb        | +       |      | any size               |
+ * | ctr        | +       |      | any size               |
+ * | gcm        | +       | +/-  | any size               |
+ * | ccm        | +       | +    | any size               |
+ * | xts        | +       |      | any size               |
+ * | stream     | +/-     |      | any size               |
+ * | chachapoly | +       |      | any size               |
+ *
+ * gcm:    usable with or without AEAD
+ * ccm:    only with AEAD
+ * stream: uses iv for chacha20 algorithm but no iv for arc4
  */
 enum class cipher_bm {
-    ecb,        ///< electronic codebook, input size = N * block_size
-    cbc,        ///< cipher block chaining, custom input size
-    cfb,        ///< cipher feedback, custom input size
-    ofb,        ///< output feedback, custom input size
-    ctr,        ///< counter, custom input size
-    gcm,        ///< Galois/counter mode
-    ccm,        ///< counter with cbc-mac
-    xts,        ///< cipher text stealing of aes-xts
-    stream,     ///< as in arc4_128 or null ciphers (insecure)
-    chachapoly, ///< only is used in chaha-poly ciphers
+    ecb,        ///< electronic codebook. is fast but not cryptographically strong
+    cbc,        ///< cipher block chaining
+    cfb,        ///< cipher feedback
+    ofb,        ///< output feedback
+    ctr,        ///< counter. is fast, only strong with block_size() >= 128bits
+    gcm,        ///< Galois/counter mode. is fast and secure for tag.size >= 96bit
+    ccm,        ///< counter with cbc-mac. is fast and strong if iv is unique for each operation.
+    xts,        ///< cipher text stealing of aes-xts.
+    stream,     ///< stream is fast but not secure via arc4.
+    chachapoly, ///< only is used in chahapoly20 ciphers
     unknown,    ///< none or unknown
 };
 
