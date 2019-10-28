@@ -93,15 +93,15 @@ struct impl {
     }
 
     std::error_code
-    crypt(bin_edit_t& des, bin_view_t in, const info_t& ci, copmode_t m) noexcept {
+    crypt(bin_edit_t& out, bin_view_t in, const info_t& ci, copmode_t m) noexcept {
         const auto* ninf = find_native_info(ci.type);
         if (ninf == nullptr || !is_valid(in, ci, ninf))
             return make_error_code(error_t::bad_cipher_args);
         const size_t min_size = // only crypts the fix size for ECB block modes
             in.size + (ninf->mode == MBEDTLS_MODE_ECB ? 0 : ninf->block_size);
-        if (des.data == nullptr || des.size == 0) {
-            des.size = min_size;
-        } else if (des.size < min_size) {
+        if (out.data == nullptr || out.size == 0) {
+            out.size = min_size;
+        } else if (out.size < min_size) {
             return make_error_code(error_t::small_output);
         } else {
             int ret = mbedtls_cipher_setup(&ctx_, ninf);
@@ -111,38 +111,50 @@ struct impl {
                 mbedtls_cipher_setkey(&ctx_, ci.key.data, ci.key.size << 3, m);
             if (ret != 0)
                 return mbedtls::make_error_code(ret);
-            ret = try_set_padding(ci.padding);
-            if (ret != 0)
-                return mbedtls::make_error_code(ret);
-            ret = mbedtls_cipher_crypt(
-                &ctx_,
-                ci.iv.size ? ci.iv.data : nullptr,
-                ci.iv.size,
-                in.data,
-                in.size,
-                des.data,
-                &des.size);
-            if (ret != 0)
-                return mbedtls::make_error_code(ret);
+            if (ninf->mode == MBEDTLS_MODE_ECB) {
+                // break down to block size
+                const auto bsize = ninf->block_size;
+                for (size_t idx = 0; idx < in.size; idx += bsize) {
+                    size_t written = bsize;
+                    ret = mbedtls_cipher_update(
+                        &ctx_, in.data + idx, bsize, out.data + idx, &written);
+                    if (ret != 0)
+                        return mbedtls::make_error_code(ret);
+                }
+            } else {
+                ret = try_set_padding(ci.padding);
+                if (ret != 0)
+                    return mbedtls::make_error_code(ret);
+                ret = mbedtls_cipher_crypt(
+                    &ctx_,
+                    ci.iv.size ? ci.iv.data : nullptr,
+                    ci.iv.size,
+                    in.data,
+                    in.size,
+                    out.data,
+                    &out.size);
+                if (ret != 0)
+                    return mbedtls::make_error_code(ret);
+            }
         }
         return std::error_code{};
     }
 
     std::error_code
-    crypt(obuffer_t&& des, bin_view_t in, const info_t& ci, copmode_t m) {
+    crypt(obuffer_t&& out, bin_view_t in, const info_t& ci, copmode_t m) {
         bin_edit_t expected;
         auto       ec = crypt(expected, in, ci, m);
         if (ec)
             return ec;
-        des.resize(expected.size);
-        ec = crypt(static_cast<bin_edit_t&>(des), in, ci, m);
+        out.resize(expected.size);
+        ec = crypt(static_cast<bin_edit_t&>(out), in, ci, m);
         if (!ec) // if there is no error, adjust the exact size
-            des.resize(des.size);
+            out.resize(out.size);
         return ec;
     }
 
     int try_set_padding(padding_t p) noexcept {
-        if (p == padding_t::unknown || p == padding_t::none)
+        if (!has_padding(p))
             return 0; // no padding is required
         const auto npad = to_native(p);
         return mbedtls_cipher_set_padding_mode(&ctx_, npad);
