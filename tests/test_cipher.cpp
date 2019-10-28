@@ -6,6 +6,8 @@
 #include "src/conversions.hpp"
 
 #include <fstream>
+
+#define VERBOSE_CIPHER 0
 //-----------------------------------------------------------------------------
 namespace {
 using namespace mbedcrypto;
@@ -105,8 +107,7 @@ bin_view_t
 make_source(bin_view_t in, const cipher_properties& p) noexcept {
     auto copy{in};
     if (p.bmode == cipher_bm::ecb)
-        copy.size = (p.block_size); // at the moment only block_size is supported for ECB
-        // copy.size -= (in.size % p.block_size);
+        copy.size -= (in.size % p.block_size); // must be N % block_size
     return copy;
 }
 
@@ -143,7 +144,8 @@ protected:
     }
 
     void one_shots() const {
-        if (prop.bmode == cipher_bm::ccm) // CCM is only for AEAD
+        if (prop.bmode == cipher_bm::ccm            // CCM is only for AEAD
+            || prop.bmode == cipher_bm::chachapoly) // not supported yet
             return;
         cipher::info_t ci;
         ci.type    = prop.type;
@@ -166,6 +168,15 @@ protected:
         REQUIRE_FALSE(ec);
 
         REQUIRE(dec == source);
+
+#if VERBOSE_CIPHER > 0
+        std::printf(
+            "%-20s done. sizeof in:%3zu enc:%3zu dec:%3zu\n",
+            to_string(prop.type),
+            source.size,
+            enc.size(),
+            dec.size());
+#endif
     }
 };
 
