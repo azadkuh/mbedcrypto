@@ -7,11 +7,12 @@
 namespace mbedcrypto {
 namespace {
 //-----------------------------------------------------------------------------
-using mode_t = mbedtls_operation_t;
-using info_t = cipher::info_t;
+using copmode_t = mbedtls_operation_t;
+using cinfo_t   = mbedtls_cipher_info_t;
+using info_t    = cipher::info_t;
 //-----------------------------------------------------------------------------
 
-const mbedtls_cipher_info_t*
+const cinfo_t*
 find_native_info(cipher_t type) noexcept {
     if (type == cipher_t::unknown)
         return nullptr;
@@ -19,9 +20,31 @@ find_native_info(cipher_t type) noexcept {
 }
 
 bool
-is_valid(const info_t& ci, const mbedtls_cipher_info_t* inf) noexcept {
+has_padding(padding_t p) noexcept {
+    return !(p == padding_t::none || p == padding_t::unknown);
+}
+
+bool
+is_valid(const info_t& ci, const cinfo_t* inf) noexcept {
     return (ci.key.size << 3) == inf->key_bitlen // in bit
            && ci.iv.size      == inf->iv_size;
+}
+
+bool
+is_valid(bin_view_t input, const info_t& ci, const cinfo_t* inf) noexcept {
+    if (!is_valid(ci, inf))
+        return false;
+    if (inf->mode == MBEDTLS_MODE_CBC) {
+        if ((input.size % inf->block_size) && !has_padding(ci.padding))
+            return false; // requires padding when input.size != N * block_size
+    }
+    if (inf->mode == MBEDTLS_MODE_ECB) {
+        if (input.size % inf->block_size)
+            return false; // input.size must be N * block_size
+    }
+    if (inf->mode == MBEDTLS_MODE_CCM && is_empty(ci.ad))
+        return false; // requires additional data
+    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -42,7 +65,7 @@ struct impl {
         return mbedtls::make_error_code(mbedtls_cipher_setup(&ctx_, native));
     }
 
-    std::error_code setup(const info_t& ci, mbedtls_operation_t op) noexcept {
+    std::error_code setup(const info_t& ci, copmode_t op) noexcept {
         const auto* inf = find_native_info(ci.type);
         if (inf == nullptr)
             return make_error_code(error_t::usage);
@@ -70,10 +93,10 @@ struct impl {
     }
 
     std::error_code
-    crypt(bin_edit_t& des, bin_view_t in, const info_t& ci, mode_t m) noexcept {
+    crypt(bin_edit_t& des, bin_view_t in, const info_t& ci, copmode_t m) noexcept {
         const auto* ninf = find_native_info(ci.type);
-        if (ninf == nullptr || !is_valid(ci, ninf))
-            return make_error_code(error_t::bad_cipher);
+        if (ninf == nullptr || !is_valid(in, ci, ninf))
+            return make_error_code(error_t::bad_cipher_args);
         const size_t min_size = // only crypts the fix size for ECB block modes
             in.size + (ninf->mode == MBEDTLS_MODE_ECB ? 0 : ninf->block_size);
         if (des.data == nullptr || des.size == 0) {
@@ -106,7 +129,7 @@ struct impl {
     }
 
     std::error_code
-    crypt(obuffer_t&& des, bin_view_t in, const info_t& ci, mode_t m) {
+    crypt(obuffer_t&& des, bin_view_t in, const info_t& ci, copmode_t m) {
         bin_edit_t expected;
         auto       ec = crypt(expected, in, ci, m);
         if (ec)
