@@ -63,11 +63,12 @@ enum class padding_t {
  * | ccm        | +       | +    | any size               |
  * | xts        | +       |      | any size               |
  * | stream     | +/-     |      | any size               |
- * | chachapoly | +       |      | any size               |
+ * | chachapoly | +       | +    | any size               |
  *
- * gcm:    usable with or without AEAD
- * ccm:    only with AEAD
- * stream: uses iv for chacha20 algorithm but no iv for arc4
+ * gcm:        usable with or without AEAD
+ * ccm:        only with AEAD
+ * stream:     uses iv for chacha20 algorithm but no iv for arc4
+ * chachapoly: always needs additional data
  */
 enum class cipher_bm {
     ecb,        ///< electronic codebook. is fast but not cryptographically strong

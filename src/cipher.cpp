@@ -44,6 +44,8 @@ is_valid(bin_view_t input, const info_t& ci, const cinfo_t* inf) noexcept {
     }
     if (inf->mode == MBEDTLS_MODE_CCM && is_empty(ci.ad))
         return false; // requires additional data
+    if (inf->mode == MBEDTLS_MODE_CHACHAPOLY && is_empty(ci.ad))
+        return false; // requires additional data
     return true;
 }
 
@@ -107,6 +109,14 @@ struct impl {
             int ret = mbedtls_cipher_setup(&ctx_, ninf);
             if (ret != 0)
                 return mbedtls::make_error_code(ret);
+            if (ninf->mode == MBEDTLS_MODE_CHACHAPOLY) {
+#if defined(MBEDTLS_CHACHAPOLY_C)
+                // just right after setup and before any other funcs
+                ret = mbedtls_cipher_update_ad(&ctx_, ci.ad.data, ci.ad.size);
+                if (ret != 0)
+                    return mbedtls::make_error_code(ret);
+#endif // MBEDTLS_CHACHAPOLY_C
+            }
             ret =
                 mbedtls_cipher_setkey(&ctx_, ci.key.data, ci.key.size << 3, m);
             if (ret != 0)
