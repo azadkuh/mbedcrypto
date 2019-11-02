@@ -98,10 +98,10 @@ struct impl {
     crypt(bin_edit_t& out, bin_view_t in, const info_t& ci, copmode_t m) noexcept {
         const auto* ninf = find_native_info(ci.type);
         if (ninf == nullptr || !is_valid(in, ci, ninf))
-            return make_error_code(error_t::bad_cipher_args);
+            return make_error_code(error_t::cipher_args);
         const size_t min_size = // only crypts the fix size for ECB block modes
             in.size + (ninf->mode == MBEDTLS_MODE_ECB ? 0 : ninf->block_size);
-        if (out.data == nullptr || out.size == 0) {
+        if (is_empty(out)) {
             out.size = min_size;
         } else if (out.size < min_size) {
             return make_error_code(error_t::small_output);
