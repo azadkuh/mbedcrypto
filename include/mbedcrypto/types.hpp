@@ -87,10 +87,14 @@ enum class cipher_bm {
 /** all possible supported cipher types in mbedcrypto.
  * hints:
  * - @warning blowfish is known to be susceptible to attacks when using weak
- * keys, you'd be better to use aes or twofish instead.
+ *   keys, you'd be better to use aes or twofish instead.
  * - @warning arc4 is a stream cipher with serious weaknesses in its initial
- * stream output, Its use is strongly discouraged. arc4 does not use mode
- * constructions.
+ *   stream output, Its use is strongly discouraged. arc4 does not use mode
+ *   constructions.
+ * - @warning xts requires two independent AES keys, one for the data and one
+ *   for hte tweak sector number, so the key size of aes_128_xts is 265bit and
+ *   for aes_256_xts is 512bit.
+ *
  * naming: chipher id + key bit len + possible blocking mode
  */
 enum class cipher_t {
