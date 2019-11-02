@@ -164,7 +164,7 @@ struct engine {
             return ec;
         out.resize(expected.size);
         ec = crypt(static_cast<bin_edit_t&>(out), in, ci, m);
-        if (!ec) // if there is no error, adjust the exact size
+        if (!ec && out.size != expected.size) // if there is no error, adjust the exact size
             out.resize(out.size);
         return ec;
     }
@@ -263,8 +263,10 @@ struct engine {
             in,
             ci);
         if (!ec) {
-            out.resize(out.size);
-            tag.resize(tag.size);
+            if (out.size != oex.size)
+                out.resize(out.size);
+            if (tag.size != tex.size)
+                tag.resize(tag.size);
         }
         return ec;
     }
@@ -277,7 +279,7 @@ struct engine {
             return ec;
         out.resize(expected.size);
         ec = auth_decrypt(static_cast<bin_edit_t&>(out), tag, in, ci);
-        if (!ec)
+        if (!ec && out.size != expected.size)
             out.resize(out.size);
         return ec;
     }
