@@ -51,16 +51,21 @@ is_valid(bin_view_t input, const info_t& ci, const cinfo_t* inf) noexcept {
     return true;
 }
 
+size_t
+min_output_size(size_t input, const mbedtls_cipher_info_t& inf) noexcept {
+    return input + (inf.mode == MBEDTLS_MODE_CBC ? inf.block_size : 0);
+}
+
 //-----------------------------------------------------------------------------
 
-struct impl {
+struct engine {
     mbedtls_cipher_context_t ctx_;
 
-    impl() noexcept       { mbedtls_cipher_init(&ctx_);  }
-    ~impl()               { mbedtls_cipher_free(&ctx_);  }
+    engine() noexcept     { mbedtls_cipher_init(&ctx_);  }
+    ~engine()             { mbedtls_cipher_free(&ctx_);  }
     void reset() noexcept { mbedtls_cipher_reset(&ctx_); }
 
-    auto info() const noexcept { return ctx_.cipher_info; }
+    const auto& info() const noexcept { return *ctx_.cipher_info; }
 
     std::error_code setup(cipher_t t) noexcept {
         const auto* native = find_native_info(t);
@@ -71,19 +76,9 @@ struct impl {
 
     std::error_code setup(const info_t& ci, copmode_t op) noexcept {
         const auto* inf = find_native_info(ci.type);
-        if (inf == nullptr)
-            return make_error_code(error_t::usage);
+        if (inf == nullptr || !is_valid(ci, inf))
+            return make_error_code(error_t::cipher_args);
         int ret = mbedtls_cipher_setup(&ctx_, inf);
-        if (ret != 0)
-            return mbedtls::make_error_code(ret);
-        // key size in bitlen
-        ret = mbedtls_cipher_setkey(&ctx_, ci.key.data, ci.key.size << 3, op);
-        if (ret != 0)
-            return mbedtls::make_error_code(ret);
-        ret = mbedtls_cipher_set_iv(&ctx_, ci.iv.data, ci.iv.size);
-        if (ret != 0)
-            return mbedtls::make_error_code(ret);
-        ret = try_set_padding(ci.padding);
         if (ret != 0)
             return mbedtls::make_error_code(ret);
 #if defined(MBEDTLS_GCM_C) || defined(MBEDTLS_CHACHAPOLY_C)
@@ -93,6 +88,16 @@ struct impl {
                 return mbedtls::make_error_code(ret);
         }
 #endif // defined(MBEDTLS_GCM_C) || defined(MBEDTLS_CHACHAPOLY_C)
+        // key size in bitlen
+        ret = mbedtls_cipher_setkey(&ctx_, ci.key.data, ci.key.size << 3, op);
+        if (ret != 0)
+            return mbedtls::make_error_code(ret);
+        ret = try_set_padding(ci.padding);
+        if (ret != 0)
+            return mbedtls::make_error_code(ret);
+        ret = mbedtls_cipher_set_iv(&ctx_, ci.iv.data, ci.iv.size);
+        if (ret != 0)
+            return mbedtls::make_error_code(ret);
         return std::error_code{};
     }
 
@@ -101,8 +106,7 @@ struct impl {
         const auto* ninf = find_native_info(ci.type);
         if (ninf == nullptr || !is_valid(in, ci, ninf))
             return make_error_code(error_t::cipher_args);
-        const size_t min_size = // only crypts the fix size for ECB block modes
-            in.size + (ninf->mode == MBEDTLS_MODE_ECB ? 0 : ninf->block_size);
+        const size_t min_size = min_output_size(in.size, *ninf);
         if (is_empty(out)) {
             out.size = min_size;
         } else if (out.size < min_size) {
@@ -280,7 +284,7 @@ struct impl {
 
 #endif // defined(MBEDTLS_CIPHER_MODE_AEAD)
 
-}; // struct impl
+}; // struct engine
 
 //-----------------------------------------------------------------------------
 } // namespace anon
@@ -326,22 +330,22 @@ is_valid(const info_t& ci) noexcept {
 
 std::error_code
 encrypt(bin_edit_t& output, bin_view_t input, const info_t& ci) noexcept {
-    return impl{}.crypt(output, input, ci, MBEDTLS_ENCRYPT);
+    return engine{}.crypt(output, input, ci, MBEDTLS_ENCRYPT);
 }
 
 std::error_code
 encrypt(obuffer_t&& output, bin_view_t input, const info_t& ci) {
-    return impl{}.crypt(std::forward<obuffer_t>(output), input, ci, MBEDTLS_ENCRYPT);
+    return engine{}.crypt(std::forward<obuffer_t>(output), input, ci, MBEDTLS_ENCRYPT);
 }
 
 std::error_code
 decrypt(bin_edit_t& output, bin_view_t input, const info_t& ci) noexcept {
-    return impl{}.crypt(output, input, ci, MBEDTLS_DECRYPT);
+    return engine{}.crypt(output, input, ci, MBEDTLS_DECRYPT);
 }
 
 std::error_code
 decrypt(obuffer_t&& output, bin_view_t input, const info_t& ci) {
-    return impl{}.crypt(std::forward<obuffer_t>(output), input, ci, MBEDTLS_DECRYPT);
+    return engine{}.crypt(std::forward<obuffer_t>(output), input, ci, MBEDTLS_DECRYPT);
 }
 
 std::error_code
@@ -351,7 +355,7 @@ auth_encrypt(
     bin_view_t    input,
     const info_t& ci) noexcept {
 #if defined(MBEDTLS_CIPHER_MODE_AEAD)
-    return impl{}.auth_encrypt(output, tag, input, ci);
+    return engine{}.auth_encrypt(output, tag, input, ci);
 #else
     return make_error_code(error_t::not_supported);
 #endif
@@ -364,7 +368,7 @@ auth_encrypt(
     bin_view_t    in,
     const info_t& ci) noexcept {
 #if defined(MBEDTLS_CIPHER_MODE_AEAD)
-    return impl{}.auth_encrypt(
+    return engine{}.auth_encrypt(
         std::forward<obuffer_t>(out), std::forward<obuffer_t>(tag), in, ci);
 #else
     return make_error_code(error_t::not_supported);
@@ -378,7 +382,7 @@ auth_decrypt(
     bin_view_t    input,
     const info_t& ci) noexcept {
 #if defined(MBEDTLS_CIPHER_MODE_AEAD)
-    return impl{}.auth_decrypt(output, tag, input, ci);
+    return engine{}.auth_decrypt(output, tag, input, ci);
 #else
     return make_error_code(error_t::not_supported);
 #endif
@@ -392,7 +396,7 @@ auth_decrypt(
     bin_view_t    in,
     const info_t& ci) noexcept {
 #if defined(MBEDTLS_CIPHER_MODE_AEAD)
-    return impl{}.auth_decrypt(std::forward<obuffer_t>(out), tag, in, ci);
+    return engine{}.auth_decrypt(std::forward<obuffer_t>(out), tag, in, ci);
 #else
     return make_error_code(error_t::not_supported);
 #endif
