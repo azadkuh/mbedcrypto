@@ -144,9 +144,11 @@ protected:
     }
 
     void one_shots() const {
-        if (prop.bmode == cipher_bm::ccm            // CCM is only for AEAD
-            || prop.bmode == cipher_bm::chachapoly) // not supported yet
+        if (prop.bmode == cipher_bm::ccm) // CCM is only for AEAD
             return;
+#if VERBOSE_CIPHER > 0
+        std::printf("%-20s", to_string(prop.type));
+#endif
         cipher::info_t ci;
         ci.type    = prop.type;
         ci.padding = padding_of(prop.bmode);
@@ -155,11 +157,16 @@ protected:
         REQUIRE(ci.iv.size > prop.iv_size);
         ci.iv.size  = prop.iv_size;
         ci.key.size = prop.key_bits >> 3; // to byte
+        if (prop.bmode == cipher_bm::chachapoly) {
+            ci.ad = bin_view_t("some additional data is required");
+        }
 
         const auto source = make_source(test::long_text(), prop);
 
         std::vector<uint8_t> enc;
         auto ec = cipher::encrypt(obuffer_t{enc}, source, ci);
+        if (ec)
+            std::printf("\ncrypt error(%0x): %s\n", -ec.value(), ec.message().data());
         REQUIRE_FALSE(ec);
         REQUIRE(enc.size() >= source.size);
 
