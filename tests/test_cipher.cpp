@@ -119,6 +119,7 @@ struct tester {
     void run() const {
         check_props();
         one_shots();
+        one_shot_aead();
     }
 
 protected:
@@ -174,16 +175,55 @@ protected:
         ec = cipher::decrypt(obuffer_t{dec}, enc, ci);
         REQUIRE_FALSE(ec);
 
+#if VERBOSE_CIPHER > 0
+        std::printf(" done. sizeof in:%3zu enc:%3zu dec:%3zu\n",
+            source.size, enc.size(), dec.size());
+#endif
         REQUIRE(dec == source);
+    }
+
+    void one_shot_aead() const {
+        switch (prop.bmode) {
+            case cipher_bm::ccm:
+            case cipher_bm::gcm:
+            case cipher_bm::chachapoly:
+                break;
+            default: return; // this block-mode does not support AEAD
+        }
 
 #if VERBOSE_CIPHER > 0
-        std::printf(
-            "%-20s done. sizeof in:%3zu enc:%3zu dec:%3zu\n",
-            to_string(prop.type),
-            source.size,
-            enc.size(),
-            dec.size());
+        std::printf("%-20s", to_string(prop.type));
 #endif
+        cipher::info_t ci;
+        ci.type    = prop.type;
+        ci.key     = test::short_binary();
+        ci.iv      = test::short_text();
+        REQUIRE(ci.iv.size > prop.iv_size);
+        ci.iv.size  = prop.iv_size;
+        ci.key.size = prop.key_bits >> 3; // to byte
+        ci.ad       = bin_view_t("some additional data is required");
+
+        const auto source = make_source(test::long_text(), prop);
+
+        std::vector<uint8_t> enc;
+        std::vector<uint8_t> tag;
+        auto ec = cipher::auth_encrypt(obuffer_t{enc}, obuffer_t{tag}, source, ci);
+        if (ec)
+            std::printf("\nauth-crypt error(%0x): %s\n", -ec.value(), ec.message().data());
+        REQUIRE_FALSE(ec);
+        REQUIRE(enc.size() >= source.size);
+        REQUIRE(tag.size() >= 16);
+
+        std::string dec;
+        ec = cipher::auth_decrypt(obuffer_t{dec}, tag, enc, ci);
+        REQUIRE_FALSE(ec);
+        REQUIRE(dec.size() == source.size);
+
+#if VERBOSE_CIPHER > 0
+        std::printf(" done. sizeof in:%3zu enc:%3zu dec:%3zu tag:%2zu (AEAD)\n",
+            source.size, enc.size(), dec.size(), tag.size());
+#endif
+        REQUIRE(dec == source);
     }
 };
 
