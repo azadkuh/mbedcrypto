@@ -10,6 +10,8 @@ namespace {
 using copmode_t = mbedtls_operation_t;
 using cinfo_t   = mbedtls_cipher_info_t;
 using info_t    = cipher::info_t;
+
+constexpr size_t MinTagSize = 16;
 //-----------------------------------------------------------------------------
 
 const cinfo_t*
@@ -170,6 +172,112 @@ struct impl {
         return mbedtls_cipher_set_padding_mode(&ctx_, npad);
     }
 
+
+#if defined(MBEDTLS_CIPHER_MODE_AEAD)
+    // authenticated encryptoin/decryption
+
+    std::error_code auth_encrypt(
+        bin_edit_t&   out,
+        bin_edit_t&   tag,
+        bin_view_t    in,
+        const info_t& ci) noexcept {
+        const auto* ninf = find_native_info(ci.type);
+        if (is_empty(ci.ad) || ninf == nullptr || !is_valid(in, ci, ninf))
+            return make_error_code(error_t::cipher_args);
+        if (is_empty(out) || is_empty(tag)) {
+            out.size = in.size;
+            tag.size = MinTagSize;
+        } else if (out.size < in.size || tag.size < MinTagSize) {
+            return make_error_code(error_t::small_output);
+        } else {
+            int ret = mbedtls_cipher_setup(&ctx_, ninf);
+            if (ret != 0)
+                return mbedtls::make_error_code(ret);
+            ret = mbedtls_cipher_setkey(
+                &ctx_, ci.key.data, ci.key.size << 3, MBEDTLS_ENCRYPT);
+            if (ret != 0)
+                return mbedtls::make_error_code(ret);
+            ret = mbedtls_cipher_auth_encrypt(&ctx_,
+                ci.iv.data, ci.iv.size,
+                ci.ad.data, ci.ad.size,
+                in.data,    in.size,
+                out.data,   &out.size,
+                tag.data,   tag.size);
+            if (ret != 0)
+                return mbedtls::make_error_code(ret);
+        }
+        return std::error_code{};
+    }
+
+    std::error_code auth_decrypt(
+        bin_edit_t&   out,
+        bin_view_t    tag,
+        bin_view_t    in,
+        const info_t& ci) noexcept {
+        const auto* ninf = find_native_info(ci.type);
+        if (is_empty(ci.ad) || ninf == nullptr || !is_valid(in, ci, ninf))
+            return make_error_code(error_t::cipher_args);
+        if (tag.size < MinTagSize || is_empty(in))
+            return make_error_code(error_t::cipher_args);
+        if (is_empty(out)) {
+            out.size = in.size;
+        } else if (out.size < in.size) {
+            return make_error_code(error_t::small_output);
+        } else {
+            int ret = mbedtls_cipher_setup(&ctx_, ninf);
+            if (ret != 0)
+                return mbedtls::make_error_code(ret);
+            ret = mbedtls_cipher_setkey(
+                &ctx_, ci.key.data, ci.key.size << 3, MBEDTLS_DECRYPT);
+            if (ret != 0)
+                return mbedtls::make_error_code(ret);
+            ret = mbedtls_cipher_auth_decrypt(&ctx_,
+                ci.iv.data, ci.iv.size,
+                ci.ad.data, ci.ad.size,
+                in.data,    in.size,
+                out.data,   &out.size,
+                tag.data,   tag.size);
+            if (ret != 0)
+                return mbedtls::make_error_code(ret);
+        }
+        return std::error_code{};
+    }
+
+    std::error_code auth_encrypt(
+        obuffer_t&& out, obuffer_t&& tag, bin_view_t in, const info_t& ci) {
+        bin_edit_t oex, tex;
+        auto       ec = auth_encrypt(oex, tex, in, ci);
+        if (ec)
+            return ec;
+        out.resize(oex.size);
+        tag.resize(tex.size);
+        ec = auth_encrypt(
+            static_cast<bin_edit_t&>(out),
+            static_cast<bin_edit_t&>(tag),
+            in,
+            ci);
+        if (!ec) {
+            out.resize(out.size);
+            tag.resize(tag.size);
+        }
+        return ec;
+    }
+
+    std::error_code auth_decrypt(
+        obuffer_t&& out, bin_view_t tag, bin_view_t in, const info_t& ci) {
+        bin_edit_t expected;
+        auto       ec = auth_decrypt(expected, tag, in, ci);
+        if (ec)
+            return ec;
+        out.resize(expected.size);
+        ec = auth_decrypt(static_cast<bin_edit_t&>(out), tag, in, ci);
+        if (!ec)
+            out.resize(out.size);
+        return ec;
+    }
+
+#endif // defined(MBEDTLS_CIPHER_MODE_AEAD)
+
 }; // struct impl
 
 //-----------------------------------------------------------------------------
@@ -233,6 +341,61 @@ std::error_code
 decrypt(obuffer_t&& output, bin_view_t input, const info_t& ci) {
     return impl{}.crypt(std::forward<obuffer_t>(output), input, ci, MBEDTLS_DECRYPT);
 }
+
+std::error_code
+auth_encrypt(
+    bin_edit_t&   output,
+    bin_edit_t&   tag,
+    bin_view_t    input,
+    const info_t& ci) noexcept {
+#if defined(MBEDTLS_CIPHER_MODE_AEAD)
+    return impl{}.auth_encrypt(output, tag, input, ci);
+#else
+    return make_error_code(error_t::not_supported);
+#endif
+}
+
+std::error_code
+auth_encrypt(
+    obuffer_t&&   out,
+    obuffer_t&&   tag,
+    bin_view_t    in,
+    const info_t& ci) noexcept {
+#if defined(MBEDTLS_CIPHER_MODE_AEAD)
+    return impl{}.auth_encrypt(
+        std::forward<obuffer_t>(out), std::forward<obuffer_t>(tag), in, ci);
+#else
+    return make_error_code(error_t::not_supported);
+#endif
+}
+
+std::error_code
+auth_decrypt(
+    bin_edit_t&   output,
+    bin_view_t    tag,
+    bin_view_t    input,
+    const info_t& ci) noexcept {
+#if defined(MBEDTLS_CIPHER_MODE_AEAD)
+    return impl{}.auth_decrypt(output, tag, input, ci);
+#else
+    return make_error_code(error_t::not_supported);
+#endif
+}
+
+/// overload with contaienr adapter.
+std::error_code
+auth_decrypt(
+    obuffer_t&&   out,
+    bin_view_t    tag,
+    bin_view_t    in,
+    const info_t& ci) noexcept {
+#if defined(MBEDTLS_CIPHER_MODE_AEAD)
+    return impl{}.auth_decrypt(std::forward<obuffer_t>(out), tag, in, ci);
+#else
+    return make_error_code(error_t::not_supported);
+#endif
+}
+
 
 //-----------------------------------------------------------------------------
 } // namespace cipher

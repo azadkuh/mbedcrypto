@@ -113,6 +113,45 @@ std::error_code
 decrypt(obuffer_t&& output, bin_view_t input, const info_t& ci);
 
 //-----------------------------------------------------------------------------
+
+/** makes authenticated-encryption (AEAD) of input by additional data of ci.
+ * also computes and reports the tag (16bytes).
+ * supports: cipher_bm:ccm/gcm/chachapoly, @sa cipher_bm
+ */
+std::error_code
+auth_encrypt(
+    bin_edit_t&   output,
+    bin_edit_t&   tag,
+    bin_view_t    input,
+    const info_t& ci) noexcept;
+
+/// overload with container adapter.
+std::error_code
+auth_encrypt(
+    obuffer_t&&   output,
+    obuffer_t&&   tag,
+    bin_view_t    input,
+    const info_t& ci) noexcept;
+
+/** decrypts and checks the authentication tag of AEAD.
+ * @sa auth_encrypt()
+ */
+std::error_code
+auth_decrypt(
+    bin_edit_t&   output,
+    bin_view_t    tag,
+    bin_view_t    input,
+    const info_t& ci) noexcept;
+
+/// overload with contaienr adapter.
+std::error_code
+auth_decrypt(
+    obuffer_t&&   output,
+    bin_view_t    tag,
+    bin_view_t    input,
+    const info_t& ci) noexcept;
+
+//-----------------------------------------------------------------------------
 } // namespace cipher
 } // namespace mbedcrypto
 //-----------------------------------------------------------------------------
