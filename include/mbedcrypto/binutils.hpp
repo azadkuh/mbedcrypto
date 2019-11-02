@@ -191,6 +191,11 @@ is_empty(const bin_view_t& bv) noexcept {
     return bv.size == 0 || bv.data == nullptr;
 }
 
+constexpr inline bool
+is_empty(const bin_edit_t& be) noexcept {
+    return be.size == 0 || be.data == nullptr;
+}
+
 inline bool
 operator==(bin_view_t a, bin_view_t b) {
     return a.size == b.size && std::memcmp(a.data, b.data, a.size) == 0;
