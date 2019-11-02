@@ -5,7 +5,7 @@
 #include "mbedcrypto/text_codec.hpp"
 #include "src/conversions.hpp"
 
-#include <fstream>
+#include <array>
 
 #define VERBOSE_CIPHER 0
 //-----------------------------------------------------------------------------
@@ -113,13 +113,72 @@ make_source(bin_view_t in, const cipher_properties& p) noexcept {
 
 //-----------------------------------------------------------------------------
 
+struct streamer {
+    auto result() const noexcept { return bin_view_t{buffer}; }
+
+    void encrypt(bin_view_t source, const cipher::info_t& ci) {
+        auto ec = s.start_encrypt(ci);
+        REQUIRE_FALSE(ec);
+        buffer.resize(source.size + 64); // initial guess
+        make_chunk_size(ci.type);
+        iterate(source);
+    }
+
+    void decrypt(bin_view_t source, const cipher::info_t& ci) {
+        auto ec = s.start_decrypt(ci);
+        REQUIRE_FALSE(ec);
+        buffer.resize(source.size + 64); // initial guess
+        block_size = mbedcrypto::block_size(ci.type);
+        iterate(source);
+    }
+
+protected:
+    size_t                  block_size = 0;
+    cipher::stream          s;
+    std::vector<uint8_t>    buffer;
+    std::array<uint8_t, 32> temp;
+
+    void make_chunk_size(cipher_t type) {
+        block_size = mbedcrypto::block_size(type);
+        if (block_size % 8)
+            block_size = 16;
+    }
+
+    void iterate(bin_view_t source) {
+        auto* pbuf = &buffer[0];
+        test::chunker(source, block_size, [&](const auto* ptr, size_t len) {
+            bin_edit_t out{temp};
+            auto ec = s.update(out, bin_view_t{ptr, len});
+            if (ec)
+                std::printf("\nupdate %zu error(%0x): %s\n",
+                        len, -ec.value(), ec.message().data());
+            REQUIRE_FALSE(ec);
+            std::memcpy(pbuf, out.data, out.size);
+            pbuf += out.size;
+        });
+
+        bin_edit_t out{temp};
+        auto ec = s.finish(out);
+        REQUIRE_FALSE(ec);
+        if (out.size > 0) {
+            std::memcpy(pbuf, out.data, out.size);
+            pbuf += out.size;
+        }
+
+        size_t processed = (pbuf - &buffer[0]);
+        buffer.resize(processed);
+    }
+};
+
+//-----------------------------------------------------------------------------
+
 struct tester {
     explicit tester(const cipher_properties& p) noexcept : prop{p} {}
 
     void run() const {
         check_props();
-        one_shots();
-        one_shot_aead();
+        cypt();
+        auth_crypt();
     }
 
 protected:
@@ -144,20 +203,14 @@ protected:
         REQUIRE(is_valid(ci));
     }
 
-    void one_shots() const {
+    void cypt() const {
         if (prop.bmode == cipher_bm::ccm) // CCM is only for AEAD
             return;
 #if VERBOSE_CIPHER > 0
         std::printf("%-20s", to_string(prop.type));
 #endif
         cipher::info_t ci;
-        ci.type    = prop.type;
-        ci.padding = padding_of(prop.bmode);
-        ci.key     = test::short_binary();
-        ci.iv      = test::short_text();
-        REQUIRE(ci.iv.size > prop.iv_size);
-        ci.iv.size  = prop.iv_size;
-        ci.key.size = prop.key_bits >> 3; // to byte
+        prepare(ci);
         if (prop.bmode == cipher_bm::chachapoly) {
             ci.ad = bin_view_t("some additional data is required");
         }
@@ -180,9 +233,19 @@ protected:
             source.size, enc.size(), dec.size());
 #endif
         REQUIRE(dec == source);
+
+        if (prop.bmode == cipher_bm::xts)
+            return; // does not support
+        // streamin-api
+        streamer stm;
+        stm.encrypt(source, ci);
+        REQUIRE(stm.result() == bin_view_t{enc});
+
+        stm.decrypt(enc, ci);
+        REQUIRE(stm.result() == source);
     }
 
-    void one_shot_aead() const {
+    void auth_crypt() const {
         switch (prop.bmode) {
             case cipher_bm::ccm:
             case cipher_bm::gcm:
@@ -195,13 +258,8 @@ protected:
         std::printf("%-20s", to_string(prop.type));
 #endif
         cipher::info_t ci;
-        ci.type    = prop.type;
-        ci.key     = test::short_binary();
-        ci.iv      = test::short_text();
-        REQUIRE(ci.iv.size > prop.iv_size);
-        ci.iv.size  = prop.iv_size;
-        ci.key.size = prop.key_bits >> 3; // to byte
-        ci.ad       = bin_view_t("some additional data is required");
+        prepare(ci);
+        ci.ad = bin_view_t("some additional data is required");
 
         const auto source = make_source(test::long_text(), prop);
 
@@ -224,6 +282,18 @@ protected:
             source.size, enc.size(), dec.size(), tag.size());
 #endif
         REQUIRE(dec == source);
+    }
+
+private:
+    void prepare(cipher::info_t& ci) const noexcept {
+        ci.type    = prop.type;
+        ci.padding = padding_of(prop.bmode);
+        ci.key     = test::short_binary();
+        ci.iv      = test::short_text();
+        REQUIRE(ci.iv.size > prop.iv_size);
+        // adjust to exact size
+        ci.iv.size  = prop.iv_size;
+        ci.key.size = prop.key_bits >> 3; // to byte
     }
 };
 
