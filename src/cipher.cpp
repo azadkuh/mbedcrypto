@@ -237,7 +237,9 @@ struct impl {
                 in.data,    in.size,
                 out.data,   &out.size,
                 tag.data,   tag.size);
-            if (ret != 0)
+            if (ret == MBEDTLS_ERR_CIPHER_AUTH_FAILED)
+                return make_error_code(error_t::cipher_auth);
+            else if (ret != 0)
                 return mbedtls::make_error_code(ret);
         }
         return std::error_code{};

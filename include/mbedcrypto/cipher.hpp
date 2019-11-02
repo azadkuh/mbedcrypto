@@ -115,8 +115,8 @@ decrypt(obuffer_t&& output, bin_view_t input, const info_t& ci);
 //-----------------------------------------------------------------------------
 
 /** makes authenticated-encryption (AEAD) of input by additional data of ci.
- * also computes and reports the tag (16bytes).
- * supports: cipher_bm:ccm/gcm/chachapoly, @sa cipher_bm
+ * also computes and reports the tag (>=16bytes).
+ * supports: cipher_bm::ccm/gcm/chachapoly, @sa cipher_bm
  */
 std::error_code
 auth_encrypt(
