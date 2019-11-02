@@ -95,10 +95,65 @@ struct engine {
         ret = try_set_padding(ci.padding);
         if (ret != 0)
             return mbedtls::make_error_code(ret);
-        ret = mbedtls_cipher_set_iv(&ctx_, ci.iv.data, ci.iv.size);
-        if (ret != 0)
-            return mbedtls::make_error_code(ret);
+        if (ci.iv.size) {
+            ret = mbedtls_cipher_set_iv(&ctx_, ci.iv.data, ci.iv.size);
+            if (ret != 0)
+                return mbedtls::make_error_code(ret);
+        }
         return std::error_code{};
+    }
+
+    std::error_code update(bin_edit_t& out, bin_view_t in) noexcept {
+        const size_t min_size = min_output_size(in.size, info());
+        if (is_empty(out)) {
+            out.size = min_size;
+        } else if (out.size < min_size) {
+            return make_error_code(error_t::small_output);
+        } else {
+            int ret = mbedtls_cipher_update(
+                &ctx_, in.data, in.size, out.data, &out.size);
+            if (ret != 0)
+                return mbedtls::make_error_code(ret);
+        }
+        return std::error_code{};
+    }
+
+    std::error_code update(obuffer_t&& out, bin_view_t in) {
+        bin_edit_t expected;
+        auto       ec = update(expected, in);
+        if (ec)
+            return ec;
+        out.resize(expected.size);
+        ec = update(static_cast<bin_edit_t&>(out), in);
+        if (!ec && out.size != expected.size)
+            out.resize(out.size);
+        return ec;
+    }
+
+    std::error_code finish(bin_edit_t& out) noexcept {
+        const size_t min_size = info().block_size;
+        if (is_empty(out)) {
+            out.size = min_size;
+        } else if (out.size < min_size) {
+            return make_error_code(error_t::small_output);
+        } else {
+            int ret = mbedtls_cipher_finish(&ctx_, out.data, &out.size);
+            if (ret != 0)
+                return mbedtls::make_error_code(ret);
+        }
+        return std::error_code{};
+    }
+
+    std::error_code finish(obuffer_t&& out) {
+        bin_edit_t expected;
+        auto       ec = finish(expected);
+        if (ec)
+            return ec;
+        out.resize(expected.size);
+        ec = finish(static_cast<bin_edit_t&>(out));
+        if (!ec && out.size != expected.size)
+            out.resize(out.size);
+        return ec;
     }
 
     std::error_code
@@ -404,6 +459,49 @@ auth_decrypt(
 #endif
 }
 
+//-----------------------------------------------------------------------------
+
+struct stream::impl : public engine {};
+
+stream::stream() : pimpl{std::make_unique<impl>()} {
+}
+
+stream::~stream() = default;
+
+
+std::error_code
+stream::start_encrypt(const info_t& ci) noexcept {
+    auto& d = *pimpl;
+    d.reset();
+    return d.setup(ci, MBEDTLS_ENCRYPT);
+}
+
+std::error_code
+stream::start_decrypt(const info_t& ci) noexcept {
+    auto& d = *pimpl;
+    d.reset();
+    return d.setup(ci, MBEDTLS_DECRYPT);
+}
+
+std::error_code
+stream::update(bin_edit_t& out, bin_view_t in) noexcept {
+    return pimpl->update(out, in);
+}
+
+std::error_code
+stream::update(obuffer_t&& out, bin_view_t in) {
+    return pimpl->update(std::forward<obuffer_t>(out), in);
+}
+
+std::error_code
+stream::finish(bin_edit_t& out) noexcept {
+    return pimpl->finish(out);
+}
+
+std::error_code
+stream::finish(obuffer_t&& out) {
+    return pimpl->finish(std::forward<obuffer_t>(out));
+}
 
 //-----------------------------------------------------------------------------
 } // namespace cipher

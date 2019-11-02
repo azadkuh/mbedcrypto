@@ -152,6 +152,54 @@ auth_decrypt(
     const info_t& ci) noexcept;
 
 //-----------------------------------------------------------------------------
+
+/** encrypts/decrypts stream of data chunk by chunk.
+ *
+ * ex: to encrypt stream of data:
+ * @code
+ * cipher::stream s;
+ * if (auto ec = s.start_encrypt(inf); ec) {
+ *     // report error
+ * }
+ *
+ * for (...) {
+ *     const auto input = read_some_input_from_somewhere();
+ *     std::vector<uint8_t> output;
+ *     s.update(obuffer_t{output}, input);
+ *     use_encrypted_segment(output);
+ * }
+ * std::vector<uint8_t> last_segment;
+ * s.finish(obuffer_t{last_segment});
+ * use_encrypted_segment(last_segment);
+ * @endcode
+ */
+class stream
+{
+public:
+    explicit stream();
+    ~stream();
+
+    /// setup for encryption
+    std::error_code start_encrypt(const info_t&) noexcept;
+    /// setup for decryption
+    std::error_code start_decrypt(const info_t&) noexcept;
+
+    /// adds chunk of input to cipher context and computes output segment.
+    std::error_code update(bin_edit_t& output, bin_view_t chunk) noexcept;
+    /// overload with container adapter.
+    std::error_code update(obuffer_t&& output, bin_view_t chukn);
+
+    /// returns the final segment of output (w/ padding if supported)
+    std::error_code finish(bin_edit_t& final_output) noexcept;
+    /// overload with container adapter.
+    std::error_code finish(obuffer_t&& final_output);
+
+protected:
+    struct impl;
+    std::unique_ptr<impl> pimpl;
+}; // class stream
+
+//-----------------------------------------------------------------------------
 } // namespace cipher
 } // namespace mbedcrypto
 //-----------------------------------------------------------------------------
