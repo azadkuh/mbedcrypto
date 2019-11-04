@@ -38,6 +38,11 @@ function fetch_mbedtls() {
     echo "    done."
 }
 
+function make_ctags() {
+    ctags --exclude=.build --exclude=.3rdparty \
+        --c++-kinds=+cefgnps --fields=+iaS --extra=+fq -R .
+}
+
 
 CMD="help"
 [[ -n "$1" ]] && CMD="$1"
@@ -56,6 +61,10 @@ case $CMD in
     all)
         mkdir -p $DEPDIR
         (cd $DEPDIR || exit; fetch_catch2 && fetch_mbedtls)
+        ;;
+
+    tags|ctag|ctags)
+        make_ctags
         ;;
 
     help|*)
