@@ -67,14 +67,7 @@ struct engine {
 
     const auto& info() const noexcept { return *ctx_.cipher_info; }
 
-    std::error_code setup(cipher_t t) noexcept {
-        const auto* native = find_native_info(t);
-        if (native == nullptr)
-            return make_error_code(error_t::bad_cipher);
-        return mbedtls::make_error_code(mbedtls_cipher_setup(&ctx_, native));
-    }
-
-    std::error_code setup(const info_t& ci, copmode_t op) noexcept {
+    std::error_code start(const info_t& ci, copmode_t op) noexcept {
         const auto* inf = find_native_info(ci.type);
         if (inf == nullptr || !is_valid(ci, inf))
             return make_error_code(error_t::cipher_args);
@@ -83,8 +76,7 @@ struct engine {
             return mbedtls::make_error_code(ret);
 #if defined(MBEDTLS_GCM_C) || defined(MBEDTLS_CHACHAPOLY_C)
         if (!is_empty(ci.ad)) {
-            ret = mbedtls_cipher_update_ad(&ctx_, ci.ad.data, ci.ad.size);
-            if (ret != 0)
+            if ((ret = mbedtls_cipher_update_ad(&ctx_, ci.ad.data, ci.ad.size)) != 0)
                 return mbedtls::make_error_code(ret);
         }
 #endif // defined(MBEDTLS_GCM_C) || defined(MBEDTLS_CHACHAPOLY_C)
@@ -92,8 +84,7 @@ struct engine {
         ret = mbedtls_cipher_setkey(&ctx_, ci.key.data, ci.key.size << 3, op);
         if (ret != 0)
             return mbedtls::make_error_code(ret);
-        ret = try_set_padding(ci.padding);
-        if (ret != 0)
+        if ((ret = try_set_padding(ci.padding)) != 0)
             return mbedtls::make_error_code(ret);
         if (ci.iv.size) {
             ret = mbedtls_cipher_set_iv(&ctx_, ci.iv.data, ci.iv.size);
@@ -193,8 +184,7 @@ struct engine {
                         return mbedtls::make_error_code(ret);
                 }
             } else {
-                ret = try_set_padding(ci.padding);
-                if (ret != 0)
+                if ((ret = try_set_padding(ci.padding)) != 0)
                     return mbedtls::make_error_code(ret);
                 ret = mbedtls_cipher_crypt(
                     &ctx_,
@@ -392,7 +382,8 @@ encrypt(bin_edit_t& output, bin_view_t input, const info_t& ci) noexcept {
 
 std::error_code
 encrypt(obuffer_t&& output, bin_view_t input, const info_t& ci) {
-    return engine{}.crypt(std::forward<obuffer_t>(output), input, ci, MBEDTLS_ENCRYPT);
+    return engine{}.crypt(
+        std::forward<obuffer_t>(output), input, ci, MBEDTLS_ENCRYPT);
 }
 
 std::error_code
@@ -402,7 +393,8 @@ decrypt(bin_edit_t& output, bin_view_t input, const info_t& ci) noexcept {
 
 std::error_code
 decrypt(obuffer_t&& output, bin_view_t input, const info_t& ci) {
-    return engine{}.crypt(std::forward<obuffer_t>(output), input, ci, MBEDTLS_DECRYPT);
+    return engine{}.crypt(
+        std::forward<obuffer_t>(output), input, ci, MBEDTLS_DECRYPT);
 }
 
 std::error_code
@@ -473,14 +465,14 @@ std::error_code
 stream::start_encrypt(const info_t& ci) noexcept {
     auto& d = *pimpl;
     d.reset();
-    return d.setup(ci, MBEDTLS_ENCRYPT);
+    return d.start(ci, MBEDTLS_ENCRYPT);
 }
 
 std::error_code
 stream::start_decrypt(const info_t& ci) noexcept {
     auto& d = *pimpl;
     d.reset();
-    return d.setup(ci, MBEDTLS_DECRYPT);
+    return d.start(ci, MBEDTLS_DECRYPT);
 }
 
 std::error_code

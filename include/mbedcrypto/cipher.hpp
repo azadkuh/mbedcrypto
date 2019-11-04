@@ -168,6 +168,7 @@ auth_decrypt(
  *     s.update(obuffer_t{output}, input);
  *     use_encrypted_segment(output);
  * }
+ *
  * std::vector<uint8_t> last_segment;
  * s.finish(obuffer_t{last_segment});
  * use_encrypted_segment(last_segment);
@@ -184,7 +185,12 @@ public:
     /// setup for decryption
     std::error_code start_decrypt(const info_t&) noexcept;
 
-    /// adds chunk of input to cipher context and computes output segment.
+    /** adds chunk of input to cipher context and computes output segment.
+     * @warning you can use any cipher type with any chunk size except:
+     *  - cipher_bm::ecb: requires chunk.size = block_size()
+     *  - cipher_bm::gcm: requires chunk.size = N * block_size()
+     *  - cipher_bm::xts: not supported yet, use cipher::encrypt()/decrypt()
+     */
     std::error_code update(bin_edit_t& output, bin_view_t chunk) noexcept;
     /// overload with container adapter.
     std::error_code update(obuffer_t&& output, bin_view_t chukn);
