@@ -111,6 +111,13 @@ make_source(bin_view_t in, const cipher_properties& p) noexcept {
     return copy;
 }
 
+void
+write_to_file(const char* fname, bin_view_t binary) noexcept {
+    auto* fp = fopen(fname, "wb");
+    fwrite(binary.data, binary.size, 1, fp);
+    fclose(fp);
+}
+
 //-----------------------------------------------------------------------------
 
 struct streamer {
@@ -119,34 +126,37 @@ struct streamer {
     void encrypt(bin_view_t source, const cipher::info_t& ci) {
         auto ec = s.start_encrypt(ci);
         REQUIRE_FALSE(ec);
-        buffer.resize(source.size + 64); // initial guess
-        make_chunk_size(ci.type);
-        iterate(source);
+        prepare(source.size, ci.type);
+        run(source);
     }
 
     void decrypt(bin_view_t source, const cipher::info_t& ci) {
         auto ec = s.start_decrypt(ci);
         REQUIRE_FALSE(ec);
-        buffer.resize(source.size + 64); // initial guess
-        block_size = mbedcrypto::block_size(ci.type);
-        iterate(source);
+        prepare(source.size, ci.type);
+        run(source);
     }
 
 protected:
-    size_t                  block_size = 0;
+    size_t                  chunk_size = 0;
     cipher::stream          s;
     std::vector<uint8_t>    buffer;
-    std::array<uint8_t, 32> temp;
+    std::array<uint8_t, 64> temp; // for intermediate crypt
 
-    void make_chunk_size(cipher_t type) {
-        block_size = mbedcrypto::block_size(type);
-        if (block_size % 8)
-            block_size = 16;
+    void prepare(size_t input_size, cipher_t type) {
+        buffer.resize(input_size + 64); // initial guess
+        const auto bm = mbedcrypto::block_mode(type);
+        if (bm == cipher_bm::ecb)
+            chunk_size = mbedcrypto::block_size(type);
+        else if (bm == cipher_bm::gcm)
+            chunk_size = 3 * mbedcrypto::block_size(type); // N * block_size
+        else
+            chunk_size = 42; // custom input size fittable into temp
     }
 
-    void iterate(bin_view_t source) {
+    void run(bin_view_t source) {
         auto* pbuf = &buffer[0];
-        test::chunker(source, block_size, [&](const auto* ptr, size_t len) {
+        test::chunker(source, chunk_size, [&](const auto* ptr, size_t len) {
             bin_edit_t out{temp};
             auto ec = s.update(out, bin_view_t{ptr, len});
             if (ec)
@@ -234,12 +244,16 @@ protected:
 #endif
         REQUIRE(dec == source);
 
+        // streamin-api
         if (prop.bmode == cipher_bm::xts)
             return; // does not support
-        // streamin-api
         streamer stm;
         stm.encrypt(source, ci);
-        REQUIRE(stm.result() == bin_view_t{enc});
+        if (false) {
+            write_to_file("output.enc", enc);
+            write_to_file("output.stm", stm.result());
+        }
+        REQUIRE(stm.result() == enc);
 
         stm.decrypt(enc, ci);
         REQUIRE(stm.result() == source);

@@ -455,11 +455,9 @@ auth_decrypt(
 
 struct stream::impl : public engine {};
 
-stream::stream() : pimpl{std::make_unique<impl>()} {
-}
+stream::stream() : pimpl{std::make_unique<impl>()} {}
 
 stream::~stream() = default;
-
 
 std::error_code
 stream::start_encrypt(const info_t& ci) noexcept {
