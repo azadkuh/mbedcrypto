@@ -60,15 +60,13 @@ bin_view_t long_text_signature() noexcept;
 template <class Func, class... Args>
 inline void
 chunker(bin_view_t input, size_t chunk_size, Func&& func, Args&&... args) {
-    for (size_t i = 0; (i + chunk_size) <= input.size; i += chunk_size) {
-        func(input.data + i, chunk_size, std::forward<Args&&>(args)...);
-    }
-    const auto residue = input.size % chunk_size;
-    if (residue) {
-        func(
-            input.data + input.size - residue,
-            residue,
-            std::forward<Args&&>(args)...);
+    const auto* start = input.data;
+    const auto* end   = input.data + input.size;
+    while (start < end) {
+        const auto*  next = start + chunk_size;
+        const size_t len  = next < end ? chunk_size : (end - start);
+        func(start, len, std::forward<Args>(args)...);
+        start += len;
     }
 }
 
