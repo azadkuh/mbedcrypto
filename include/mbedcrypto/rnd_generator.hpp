@@ -30,11 +30,14 @@
 namespace mbedcrypto {
 //-----------------------------------------------------------------------------
 
-/// makes and writes length bytes of random data into output.
-std::error_code make_random_bytes(bin_edit_t& output, size_t length) noexcept;
+/// makes and writes output.size of random bytes into output.data
+std::error_code make_random_bytes(bin_edit_t& output) noexcept;
 
-/// overlad with container adapter.
-std::error_code make_random_bytes(obuffer_t&& output, size_t length);
+inline auto
+make_random_bytes(obuffer_t&& output, size_t length) {
+    output.resize(length);
+    return make_random_bytes(static_cast<bin_edit_t&>(output));
+}
 
 template <typename Container>
 inline std::pair<Container, std::error_code>
@@ -65,9 +68,27 @@ public:
 
     ~rnd_generator();
 
-    /// makes and writes random bytes to output
-    std::error_code make(bin_edit_t& output, size_t length) noexcept;
-    std::error_code make(obuffer_t&& output, size_t length);
+    /// makes and writes output.size of random bytes into ouput.data
+    std::error_code make(bin_edit_t& output) noexcept;
+
+    inline auto make(obuffer_t&& output, size_t length) {
+        output.resize(length);
+        return make(static_cast<bin_edit_t&>(output));
+    }
+
+    /** equivalent for mbedtls_ctr_drbg_random().
+     * p_rng must be the address of a rnd_generator instance.
+     * @code
+     * rnd_generator my_rnd{"ecdsa randomizer"};
+     * ret = mbedtls_ecdsa_genkey(&ctx_sign,
+     *     ECPARAMS,
+     *     rnd_generator::make,
+     *     &my_rnd
+     *     );
+     * @endcode
+     * @sa mbedtls_ctr_drbg_random()
+     */
+    int make(void*, uint8_t*, size_t) noexcept;
 
     /// low level overload, empty bin_view_t is also valid
     std::error_code reseed(bin_view_t custom_data) noexcept;
@@ -76,7 +97,7 @@ public:
     std::error_code reseed() noexcept { return reseed(bin_view_t{}); }
 
     /// updates CTR_DRBG internal state with additional (custom) data
-    void update(bin_view_t additional_data) noexcept;
+    std::error_code update(bin_view_t additional_data) noexcept;
 
 public: // properties
     /** set entropy read length.
@@ -98,22 +119,6 @@ protected:
     struct impl;
     std::unique_ptr<impl> pimpl;
 }; // class rnd_generator
-
-//-----------------------------------------------------------------------------
-
-/** equivalent for mbedtls_ctr_drbg_random().
- * p_rng must be the address of a rnd_generator instance.
- * @code
- * rnd_generator my_rnd{"ecdsa randomizer"};
- * ret = mbedtls_ecdsa_genkey(&ctx_sign,
- *     ECPARAMS,
- *     mbedcrypto::make_random_bytes,
- *     &my_rnd
- *     );
- * @endcode
- * @sa mbedtls_ctr_drbg_random()
- */
-int make_random_bytes(void*, uint8_t*, size_t) noexcept;
 
 //-----------------------------------------------------------------------------
 } // namespace mbedcrypto

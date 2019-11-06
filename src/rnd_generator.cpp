@@ -24,17 +24,13 @@ feed_all(mbedtls_ctr_drbg_context* ctx, bin_edit_t& out) noexcept {
     return 0; // success
 }
 
-//-----------------------------------------------------------------------------
-} // namespace anon
-//-----------------------------------------------------------------------------
-
-struct rnd_generator::impl {
+struct rndg {
     mbedtls_entropy_context  entropy_;
     mbedtls_ctr_drbg_context ctx_;
 
-    impl() noexcept = default;
+    rndg() noexcept = default;
 
-    ~impl() {
+    ~rndg() {
         mbedtls_entropy_free(&entropy_);
         mbedtls_ctr_drbg_free(&ctx_);
     }
@@ -48,15 +44,49 @@ struct rnd_generator::impl {
                                                    MBEDTLS_CTR_DRBG_PR_OFF);
     }
 
-}; // struct impl
+    std::error_code make(bin_edit_t& out) noexcept {
+        if (is_empty(out))
+            return make_error_code(error_t::small_output);
+        int ret = feed_all(&ctx_, out);
+        return ret == 0 ? std::error_code{} : mbedtls::make_error_code(ret);
+    }
+}; // struct rndg
 
 //-----------------------------------------------------------------------------
+} // namespace anon
+//-----------------------------------------------------------------------------
+
+struct rnd_generator::impl : rndg {};
 
 rnd_generator::rnd_generator(bin_view_t ad) : pimpl{std::make_unique<impl>()} {
     pimpl->setup(ad);
 }
 
 rnd_generator::~rnd_generator() = default;
+
+std::error_code
+rnd_generator::make(bin_edit_t& out) noexcept {
+    return pimpl->make(out);
+}
+
+int
+rnd_generator::make(void* opaque, uint8_t* buf, size_t len) noexcept {
+    bin_edit_t out{buf, len};
+    auto&      self = *reinterpret_cast<rnd_generator*>(opaque);
+    return feed_all(&self.pimpl->ctx_, out);
+}
+
+std::error_code
+rnd_generator::reseed(bin_view_t cd) noexcept {
+    int ret = mbedtls_ctr_drbg_reseed(&pimpl->ctx_, cd.data, cd.size);
+    return ret == 0 ? std::error_code{} : mbedtls::make_error_code(ret);
+}
+
+std::error_code
+rnd_generator::update(bin_view_t ad) noexcept {
+    int ret = mbedtls_ctr_drbg_update_ret(&pimpl->ctx_, ad.data, ad.size);
+    return ret == 0 ? std::error_code{} : mbedtls::make_error_code(ret);
+}
 
 void
 rnd_generator::entropy_length(size_t len) noexcept {
@@ -75,43 +105,14 @@ rnd_generator::prediction_resistance(bool p) noexcept {
         &pimpl->ctx_, p ? MBEDTLS_CTR_DRBG_PR_ON : MBEDTLS_CTR_DRBG_PR_OFF);
 }
 
-std::error_code
-rnd_generator::make(bin_edit_t& out, size_t len) noexcept {
-    if (out.data == nullptr || len < out.size)
-        return make_error_code(error_t::small_output);
-    int ret = feed_all(&pimpl->ctx_, out);
-    return ret == 0 ? std::error_code{} : mbedtls::make_error_code(ret);
-}
-
-std::error_code
-rnd_generator::make(obuffer_t&& out, size_t len) {
-    out.resize(len);
-    return make(static_cast<bin_edit_t&>(out), len);
-}
-
-std::error_code
-rnd_generator::reseed(bin_view_t cd) noexcept {
-    int ret = mbedtls_ctr_drbg_reseed(&pimpl->ctx_, cd.data, cd.size);
-    return ret == 0 ? std::error_code{} : mbedtls::make_error_code(ret);
-}
-
-void
-rnd_generator::update(bin_view_t ad) noexcept {
-    mbedtls_ctr_drbg_update(&pimpl->ctx_, ad.data, ad.size);
-}
-
 //-----------------------------------------------------------------------------
 
 std::error_code
-make_random_bytes(bin_edit_t& out, size_t len) noexcept {
-    thread_local static rnd_generator rgen;
-    return rgen.make(out, len);
-}
-
-std::error_code
-make_random_bytes(obuffer_t&& out, size_t len) {
-    out.resize(len);
-    return make_random_bytes(static_cast<bin_edit_t&>(out), len);
+make_random_bytes(bin_edit_t& out) noexcept {
+    thread_local static std::unique_ptr<rndg> inst;
+    if (!inst)
+        inst = std::make_unique<rndg>();
+    return inst->make(out);
 }
 
 //-----------------------------------------------------------------------------
