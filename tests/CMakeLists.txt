@@ -9,10 +9,10 @@ add_executable(${PROJECT_NAME}
     ./test_text_codec.cpp
     ./test_hash.cpp
     ./test_cipher.cpp
+    ./test_rnd_generator.cpp
     # ./tdd/test_ecp.cpp
     # ./tdd/test_exception.cpp
     # ./tdd/test_qt5.cpp
-    # ./tdd/test_random.cpp
     # ./tdd/test_rsa.cpp
     )
 
