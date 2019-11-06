@@ -24,13 +24,13 @@ feed_all(mbedtls_ctr_drbg_context* ctx, bin_edit_t& out) noexcept {
     return 0; // success
 }
 
-struct rndg {
+struct ctr_drbg {
     mbedtls_entropy_context  entropy_;
     mbedtls_ctr_drbg_context ctx_;
 
-    rndg() noexcept = default;
+    ctr_drbg() noexcept = default;
 
-    ~rndg() {
+    ~ctr_drbg() {
         mbedtls_entropy_free(&entropy_);
         mbedtls_ctr_drbg_free(&ctx_);
     }
@@ -50,13 +50,13 @@ struct rndg {
         int ret = feed_all(&ctx_, out);
         return ret == 0 ? std::error_code{} : mbedtls::make_error_code(ret);
     }
-}; // struct rndg
+}; // struct ctr_drbg
 
 //-----------------------------------------------------------------------------
 } // namespace anon
 //-----------------------------------------------------------------------------
 
-struct rnd_generator::impl : rndg {};
+struct rnd_generator::impl : ctr_drbg {};
 
 rnd_generator::rnd_generator(bin_view_t ad) : pimpl{std::make_unique<impl>()} {
     pimpl->setup(ad);
@@ -109,9 +109,11 @@ rnd_generator::prediction_resistance(bool p) noexcept {
 
 std::error_code
 make_random_bytes(bin_edit_t& out) noexcept {
-    thread_local static std::unique_ptr<rndg> inst;
-    if (!inst)
-        inst = std::make_unique<rndg>();
+    thread_local static std::unique_ptr<ctr_drbg> inst{};
+    if (!inst) {
+        inst = std::make_unique<ctr_drbg>();
+        inst->setup({});
+    }
     return inst->make(out);
 }
 
