@@ -5,38 +5,22 @@
 //-----------------------------------------------------------------------------
 namespace mbedcrypto {
 namespace {
+constexpr size_t MaxChunkSize = MBEDTLS_CTR_DRBG_MAX_REQUEST;
 //-----------------------------------------------------------------------------
 
-static_assert(std::is_copy_constructible<rnd_generator>::value == false, "");
-static_assert(std::is_move_constructible<rnd_generator>::value == true,  "");
-
+// make chunks of random data and fill output buffer
 int
-make_chunked(mbedtls_ctr_drbg_context* ctx, uint8_t* buffer, size_t length) {
-
-    constexpr size_t MaxChunkSize = MBEDTLS_CTR_DRBG_MAX_REQUEST;
-
-    // length is smaller than
-    if (length <= MaxChunkSize) {
-        return mbedtls_ctr_drbg_random(ctx, buffer, length);
-    }
-
-    // needs to make in chunks
-
-    for (size_t i = 0; (i + MaxChunkSize) <= length; i += MaxChunkSize) {
-        int ret = mbedtls_ctr_drbg_random(ctx, buffer + i, MaxChunkSize);
+feed_all(mbedtls_ctr_drbg_context* ctx, bin_edit_t& out) noexcept {
+    auto* start = out.data;
+    auto* end   = out.data + out.size;
+    while (start < end) {
+        const auto*  next = start + MaxChunkSize;
+        const size_t len  = next < end ? MaxChunkSize : (end - start);
+        int          ret  = mbedtls_ctr_drbg_random(ctx, start, len);
         if (ret != 0)
             return ret;
+        start += len;
     }
-
-    // last chunk
-    size_t residue = length % MaxChunkSize;
-    if (residue) {
-        int ret =
-            mbedtls_ctr_drbg_random(ctx, buffer + length - residue, residue);
-        if (ret != 0)
-            return ret;
-    }
-
     return 0; // success
 }
 
@@ -48,37 +32,31 @@ struct rnd_generator::impl {
     mbedtls_entropy_context  entropy_;
     mbedtls_ctr_drbg_context ctx_;
 
-    explicit impl() noexcept {}
+    impl() noexcept = default;
 
     ~impl() {
         mbedtls_entropy_free(&entropy_);
         mbedtls_ctr_drbg_free(&ctx_);
     }
 
-    void setup(const uint8_t* custom, size_t length) {
+    void setup(bin_view_t ad) noexcept {
         mbedtls_entropy_init(&entropy_);
-
         mbedtls_ctr_drbg_init(&ctx_);
         mbedtls_ctr_drbg_seed(
-            &ctx_, mbedtls_entropy_func, &entropy_, custom, length);
-        mbedtls_ctr_drbg_set_prediction_resistance(
-            &ctx_, MBEDTLS_CTR_DRBG_PR_OFF);
+            &ctx_, mbedtls_entropy_func, &entropy_, ad.data, ad.size);
+        mbedtls_ctr_drbg_set_prediction_resistance(&ctx_,
+                                                   MBEDTLS_CTR_DRBG_PR_OFF);
     }
 
-}; // class rnd_generator::imp
+}; // struct impl
 
 //-----------------------------------------------------------------------------
 
-rnd_generator::rnd_generator(const buffer_t& b)
-    : pimpl(std::make_unique<impl>()) {
-    pimpl->setup(to_const_ptr(b), b.size());
+rnd_generator::rnd_generator(bin_view_t ad) : pimpl{std::make_unique<impl>()} {
+    pimpl->setup(ad);
 }
 
-rnd_generator::rnd_generator() : pimpl(std::make_unique<impl>()) {
-    pimpl->setup(nullptr, 0);
-}
-
-rnd_generator::~rnd_generator() {}
+rnd_generator::~rnd_generator() = default;
 
 void
 rnd_generator::entropy_length(size_t len) noexcept {
@@ -87,8 +65,8 @@ rnd_generator::entropy_length(size_t len) noexcept {
 
 void
 rnd_generator::reseed_interval(size_t interval) noexcept {
-    mbedtls_ctr_drbg_set_reseed_interval(
-            &pimpl->ctx_, static_cast<int>(interval));
+    mbedtls_ctr_drbg_set_reseed_interval(&pimpl->ctx_,
+                                         static_cast<int>(interval));
 }
 
 void
@@ -97,30 +75,43 @@ rnd_generator::prediction_resistance(bool p) noexcept {
         &pimpl->ctx_, p ? MBEDTLS_CTR_DRBG_PR_ON : MBEDTLS_CTR_DRBG_PR_OFF);
 }
 
-int
-rnd_generator::make(uint8_t* buffer, size_t olen) noexcept {
-    return make_chunked(&pimpl->ctx_, buffer, olen);
+std::error_code
+rnd_generator::make(bin_edit_t& out, size_t len) noexcept {
+    if (out.data == nullptr || len < out.size)
+        return make_error_code(error_t::small_output);
+    int ret = feed_all(&pimpl->ctx_, out);
+    return ret == 0 ? std::error_code{} : mbedtls::make_error_code(ret);
 }
 
-int
-rnd_generator::maker(void* p_rng, uint8_t* buffer, size_t olen) {
-    rnd_generator* ctx = reinterpret_cast<rnd_generator*>(p_rng);
-    return ctx->make(buffer, olen);
+std::error_code
+rnd_generator::make(obuffer_t&& out, size_t len) {
+    out.resize(len);
+    return make(static_cast<bin_edit_t&>(out), len);
+}
+
+std::error_code
+rnd_generator::reseed(bin_view_t cd) noexcept {
+    int ret = mbedtls_ctr_drbg_reseed(&pimpl->ctx_, cd.data, cd.size);
+    return ret == 0 ? std::error_code{} : mbedtls::make_error_code(ret);
 }
 
 void
-rnd_generator::reseed() {
-    mbedcrypto_c_call(mbedtls_ctr_drbg_reseed, &pimpl->ctx_, nullptr, 0);
+rnd_generator::update(bin_view_t ad) noexcept {
+    mbedtls_ctr_drbg_update(&pimpl->ctx_, ad.data, ad.size);
 }
 
-int
-rnd_generator::reseed(const uint8_t* custom, size_t length) noexcept {
-    return mbedtls_ctr_drbg_reseed(&pimpl->ctx_, custom, length);
+//-----------------------------------------------------------------------------
+
+std::error_code
+make_random_bytes(bin_edit_t& out, size_t len) noexcept {
+    thread_local static rnd_generator rgen;
+    return rgen.make(out, len);
 }
 
-void
-rnd_generator::update(const uint8_t* additional, size_t length) noexcept {
-    mbedtls_ctr_drbg_update(&pimpl->ctx_, additional, length);
+std::error_code
+make_random_bytes(obuffer_t&& out, size_t len) {
+    out.resize(len);
+    return make_random_bytes(static_cast<bin_edit_t&>(out), len);
 }
 
 //-----------------------------------------------------------------------------

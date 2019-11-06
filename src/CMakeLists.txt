@@ -38,8 +38,8 @@ add_library(${PROJECT_NAME}
     text_codec.cpp
     hash.cpp
     cipher.cpp
+    rnd_generator.cpp
     # mpi.cpp
-    # rnd_generator.cpp
     # pk.cpp
     # rsa.cpp
     )

@@ -3,17 +3,8 @@
  * @copyright (C) 2016
  * @date 2016.03.07
  * @author amir zamani <azadkuh@live.com>
- */
-
-#ifndef MBEDCRYPTO_RND_GENERATOR_HPP
-#define MBEDCRYPTO_RND_GENERATOR_HPP
-
-#include "mbedcrypto/types.hpp"
-//-----------------------------------------------------------------------------
-namespace mbedcrypto {
-//-----------------------------------------------------------------------------
-
-/** cryptographically secure pseudo-random byte generator.
+ *
+ * cryptographically secure pseudo-random byte generator.
  * this feature is based on counter mode deterministic random
  *  byte generator (CTR_DRBG) by AES-256 (NIST SP 800-90) and
  *  internally uses an entropy collection modules.
@@ -28,56 +19,68 @@ namespace mbedcrypto {
  *  system at runtime and ... the execution time may differs a lot. so use them
  *  efficiently.
  */
+
+#ifndef MBEDCRYPTO_RND_GENERATOR_HPP
+#define MBEDCRYPTO_RND_GENERATOR_HPP
+
+#include "mbedcrypto/binutils.hpp"
+#include "mbedcrypto/errors.hpp"
+
+//-----------------------------------------------------------------------------
+namespace mbedcrypto {
+//-----------------------------------------------------------------------------
+
+/// makes and writes length bytes of random data into output.
+std::error_code make_random_bytes(bin_edit_t& output, size_t length) noexcept;
+
+/// overlad with container adapter.
+std::error_code make_random_bytes(obuffer_t&& output, size_t length);
+
+template <typename Container>
+inline std::pair<Container, std::error_code>
+make_random_bytes(size_t length) {
+    Container out;
+    auto      ec = make_random_bytes(obuffer_t{out}, length);
+    return {out, ec};
+}
+
+//-----------------------------------------------------------------------------
+
+/// a utility class with more properties and custom seeds.
 class rnd_generator
 {
 public:
-    /// initializes both entropy collector and CTR_DRBG
-    rnd_generator();
-
     /** optional custom data can be provided in addition to the more generic
      * entropy source.
-     *  useful when using random objects (possibly on different threads).
-     *  each thread can have a unique custom byte for better security.
-     *  This makes sure that the random generators between the different
-     *  threads have the least amount of correlation possible and can
-     *  thus be considered as independent as possible.
+     * useful when using random objects (possibly on different threads).
+     * each thread can have a unique custom byte for better security.
+     * This makes sure that the random generators between the different threads
+     * have the least amount of correlation possible and can thus be considered
+     * as independent as possible.
      */
-    explicit rnd_generator(const buffer_t& custom);
+    explicit rnd_generator(bin_view_t custom);
+
+    /// initializes both entropy collector and CTR_DRBG
+    rnd_generator() : rnd_generator{bin_view_t{}} {}
 
     ~rnd_generator();
 
-    /** returns a random binary buffer with specified length.
-     * @note automatically reseeds if reseed_interval is passed.
-     * length can be in any size because underlying class makes random in
-     * chunks.
-     */
-    template<class TBuff = buffer_t>
-    TBuff make(size_t length) {
-        using length_t = decltype(TBuff().size());
-        TBuff rnd_bytes(static_cast<length_t>(length), '\0');
-        make(to_ptr(rnd_bytes), length);
-        return rnd_bytes;
-    }
+    /// makes and writes random bytes to output
+    std::error_code make(bin_edit_t& output, size_t length) noexcept;
+    std::error_code make(obuffer_t&& output, size_t length);
 
-    /// low level overload
-    int make(uint8_t* buffer, size_t length) noexcept;
+    /// low level overload, empty bin_view_t is also valid
+    std::error_code reseed(bin_view_t custom_data) noexcept;
 
-    /** equivalent for mbedtls_ctr_drbg_random().
-     * p_rng must be the address of a rnd_generator instance.
-     * @code
-     * rnd_generator my_rnd{"ecdsa randomizer"};
-     * ret = mbedtls_ecdsa_genkey(&ctx_sign,
-     *     ECPARAMS,
-     *     rnd_generator::maker,
-     *     &my_rnd
-     *     );
-     * @endcode
-     * @sa mbedtls_ctr_drbg_random()
-     */
-    static int maker(void* p_rng, uint8_t*, size_t);
+    /// reseeds (extract data from entropy)
+    std::error_code reseed() noexcept { return reseed(bin_view_t{}); }
 
-public: // auxiliary methods
-    /** set entropy read length. default: 32/48 (sha256/sha512).
+    /// updates CTR_DRBG internal state with additional (custom) data
+    void update(bin_view_t additional_data) noexcept;
+
+public: // properties
+    /** set entropy read length.
+     * default: 32/48 (sha256/sha512).
      * based on build configs, uses sha256 or sha512
      */
     void entropy_length(size_t) noexcept;
@@ -85,38 +88,32 @@ public: // auxiliary methods
     /// set reseeding interval. default: 10000 calls
     void reseed_interval(size_t) noexcept;
 
-    /** if set to true, entropy is used with each call!
-     * quite expensive but more secure.
+    /** if set to true, entropy is used by each call!
      * default: false
+     * @warning: quite expensive but more secure.
      */
     void prediction_resistance(bool) noexcept;
-
-    /// reseeds (extract data from entropy)
-    void reseed();
-    /// overload with custom data
-    void reseed(buffer_view_t custom) {
-        reseed(custom.data(), custom.size());
-    }
-    /// low level overload, nullptr, 0 are valid
-    int reseed(const uint8_t* custom, size_t length) noexcept;
-
-    /// updates CTR_DRBG internal state with additional (custom) data
-    void update(buffer_view_t additional) {
-        update(additional.data(), additional.size());
-    }
-    /// low level overload
-    void update(const uint8_t* additional, size_t length) noexcept;
-
-    // move only
-    rnd_generator(const rnd_generator&) = delete;
-    rnd_generator(rnd_generator&&)      = default;
-    rnd_generator& operator = (const rnd_generator&) = delete;
-    rnd_generator& operator = (rnd_generator&&)      = default;
 
 protected:
     struct impl;
     std::unique_ptr<impl> pimpl;
-}; // rnd_generator
+}; // class rnd_generator
+
+//-----------------------------------------------------------------------------
+
+/** equivalent for mbedtls_ctr_drbg_random().
+ * p_rng must be the address of a rnd_generator instance.
+ * @code
+ * rnd_generator my_rnd{"ecdsa randomizer"};
+ * ret = mbedtls_ecdsa_genkey(&ctx_sign,
+ *     ECPARAMS,
+ *     mbedcrypto::make_random_bytes,
+ *     &my_rnd
+ *     );
+ * @endcode
+ * @sa mbedtls_ctr_drbg_random()
+ */
+int make_random_bytes(void*, uint8_t*, size_t) noexcept;
 
 //-----------------------------------------------------------------------------
 } // namespace mbedcrypto
