@@ -8,7 +8,9 @@
 #ifndef MBEDCRYPTO_MPI_HPP
 #define MBEDCRYPTO_MPI_HPP
 
-#include "mbedcrypto/types.hpp"
+#include "mbedcrypto/binutils.hpp"
+#include "mbedcrypto/errors.hpp"
+
 //-----------------------------------------------------------------------------
 namespace mbedcrypto {
 //-----------------------------------------------------------------------------
@@ -18,71 +20,47 @@ namespace mbedcrypto {
  * used as key parameters for rsa and ecp algorithms.
  * @sa rsa::key_info and @sa ecp::key_info
  */
-class mpi
+struct mpi
 {
-public:
-    explicit mpi();
-    ~mpi();
+    mpi();
+    ~mpi(); ///< also calls reset()
 
-    /// resets and clears the value
-    void reset();
+    /// manually resets and clears the value
+    void reset() noexcept;
 
-public:
-    /// returns true only if the mpi has a valid value
-    explicit operator bool() const noexcept {
-        return bitlen() > 0;
-    }
-    bool operator==(bool b) const noexcept {
-        return static_cast<bool>(*this) == b;
-    }
     /// returns the integer size in byte (ex: 512 for a 4096bit integer)
     size_t size() const noexcept;
     /// returns the integer bitsize
     size_t bitlen() const noexcept;
 
-    /// writes the integer into string with defined radix(16 or 10)
-    auto to_string(int radix = 16) const -> std::string;
-    /// writes the integer into unsigned binary data (big endian)
-    auto dump() const -> std::string;
+    /// returns true only if the mpi has a valid value
+    explicit operator bool() const noexcept {
+        return bitlen() > 0;
+    }
 
-    /** compares the properties of two mpi.
-     * returns 1, 0, -1 if a is greater, equal or less than b
-     */
-    static int compare(const mpi& a, const mpi& b) noexcept;
+    /// returns 1, 0, -1 if is greater, equal or less than other
+    int compare(const mpi& other) const noexcept;
 
-public: // copy/move-able
-    mpi(const mpi&);
-    mpi(mpi&&);
-    mpi& operator=(const mpi&);
-    mpi& operator=(mpi&&);
+    /// dumps the MPI as a null-terminated string
+    std::error_code to_string(bin_edit_t& out, int radix) const noexcept;
+    std::error_code to_string(obuffer_t&& out, int radix) const;
 
-    // private usage
-    template <typename T> void operator<<(const T&);
-    template <typename T> void operator>>(T&) const;
+    /// reads from a null-terminated string
+    std::error_code from_string(const char* cstr, int radix) noexcept;
+
+    /// dumps the MPI to a portable binary buffer.
+    std::error_code to_binary(bin_edit_t& out) const noexcept;
+    std::error_code to_binary(obuffer_t&& out) const;
+
+    /// reads from a binary buffer
+    std::error_code from_binary(bin_view_t bin) noexcept;
 
 protected:
     struct impl;
     std::unique_ptr<impl> pimpl;
-}; // mpi
+}; // struct mpi
 
 //-----------------------------------------------------------------------------
 } // namespace mbedcrypto
-//-----------------------------------------------------------------------------
-
-inline bool
-operator==(const mbedcrypto::mpi& a, const mbedcrypto::mpi& b) noexcept {
-    return mbedcrypto::mpi::compare(a, b) == 0;
-}
-
-inline bool
-operator>(const mbedcrypto::mpi& a, const mbedcrypto::mpi& b) noexcept {
-    return mbedcrypto::mpi::compare(a, b) > 0;
-}
-
-inline bool
-operator<(const mbedcrypto::mpi& a, const mbedcrypto::mpi& b) noexcept {
-    return mbedcrypto::mpi::compare(a, b) < 0;
-}
-
 //-----------------------------------------------------------------------------
 #endif // MBEDCRYPTO_MPI_HPP

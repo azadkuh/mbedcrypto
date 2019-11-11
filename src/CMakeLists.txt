@@ -39,7 +39,7 @@ add_library(${PROJECT_NAME}
     hash.cpp
     cipher.cpp
     rnd_generator.cpp
-    # mpi.cpp
+    mpi.cpp
     # pk.cpp
     # rsa.cpp
     )
