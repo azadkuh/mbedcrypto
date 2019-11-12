@@ -1,4 +1,4 @@
-#include "./mpi_impl.hpp"
+#include "./private/mpi_impl.hpp"
 
 //-----------------------------------------------------------------------------
 namespace mbedcrypto {

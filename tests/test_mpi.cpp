@@ -2,7 +2,7 @@
 #include <array>
 
 #include "mbedcrypto/mpi.hpp"
-#include "../src/mpi_impl.hpp"
+#include "../src/private/mpi_impl.hpp"
 
 //-----------------------------------------------------------------------------
 namespace mbedcrypto {

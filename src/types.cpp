@@ -1,7 +1,7 @@
 #include "mbedcrypto/types.hpp"
 
-#include "./enumerator.hxx"
-#include "./conversions.hpp"
+#include "./private/enumerator.hxx"
+#include "./private/conversions.hpp"
 
 #include <mbedtls/aesni.h>
 //-----------------------------------------------------------------------------

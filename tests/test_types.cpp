@@ -1,6 +1,6 @@
 #include <catch2/catch.hpp>
 
-#include "src/conversions.hpp"
+#include "../src/private/conversions.hpp"
 
 #include <initializer_list>
 #include <cstdio>

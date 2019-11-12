@@ -1,5 +1,5 @@
 #include "mbedcrypto/hash.hpp"
-#include "./conversions.hpp"
+#include "./private/conversions.hpp"
 
 #include <mbedtls/md.h>
 #include <type_traits>

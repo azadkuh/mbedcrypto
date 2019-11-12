@@ -3,7 +3,7 @@
 #include "./helper.hpp"
 #include "mbedcrypto/cipher.hpp"
 #include "mbedcrypto/text_codec.hpp"
-#include "src/conversions.hpp"
+#include "../src/private/conversions.hpp"
 
 #include <array>
 

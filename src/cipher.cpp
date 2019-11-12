@@ -1,5 +1,5 @@
 #include "mbedcrypto/cipher.hpp"
-#include "./conversions.hpp"
+#include "./private/conversions.hpp"
 
 #include <mbedtls/aesni.h>
 #include <mbedtls/cipher.h>
