@@ -40,8 +40,6 @@ add_library(${PROJECT_NAME}
     cipher.cpp
     rnd_generator.cpp
     mpi.cpp
-    # pk.cpp
-    # rsa.cpp
     )
 
 include("${CMAKE_SOURCE_DIR}/cmake/setup_platforms.cmake")
