@@ -11,10 +11,6 @@ add_executable(${PROJECT_NAME}
     ./test_cipher.cpp
     ./test_rnd_generator.cpp
     ./test_mpi.cpp
-    # ./tdd/test_ecp.cpp
-    # ./tdd/test_exception.cpp
-    # ./tdd/test_qt5.cpp
-    # ./tdd/test_rsa.cpp
     )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
