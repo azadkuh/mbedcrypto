@@ -43,7 +43,7 @@ TEST_CASE("mpi tests", "[mpi]") {
         SECTION("properties") {
             REQUIRE(big.bitlen() == 406); // 2^406
             REQUIRE(big.size()   == 51);  // requires 51 bytes
-            std::printf("bit len is: %zu size is: %zu\n", big.bitlen(), big.size());
+            // std::printf("bit len is: %zu size is: %zu\n", big.bitlen(), big.size());
         }
         SECTION("compare") {
             auto small = make_mpi(1024, 12);
