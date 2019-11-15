@@ -11,7 +11,9 @@ using copmode_t = mbedtls_operation_t;
 using cinfo_t   = mbedtls_cipher_info_t;
 using info_t    = cipher::info_t;
 
+#if defined(MBEDTLS_CIPHER_MODE_AEAD)
 constexpr size_t MinTagSize = 16;
+#endif
 //-----------------------------------------------------------------------------
 
 const cinfo_t*
