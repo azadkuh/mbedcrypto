@@ -34,9 +34,9 @@ enum class error_t : int {
     success         = 0,   ///< success: no error
     type            = 1,   ///< invalid or unknown type
     usage           = 2,   ///< bad api call or invalid argument
-    not_supported   = 10,  ///< not supported by this build
+    not_supported   = 10,  ///< not supported by this algorithm or build
     empty_input     = 20,  ///< input buffer is empty
-    bad_input       = 21,  ///< input buffer has invalid size or data
+    bad_input       = 21,  ///< invalid input type, size or data
     small_output    = 30,  ///< output buffer is empty or too small
     bad_hash        = 100, ///< invalid or unsupported hash type
     bad_cipher      = 200, ///< invalid or unsupported cipher type

@@ -43,9 +43,9 @@ struct mbedcrypto_category : std::error_category
         case error_t::success:         return "success";
         case error_t::type:            return "invalid or unknown type";
         case error_t::usage:           return "bad api call or invalid argument";
-        case error_t::not_supported:   return "not supported by this build";
+        case error_t::not_supported:   return "not supported by this algorithm or build";
         case error_t::empty_input:     return "input buffer has invalid size or data";
-        case error_t::bad_input:       return "not supported by this build";
+        case error_t::bad_input:       return "invalid input type, size or data";
         case error_t::small_output:    return "output buffer is empty or too small";
         case error_t::bad_hash:        return "invalid or unsupported hash type";
         case error_t::bad_cipher:      return "invalid or unsupported cipher type";
