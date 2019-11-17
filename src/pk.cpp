@@ -69,33 +69,6 @@ min_pub_export_size(const context& d, key_io_t kio) noexcept {
 } // namespace anon
 //-----------------------------------------------------------------------------
 
-bool
-supports_key_export() noexcept {
-#if defined(MBEDTLS_PK_WRITE_C)
-    return true;
-#else  // MBEDTLS_PK_WRITE_C
-    return false;
-#endif // MBEDTLS_PK_WRITE_C
-}
-
-bool
-supports_rsa_keygen() noexcept {
-#if defined(MBEDTLS_GENPRIME)
-    return true;
-#else
-    return false;
-#endif
-}
-
-bool
-supports_ec_keygen() noexcept {
-#if defined(MBEDTLS_ECP_C)
-    return true;
-#else
-    return false;
-#endif
-}
-
 void
 reset(context& d) noexcept {
     d.has_pri_key = false;

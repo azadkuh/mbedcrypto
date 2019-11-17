@@ -24,9 +24,6 @@ namespace mbedcrypto {
 namespace pk {
 //-----------------------------------------------------------------------------
 
-/// generic context of rsa/ec algorithms
-struct context;
-
 /** supported ASN.1 key formats to import(initialize) and export from.
  * @warning with pem keys:
  * - import_xxx() / open_xxx(): the pem data must include a null ('\0')
@@ -57,13 +54,28 @@ operator==(const capability& a, const capability& b) {
 }
 
 /// returns true only by enabled MBEDCRYPTO_PK_EXPORT builds
-bool supports_key_export() noexcept;
+inline bool
+supports_key_export() noexcept {
+    return supports(features::pk_export);
+}
 
 /// returns true only by enabled MBEDCRYPTO_RSA_KEYGEN builds
-bool supports_rsa_keygen() noexcept;
+inline bool
+supports_rsa_keygen() noexcept {
+    return supports(features::rsa_keygen);
+}
 
 /// returns true only by enabled MBEDCRYPTO_EC builds
-bool supports_ec_keygen() noexcept;
+inline bool
+supports_ec_keygen() noexcept {
+    return supports(features::ec_keygen);
+}
+
+//-----------------------------------------------------------------------------
+// public-key api
+
+/// generic context of rsa/ec algorithms
+struct context;
 
 /// resets and clean up the memory
 void reset(context&) noexcept;

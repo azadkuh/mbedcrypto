@@ -596,20 +596,20 @@ supports(features f) noexcept {
 #if defined(MBEDTLS_CIPHER_MODE_AEAD)
         return true;
 #endif
+    } else if (f == features::pk_export) {
+#if defined(MBEDTLS_PK_WRITE_C)
+        return true;
+#endif
+    } else if (f == features::rsa_keygen) {
+#if defined(MBEDTLS_GENPRIME)
+        return true;
+#endif
+    } else if (f == features::ec_keygen) {
+#if defined(MBEDTLS_ECP_C)
+        return true;
+#endif
     }
     return false;
-#if 0 // yet to be refactored
-    switch (f) {
-    case features::pk_export:
-        return pk::supports_key_export();
-    case features::rsa_keygen:
-        return pk::supports_rsa_keygen();
-    case features::ec_keygen:
-        return pk::supports_ec_keygen();
-    default:
-        return false;
-    }
-#endif
 }
 
 //-----------------------------------------------------------------------------
