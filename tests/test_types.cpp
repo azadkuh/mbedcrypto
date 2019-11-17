@@ -1,6 +1,7 @@
 #include <catch2/catch.hpp>
 
 #include "../src/private/conversions.hpp"
+#include "../src/private/pk_context.hpp"
 
 #include <initializer_list>
 #include <cstdio>
@@ -318,29 +319,29 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
         }
     }
 
-#if 0 // not implemented yet
     SECTION("pk features") {
         auto check = pk::supports_key_export();
+        REQUIRE(check == supports(features::pk_export));
 #if defined(MBEDTLS_PEM_WRITE_C)
         REQUIRE(check);
 #else  // MBEDTLS_PEM_WRITE_C
         REQUIRE_FALSE(check);
 #endif // MBEDTLS_PEM_WRITE_C
 
-        check = supports(features::rsa_keygen);
+        check = pk::supports_rsa_keygen();
+        REQUIRE(check == supports(features::rsa_keygen));
 #if defined(MBEDTLS_GENPRIME)
         REQUIRE(check);
 #else
         REQUIRE_FALSE(check);
 #endif // MBEDTLS_GENPRIME
 
-        check = supports(features::ec_keygen);
+        check = pk::supports_ec_keygen();
+        REQUIRE(check == supports(features::ec_keygen));
 #if defined(MBEDTLS_ECP_C)
         REQUIRE(check);
 #else  // MBEDTLS_ECP_C
         REQUIRE_FALSE(check);
 #endif // MBEDTLS_ECP_C
     }
-#endif
-
 }
