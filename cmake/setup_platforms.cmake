@@ -2,7 +2,6 @@
 # public api
 function(setup_build_options tgt)
     target_compile_features(${tgt}    PUBLIC cxx_std_14)
-    target_compile_definitions(${tgt} PUBLIC $<$<BOOL:MBEDCRYPTO_STATIC_CRT>:MBEDCRYPTO_STATIC_CRT>)
     if(WIN32)
         _setup_win32_builds(${tgt})
     endif()
