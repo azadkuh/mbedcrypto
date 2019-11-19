@@ -7,6 +7,21 @@ namespace {
 //-----------------------------------------------------------------------------
 
 bool
+is_supported(pk_t t) noexcept {
+    switch (t) {
+    case pk_t::rsa:
+#if defined(MBEDCRYPTO_EC)
+    case pk_t::eckey:
+    case pk_t::eckey_dh:
+    case pk_t::ecdsa:
+#endif
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool
 is_rsa(pk_t t) noexcept {
     switch (t) {
     case pk_t::rsa:
@@ -32,13 +47,10 @@ is_ec(pk_t t) noexcept {
 
 bool
 is_compatible(pk_t a, pk_t b) noexcept {
-    return (is_rsa(a) && is_rsa(b)) || (is_ec(a) && is_ec(b));
-}
-
-int
-setup(context& d, pk_t neu) noexcept {
-    reset(d);
-    return mbedtls_pk_setup(&d.pk, find_native_info(neu));
+    return a == pk_t::unknown   // unknown (empty) is compatible with any type
+        || b == pk_t::unknown
+        || (is_rsa(a) && is_rsa(b)) // both have same type
+        || (is_ec(a) && is_ec(b));
 }
 
 template <typename Func, class... Args>
@@ -76,22 +88,24 @@ reset(context& d) noexcept {
 }
 
 std::error_code
-reset_as(context& d, pk_t neu) noexcept {
-    const auto curr = type_of(d);
-    if (!is_compatible(curr, neu))
-        return make_error_code(error_t::type);
-    int ret = setup(d, neu);
+setup(context& d, pk_t neu) noexcept {
+    reset(d);
+    if (!is_supported(neu))
+        return make_error_code(error_t::not_supported);
+    int ret = mbedtls_pk_setup(&d.pk, find_native_info(neu));
     return ret == 0 ? std::error_code{} : mbedtls::make_error_code(ret);
+}
+
+bool
+is_valid(const context& d) noexcept {
+    return d.pk.pk_info               != nullptr
+        && d.pk.pk_ctx                != nullptr
+        && mbedtls_pk_get_type(&d.pk) != MBEDTLS_PK_NONE;
 }
 
 pk_t
 type_of(const context& d) noexcept {
     return from_native(mbedtls_pk_get_type(&d.pk));
-}
-
-const char*
-name_of(const context& d) noexcept {
-    return mbedtls_pk_get_name(&d.pk);
 }
 
 size_t
@@ -109,15 +123,15 @@ max_crypt_size(const context& d) noexcept {
     // padding and/or header data (11 bytes for PKCS#1 v1.5 padding).
     if (type_of(d) == pk_t::rsa)
         return key_size(d) - 11;
-#if defined(MBEDTLS_ECDSA_C)
+#   if defined(MBEDTLS_ECDSA_C)
     else if (can_do(d, pk_t::ecdsa))
         return (size_t)MBEDTLS_ECDSA_MAX_LEN;
-#endif
+#   endif
     return 0;
 }
 
 bool
-has_pri_key(const context& d) noexcept {
+has_private_key(const context& d) noexcept {
     return d.has_pri_key;
 }
 

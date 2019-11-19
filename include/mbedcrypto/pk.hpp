@@ -10,6 +10,8 @@
  * - MBEDCRYPTO_RSA_KEYGEN
  * - MBEDCRYPTO_EC
  *
+ * please note that RSA is always enabled in mbedcrypto.
+ *
  */
 
 #ifndef MBEDCRYPTO_PK_HPP
@@ -49,8 +51,8 @@ constexpr inline bool
 operator==(const capability& a, const capability& b) {
     return a.encrypt == b.encrypt
         && a.decrypt == b.decrypt
-        && a.sign == b.sign
-        && a.verify == b.verify;
+        && a.sign    == b.sign
+        && a.verify  == b.verify;
 }
 
 /// returns true only by enabled MBEDCRYPTO_PK_EXPORT builds
@@ -80,19 +82,26 @@ struct context;
 /// resets and clean up the memory
 void reset(context&) noexcept;
 
-/// resets and initialize to the new type if it is compatible.
-std::error_code reset_as(context&, pk_t new_type) noexcept;
+/// resets and initializes to the new compatible type.
+/// you rarely need to call this function directly.
+std::error_code setup(context&, pk_t new_type) noexcept;
+
+/** returns false if the context is uninitialized.
+ * note: the context is valid even if it has not any associated key, so
+ * manually setup() a context, gives a valid context without any key.
+ */
+bool is_valid(const context&) noexcept;
 
 /// returns the type of a pk context
 pk_t type_of(const context&) noexcept;
 
-/// returns the name of current algorithm
-const char* name_of(const context&) noexcept;
+/// returns the name of current algorithm or unknown if it is not valid
+inline auto name_of(const context& c) noexcept { return to_string(type_of(c)); }
 
-/// size of underlying key in bits, ex 2048 or ... or 0 if uninitialized
+/// size of underlying key in bits, or 0 if it has no key
 size_t key_bitlen(const context&) noexcept;
 
-/// size of underlying key or 0 if uninitialized
+/// size of underlying key or 0 if it has no key
 size_t key_size(const context&) noexcept;
 
 /** maximum size of data (in bytes) for a pk context to sign or verify.
