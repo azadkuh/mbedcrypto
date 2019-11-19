@@ -18,13 +18,6 @@ rnd_generator::make(bin_edit_t& out) noexcept {
     return pimpl->make(out);
 }
 
-int
-rnd_generator::make(void* opaque, uint8_t* buf, size_t len) noexcept {
-    bin_edit_t out{buf, len};
-    auto&      self = *reinterpret_cast<rnd_generator*>(opaque);
-    return feed_all(&self.pimpl->ctx_, out);
-}
-
 std::error_code
 rnd_generator::reseed(bin_view_t cd) noexcept {
     int ret = mbedtls_ctr_drbg_reseed(&pimpl->ctx_, cd.data, cd.size);

@@ -64,6 +64,13 @@ struct ctr_drbg
         int ret = feed_all(&ctx_, out);
         return ret == 0 ? std::error_code{} : mbedtls::make_error_code(ret);
     }
+
+    /// is being used internally by mbedcrypto api as rsa/ec key generators
+    static int make(void* opaque, uint8_t* buf, size_t len) noexcept {
+        bin_edit_t out{buf, len};
+        auto&      self = *reinterpret_cast<ctr_drbg*>(opaque);
+        return feed_all(&self.ctx_, out);
+    }
 }; // struct ctr_drbg
 
 //-----------------------------------------------------------------------------

@@ -76,20 +76,6 @@ public:
         return make(static_cast<bin_edit_t&>(output));
     }
 
-    /** equivalent for mbedtls_ctr_drbg_random().
-     * p_rng must be the address of a rnd_generator instance.
-     * @code
-     * rnd_generator my_rnd{"ecdsa randomizer"};
-     * ret = mbedtls_ecdsa_genkey(&ctx_sign,
-     *     ECPARAMS,
-     *     rnd_generator::make,
-     *     &my_rnd
-     *     );
-     * @endcode
-     * @sa mbedtls_ctr_drbg_random()
-     */
-    int make(void*, uint8_t*, size_t) noexcept;
-
     /// low level overload, empty bin_view_t is also valid
     std::error_code reseed(bin_view_t custom_data) noexcept;
 
