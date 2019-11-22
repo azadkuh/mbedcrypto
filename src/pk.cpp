@@ -247,7 +247,6 @@ open_pub_key(context& d, const char* fpath) noexcept {
 
 std::error_code
 export_pri_key(bin_edit_t& out, context& d, key_io_t kio) noexcept {
-#if defined(MBEDTLS_PK_WRITE_C)
     const auto min_size = min_pri_export_size(d, kio);
     if (is_empty(out)) {
         out.size = min_size;
@@ -269,9 +268,6 @@ export_pri_key(bin_edit_t& out, context& d, key_io_t kio) noexcept {
         }
     }
     return std::error_code{};
-#else
-    return make_error_code(error_t::not_supported);
-#endif
 }
 
 std::error_code
@@ -289,7 +285,6 @@ export_pri_key(obuffer_t&& out, context& d, key_io_t kio) {
 
 std::error_code
 export_pub_key(bin_edit_t& out, context& d, key_io_t kio) noexcept {
-#if defined(MBEDTLS_PK_WRITE_C)
     const auto min_size = min_pub_export_size(d, kio);
     if (is_empty(out)) {
         out.size = min_size;
@@ -311,9 +306,6 @@ export_pub_key(bin_edit_t& out, context& d, key_io_t kio) noexcept {
         }
     }
     return std::error_code{};
-#else
-    return make_error_code(error_t::not_supported);
-#endif
 }
 
 std::error_code

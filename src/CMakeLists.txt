@@ -116,8 +116,8 @@ if(MBEDCRYPTO_ARC4)
     target_sources(${PROJECT_NAME} PRIVATE ${MBEDTLS_SRCDIR}/arc4.c)
 endif()
 
-#  public key options
-if(MBEDCRYPTO_PK_EXPORT)
+#  public key options, is mandatory part
+if(TRUE)
     set(MBEDTLS_ASN1_WRITE_C ON)
     set(MBEDTLS_PK_WRITE_C   ON)
     set(MBEDTLS_PEM_WRITE_C  ON)

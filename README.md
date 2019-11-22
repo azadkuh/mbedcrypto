@@ -170,7 +170,6 @@ you can add other algorithms by these cmake options:
 | MBEDCRYPTO_CHACHA20   | enable chacha20 & chacha20_poly ciphers                         |
 | MBEDCRYPTO_DES        | enable des and triple-des cipher (weak)                         |
 | MBEDCRYPTO_ARC4       | enable arc4 cipher (insecure)                                   |
-| MBEDCRYPTO_PK_EXPORT  | enable export keys in pem or der format                         |
 | MBEDCRYPTO_RSA_KEYGEN | enable rsa key generator                                        |
 | MBEDCRYPTO_EC         | enable eckey, eckey_dh and ecdsa algorithms                     |
 

@@ -596,10 +596,6 @@ supports(features f) noexcept {
 #if defined(MBEDTLS_CIPHER_MODE_AEAD)
         return true;
 #endif
-    } else if (f == features::pk_export) {
-#if defined(MBEDTLS_PK_WRITE_C)
-        return true;
-#endif
     } else if (f == features::rsa_keygen) {
 #if defined(MBEDTLS_GENPRIME)
         return true;

@@ -6,7 +6,6 @@
  * @author amir zamani <azadkuh@live.com>
  *
  * related cmake build options:
- * - MBEDCRYPTO_PK_EXPORT
  * - MBEDCRYPTO_RSA_KEYGEN
  * - MBEDCRYPTO_EC
  *
@@ -49,12 +48,6 @@ operator==(const capability& a, const capability& b) {
         && a.decrypt == b.decrypt
         && a.sign    == b.sign
         && a.verify  == b.verify;
-}
-
-/// returns true only by enabled MBEDCRYPTO_PK_EXPORT builds
-inline bool
-supports_key_export() noexcept {
-    return supports(features::pk_export);
 }
 
 /// returns true only by enabled MBEDCRYPTO_RSA_KEYGEN builds
@@ -156,18 +149,14 @@ open_pri_key(context&, const char* file_path, const char* password = nullptr) no
 /// (re)initializes the context by loading the public key from a file.
 std::error_code open_pub_key(context&, const char* file_path) noexcept;
 
-/** exports private key if MBEDCRYPTO_PK_EXPORT has been set.
- * @sa supports_pk_export()
- */
+/// exports private key
 std::error_code
 export_pri_key(bin_edit_t& out, context&, key_io_t) noexcept;
 
 /// overload with container adapter.
 std::error_code export_pri_key(obuffer_t&& out, context&, key_io_t);
 
-/** exports public key if MBEDCRYPTO_PK_EXPORT has been set.
- * @sa supports_pk_export()
- */
+/// exports public key
 std::error_code
 export_pub_key(bin_edit_t& out, context&, key_io_t) noexcept;
 

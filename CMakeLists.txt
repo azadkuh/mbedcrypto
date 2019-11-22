@@ -35,7 +35,6 @@ option(MBEDCRYPTO_ARC4     "enable arc4 cipher (insecure)"           OFF)
 
 ## optional pk algorithm
 ## note: rsa is mandatory (not optional)
-option(MBEDCRYPTO_PK_EXPORT  "enable export keys in pem or der format"  ON)
 option(MBEDCRYPTO_RSA_KEYGEN "enable rsa key generator"                 ON)
 option(MBEDCRYPTO_EC         "enable eckey, eckey_dh, ecdsa algorithms" OFF)
 

@@ -34,8 +34,6 @@
 #cmakedefine MBEDCRYPTO_DES
 #cmakedefine MBEDCRYPTO_ARC4
 
-// PEM/DER key export
-#cmakedefine MBEDCRYPTO_PK_EXPORT
 // rsa key generator
 #cmakedefine MBEDCRYPTO_RSA_KEYGEN
 // elliptic curve algorithms as: ekey, eckey_dh, ecdsa, ...

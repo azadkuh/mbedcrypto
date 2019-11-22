@@ -92,8 +92,6 @@ TEST_CASE("list supported algorithms", "[types]") {
             has(features::aes_ni));
     std::printf("\nthis build %s AEAD (authenticated encryption by additional data)",
             has(features::aead));
-    std::printf("\nthis build %s PK export (*.pem, *.der) facility",
-            has(features::pk_export));
     std::printf("\nthis build %s RSA key generation",
             has(features::rsa_keygen));
     std::printf("\nthis build %s EC (elliptic curve) key generation",
@@ -320,15 +318,7 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
     }
 
     SECTION("pk features") {
-        auto check = pk::supports_key_export();
-        REQUIRE(check == supports(features::pk_export));
-#if defined(MBEDTLS_PEM_WRITE_C)
-        REQUIRE(check);
-#else  // MBEDTLS_PEM_WRITE_C
-        REQUIRE_FALSE(check);
-#endif // MBEDTLS_PEM_WRITE_C
-
-        check = pk::supports_rsa_keygen();
+        auto check = pk::supports_rsa_keygen();
         REQUIRE(check == supports(features::rsa_keygen));
 #if defined(MBEDTLS_GENPRIME)
         REQUIRE(check);
