@@ -117,8 +117,23 @@ bool can_do(const context&, pk_t other_type) noexcept;
 /// returns capability based on algorithms, and/or pub/priv key.
 capability what_can_do(const context&) noexcept;
 
+//-----------------------------------------------------------------------------
+// key tools
+
+/** creates an RSA (private) key.
+ * change the default exponent value if you know exactly what you're doing.
+ * @sa supports_rsa_keygen()
+ */
+std::error_code
+make_rsa_key(context&, size_t key_bitlen, size_t exponent = 65537) noexcept;
+
+/** creates an EC (private) key.
+ * @sa supports_ec_keygen()
+ */
+std::error_code make_ec_key(context&, curve_t) noexcept;
+
 /// checks if a public-private pair of keys matches.
-bool check_pair(const context& pub, const context& pri) noexcept;
+bool is_pri_pub_pair(const context& pri, const context& pub) noexcept;
 
 //-----------------------------------------------------------------------------
 // key i/o

@@ -56,14 +56,10 @@ is_compatible(pk_t a, pk_t b) noexcept {
 template <typename Func, class... Args>
 std::error_code
 open_key_impl(context& d, Func fn, Args&&... args) noexcept {
-    const auto oldt = type_of(d);
     reset(d);
     int ret = fn(&d.pk, std::forward<Args>(args)...);
     if (ret != 0)
         return mbedtls::make_error_code(ret);
-    // make sure the new key is compatible with previous type
-    if (!is_compatible(type_of(d), oldt))
-        return make_error_code(error_t::type);
     return std::error_code{};
 }
 
@@ -176,8 +172,50 @@ what_can_do(const context& d) noexcept {
 }
 
 bool
-check_pair(const context& pub, const context& pri) noexcept {
+is_pri_pub_pair(const context& pri, const context& pub) noexcept {
     return mbedtls_pk_check_pair(&pub.pk, &pri.pk) == 0;
+}
+
+std::error_code
+make_rsa_key(context& d, size_t kbits, size_t expo) noexcept {
+#if defined(MBEDTLS_GENPRIME)
+    // resets previous states
+    auto ec = pk::setup(d, pk_t::rsa);
+    if (ec)
+        return ec;
+    int ret = mbedtls_rsa_gen_key(
+        mbedtls_pk_rsa(d.pk),
+        ctr_drbg::make,
+        &d.rnd,
+        static_cast<unsigned int>(kbits),
+        static_cast<int>(expo));
+    if (ret != 0)
+        return mbedtls::make_error_code(ret);
+    // set the key type
+    d.has_pri_key = true;
+    return ec;
+#else  // MBEDTLS_GENPRIME
+    return make_error_code(error_t::not_supported);
+#endif // MBEDTLS_GENPRIME
+}
+
+std::error_code
+make_ec_key(context& d, curve_t curve) noexcept {
+#if defined(MBEDTLS_ECP_C)
+    // resets previous states
+    auto ec = pk::setup(d, pk_t::eckey);
+    if (ec)
+        return ec;
+    int ret = mbedtls_ecp_gen_key(
+        to_native(curve), mbedtls_pk_ec(d.pk), ctr_drbg::make, &d.rnd);
+    if (ret != 0)
+        return mbedtls::make_error_code(ret);
+    // set the key type
+    d.has_pri_key = true;
+    return ec;
+#else  // MBEDTLS_ECP_C
+    return make_error_code(error_t::not_supported);
+#endif // MBEDTLS_ECP_C
 }
 
 std::error_code
@@ -239,11 +277,14 @@ export_pri_key(bin_edit_t& out, context& d, key_io_t kio) noexcept {
 std::error_code
 export_pri_key(obuffer_t&& out, context& d, key_io_t kio) {
     bin_edit_t expected;
-    const auto ec = export_pri_key(expected, d, kio);
-    if (!ec)
+    auto       ec = export_pri_key(expected, d, kio);
+    if (ec)
         return ec;
     out.resize(expected.size);
-    return export_pri_key(static_cast<bin_edit_t&>(out), d, kio);
+    ec = export_pri_key(static_cast<bin_edit_t&>(out), d, kio);
+    if (!ec)
+        out.resize(out.size);
+    return ec;
 }
 
 std::error_code
@@ -278,11 +319,14 @@ export_pub_key(bin_edit_t& out, context& d, key_io_t kio) noexcept {
 std::error_code
 export_pub_key(obuffer_t&& out, context& d, key_io_t kio) {
     bin_edit_t expected;
-    const auto ec = export_pub_key(expected, d, kio);
-    if (!ec)
+    auto       ec = export_pub_key(expected, d, kio);
+    if (ec)
         return ec;
     out.resize(expected.size);
-    return export_pub_key(static_cast<bin_edit_t&>(out), d, kio);
+    ec = export_pub_key(static_cast<bin_edit_t&>(out), d, kio);
+    if (!ec)
+        out.resize(out.size);
+    return ec;
 }
 
 //-----------------------------------------------------------------------------
