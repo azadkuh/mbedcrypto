@@ -77,6 +77,16 @@ min_pub_export_size(const context& d, key_io_t kio) noexcept {
     return 47 + (kio == key_io_t::pem ? 2 : 1) * key_size(d);
 }
 
+// TODO: requires performance optimization, use memcpy instead of byte copy
+void
+shift_left(bin_edit_t& be, size_t len) noexcept {
+    auto* begin = be.data + len;
+    be.size     = be.size - len;
+    for (size_t i = 0; i < be.size; ++i) {
+        be.data[i] = begin[i];
+    }
+}
+
 //-----------------------------------------------------------------------------
 } // namespace anon
 //-----------------------------------------------------------------------------
@@ -211,12 +221,13 @@ export_pri_key(bin_edit_t& out, context& d, key_io_t kio) noexcept {
             ret = mbedtls_pk_write_key_pem(&d.pk, out.data, out.size);
             if (ret != 0)
                 return mbedtls::make_error_code(ret);
-            out.size = std::strlen(reinterpret_cast<const char*>(out.data));
+            // the null terminator is also required
+            out.size = std::strlen(reinterpret_cast<const char*>(out.data)) + 1;
         } else {
             ret = mbedtls_pk_write_key_der(&d.pk, out.data, out.size);
             if (ret < 0)
                 return mbedtls::make_error_code(ret);
-            out.size = ret;
+            shift_left(out, static_cast<size_t>(out.size - ret));
         }
     }
     return std::error_code{};
@@ -249,12 +260,13 @@ export_pub_key(bin_edit_t& out, context& d, key_io_t kio) noexcept {
             ret = mbedtls_pk_write_pubkey_pem(&d.pk, out.data, out.size);
             if (ret != 0)
                 return mbedtls::make_error_code(ret);
-            out.size = std::strlen(reinterpret_cast<const char*>(out.data));
+            // the null terminator is also required
+            out.size = std::strlen(reinterpret_cast<const char*>(out.data)) + 1;
         } else {
             ret = mbedtls_pk_write_pubkey_der(&d.pk, out.data, out.size);
             if (ret < 0)
                 return mbedtls::make_error_code(ret);
-            out.size = ret;
+            shift_left(out, static_cast<size_t>(out.size - ret));
         }
     }
     return std::error_code{};

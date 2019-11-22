@@ -26,14 +26,10 @@ namespace mbedcrypto {
 namespace pk {
 //-----------------------------------------------------------------------------
 
-/** supported ASN.1 key formats to import(initialize) and export from.
- * @warning with pem keys:
- * - import_xxx() / open_xxx(): the pem data must include a null ('\0')
- *   aka terminating byte.
- * - export_xxx(): returns the pem data with a null terminating byte.
- */
+/// ASN.1 format to import/export public or private keys.
+/// @sa import_xxx_key() / export_xxx_key()
 enum class key_io_t {
-    pem, ///< plain text format
+    pem, ///< plain text format, must include a null terminator ('\0')
     der, ///< binary data format
 };
 
