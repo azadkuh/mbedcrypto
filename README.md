@@ -173,7 +173,6 @@ you can add other algorithms by these cmake options:
 | MBEDCRYPTO_PK_EXPORT  | enable export keys in pem or der format                         |
 | MBEDCRYPTO_RSA_KEYGEN | enable rsa key generator                                        |
 | MBEDCRYPTO_EC         | enable eckey, eckey_dh and ecdsa algorithms                     |
-| MBEDCRYPTO_Qt5        | also adds adaptors around **Qt5**'s `QByteArray`                |
 
 
 > please see [CMakeLists.txt](./CMakeLists.txt) for the full list.

@@ -41,8 +41,5 @@
 // elliptic curve algorithms as: ekey, eckey_dh, ecdsa, ...
 #cmakedefine MBEDCRYPTO_EC
 
-// mbedcrypto has been built by Qt5 binding around QByteArray
-#cmakedefine MBEDCRYPTO_Qt5
-
 //-----------------------------------------------------------------------------
 #endif // MBEDCRYPTO_CONFIG_H

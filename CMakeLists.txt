@@ -40,7 +40,6 @@ option(MBEDCRYPTO_RSA_KEYGEN "enable rsa key generator"                 ON)
 option(MBEDCRYPTO_EC         "enable eckey, eckey_dh, ecdsa algorithms" OFF)
 
 # other build options
-option(MBEDCRYPTO_Qt5        "adds adaptors around Qt5/QByteArray" OFF)
 option(MBEDCRYPTO_STATIC_CRT "build by static c/c++ runtime"       ON)
 
 
