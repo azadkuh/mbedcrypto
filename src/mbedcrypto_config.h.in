@@ -14,9 +14,9 @@
 #cmakedefine MBEDCRYPTO_STATIC_CRT
 
 // message digest (hash)
-#cmakedefine MBEDCRYPTO_MD2
-#cmakedefine MBEDCRYPTO_MD4
-#cmakedefine MBEDCRYPTO_RIPEMD160
+#cmakedefine MBEDCRYPTO_HASH_MD2
+#cmakedefine MBEDCRYPTO_HASH_MD4
+#cmakedefine MBEDCRYPTO_HASH_RIPEMD160
 
 // cipher blocking modes:
 #cmakedefine MBEDCRYPTO_BM_CFB
@@ -27,12 +27,12 @@
 #cmakedefine MBEDCRYPTO_BM_CCM
 
 // cipher algorithms
-#cmakedefine MBEDCRYPTO_ARIA
-#cmakedefine MBEDCRYPTO_BLOWFISH
-#cmakedefine MBEDCRYPTO_CAMELLIA
-#cmakedefine MBEDCRYPTO_CHACHA20
-#cmakedefine MBEDCRYPTO_DES
-#cmakedefine MBEDCRYPTO_ARC4
+#cmakedefine MBEDCRYPTO_CIPHER_ARIA
+#cmakedefine MBEDCRYPTO_CIPHER_BLOWFISH
+#cmakedefine MBEDCRYPTO_CIPHER_CAMELLIA
+#cmakedefine MBEDCRYPTO_CIPHER_CHACHA20
+#cmakedefine MBEDCRYPTO_CIPHER_DES
+#cmakedefine MBEDCRYPTO_CIPHER_ARC4
 
 // private/public key generator
 #cmakedefine MBEDCRYPTO_PK_KEYGEN

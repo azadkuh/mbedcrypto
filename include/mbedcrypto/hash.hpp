@@ -5,9 +5,9 @@
  * @author amir zamani <azadkuh@live.com>
  *
  * related cmake build options:
- *  - MBEDCRYPTO_MD2
- *  - MBEDCRYPTO_MD4
- *  - MBEDCRYPTO_RIPEMD160
+ *  - MBEDCRYPTO_HASH_MD2
+ *  - MBEDCRYPTO_HASH_MD4
+ *  - MBEDCRYPTO_HASH_RIPEMD160
  *
  */
 

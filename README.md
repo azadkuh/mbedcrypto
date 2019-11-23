@@ -153,25 +153,25 @@ $mbedcrypto.build/> make install
 to trim the library size, only SHA/AES/RSA algorithms are included by default.
 you can add other algorithms by these cmake options:
 
-| options              | message                                                         |
-| :---                 | :---                                                            |
-| MBEDCRYPTO_MD2       | enable md2 hash (insecure and deprecated)                       |
-| MBEDCRYPTO_MD4       | enable md4 hash                                                 |
-| MBEDCRYPTO_RIPEMD160 | enable ripemd160 hash                                           |
-| MBEDCRYPTO_BM_CFB    | enable cfb (cipher feedback mode)                               |
-| MBEDCRYPTO_BM_OFB    | enable ofb (output feedback mode)                               |
-| MBEDCRYPTO_BM_CTR    | enable ctr (cipher counter mode)                                |
-| MBEDCRYPTO_BM_XTS    | enable xts (cipher stealing mode for aes-xts)                   |
-| MBEDCRYPTO_BM_GCM    | enable gcm (Galois cipher mode, for aead cryptography)          |
-| MBEDCRYPTO_BM_CCM    | enable ccm (counter cbc-mac cipher mode, for aead cryptography) |
-| MBEDCRYPTO_ARIA      | enable aria cipher                                              |
-| MBEDCRYPTO_BLOWFISH  | enable blowfish cipher                                          |
-| MBEDCRYPTO_CAMELLIA  | enable camellia cipher                                          |
-| MBEDCRYPTO_CHACHA20  | enable chacha20 & chacha20_poly ciphers                         |
-| MBEDCRYPTO_DES       | enable des and triple-des cipher (weak)                         |
-| MBEDCRYPTO_ARC4      | enable arc4 cipher (insecure)                                   |
-| MBEDCRYPTO_PK_KEYGEN | enable private/public key generator                             |
-| MBEDCRYPTO_PK_EC     | enable elliptic-curve (eckey, eckey_dh & ecdsa) algorithms      |
+| options                    | message                                                         |
+| :---                       | :---                                                            |
+| MBEDCRYPTO_HASH_MD2        | enable md2 hash (insecure and deprecated)                       |
+| MBEDCRYPTO_HASH_MD4        | enable md4 hash                                                 |
+| MBEDCRYPTO_HASH_RIPEMD160  | enable ripemd160 hash                                           |
+| MBEDCRYPTO_BM_CFB          | enable cfb (cipher feedback mode)                               |
+| MBEDCRYPTO_BM_OFB          | enable ofb (output feedback mode)                               |
+| MBEDCRYPTO_BM_CTR          | enable ctr (cipher counter mode)                                |
+| MBEDCRYPTO_BM_XTS          | enable xts (cipher stealing mode for aes-xts)                   |
+| MBEDCRYPTO_BM_GCM          | enable gcm (Galois cipher mode, for aead cryptography)          |
+| MBEDCRYPTO_BM_CCM          | enable ccm (counter cbc-mac cipher mode, for aead cryptography) |
+| MBEDCRYPTO_CIPHER_ARIA     | enable aria cipher                                              |
+| MBEDCRYPTO_CIPHER_BLOWFISH | enable blowfish cipher                                          |
+| MBEDCRYPTO_CIPHER_CAMELLIA | enable camellia cipher                                          |
+| MBEDCRYPTO_CIPHER_CHACHA20 | enable chacha20 & chacha20_poly ciphers                         |
+| MBEDCRYPTO_CIPHER_DES      | enable des and triple-des cipher (weak)                         |
+| MBEDCRYPTO_CIPHER_ARC4     | enable arc4 cipher (insecure)                                   |
+| MBEDCRYPTO_PK_KEYGEN       | enable private/public key generator                             |
+| MBEDCRYPTO_PK_EC           | enable elliptic-curve (eckey, eckey_dh & ecdsa) algorithms      |
 
 
 > please see [CMakeLists.txt](./CMakeLists.txt) for the full list.
