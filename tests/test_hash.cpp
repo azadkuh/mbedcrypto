@@ -166,7 +166,7 @@ TEST_CASE("hash tests", "[hash]") {
 #endif // MBEDTLS_SHA512_C
 
 #if defined(MBEDTLS_RIPEMD160_C)
-    t.run(hasht_t::ripemd160, 20,
+    t.run(hash_t::ripemd160, 20,
         "c4e3cc08809d907e233a24c10056c9951a67ffe2",
         "d8a3cd3129090b0fff57f6ade2a33e2d67c4c0a2");
 #else
