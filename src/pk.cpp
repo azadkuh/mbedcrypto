@@ -10,7 +10,7 @@ bool
 is_supported(pk_t t) noexcept {
     switch (t) {
     case pk_t::rsa:
-#if defined(MBEDCRYPTO_EC)
+#if defined(MBEDCRYPTO_PK_EC)
     case pk_t::eckey:
     case pk_t::eckey_dh:
     case pk_t::ecdsa:

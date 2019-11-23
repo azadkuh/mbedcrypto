@@ -34,10 +34,10 @@
 #cmakedefine MBEDCRYPTO_DES
 #cmakedefine MBEDCRYPTO_ARC4
 
-// rsa key generator
-#cmakedefine MBEDCRYPTO_RSA_KEYGEN
+// private/public key generator
+#cmakedefine MBEDCRYPTO_PK_KEYGEN
 // elliptic curve algorithms as: ekey, eckey_dh, ecdsa, ...
-#cmakedefine MBEDCRYPTO_EC
+#cmakedefine MBEDCRYPTO_PK_EC
 
 //-----------------------------------------------------------------------------
 #endif // MBEDCRYPTO_CONFIG_H

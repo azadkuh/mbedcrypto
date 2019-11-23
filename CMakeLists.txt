@@ -35,8 +35,8 @@ option(MBEDCRYPTO_ARC4     "enable arc4 cipher (insecure)"           OFF)
 
 ## optional pk algorithm
 ## note: rsa is mandatory (not optional)
-option(MBEDCRYPTO_RSA_KEYGEN "enable rsa key generator"                 ON)
-option(MBEDCRYPTO_EC         "enable eckey, eckey_dh, ecdsa algorithms" OFF)
+option(MBEDCRYPTO_PK_KEYGEN "enable private/public key generator" ON)
+option(MBEDCRYPTO_PK_EC     "enable elliptic-curve algorithms"    OFF)
 
 # other build options
 option(MBEDCRYPTO_STATIC_CRT "build by static c/c++ runtime"       ON)

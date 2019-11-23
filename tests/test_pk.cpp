@@ -54,7 +54,7 @@ TEST_CASE("private api tests", "[pk]") {
     }
 
     SECTION("setup ec") {
-        #if defined(MBEDCRYPTO_EC)
+        #if defined(MBEDCRYPTO_PK_EC)
         auto ec = pk::setup(ctx, pk_t::eckey);
         REQUIRE_FALSE(ec);
         REQUIRE(pk::type_of(ctx) == pk_t::eckey);

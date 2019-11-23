@@ -6,8 +6,8 @@
  * @author amir zamani <azadkuh@live.com>
  *
  * related cmake build options:
- * - MBEDCRYPTO_RSA_KEYGEN
- * - MBEDCRYPTO_EC
+ * - MBEDCRYPTO_PK_KEYGEN
+ * - MBEDCRYPTO_PK_EC
  *
  * please note that RSA is always enabled in mbedcrypto.
  *
@@ -50,13 +50,13 @@ operator==(const capability& a, const capability& b) {
         && a.verify  == b.verify;
 }
 
-/// returns true only by enabled MBEDCRYPTO_RSA_KEYGEN builds
+/// returns true only by enabled MBEDCRYPTO_PK_KEYGEN builds
 inline bool
 supports_rsa_keygen() noexcept {
     return supports(features::rsa_keygen);
 }
 
-/// returns true only by enabled MBEDCRYPTO_EC builds
+/// returns true only by enabled MBEDCRYPTO_PK_EC builds
 inline bool
 supports_ec_keygen() noexcept {
     return supports(features::ec_keygen);
