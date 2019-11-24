@@ -54,7 +54,7 @@ TEST_CASE("private api tests", "[pk]") {
     }
 
     SECTION("setup ec") {
-        #if defined(MBEDCRYPTO_PK_EC)
+        #if defined(MBEDCRYPTO_PK_EC) && defined(MBEDCRYPTO_PK_KEYGEN)
         auto ec = pk::setup(ctx, pk_t::eckey);
         REQUIRE_FALSE(ec);
         REQUIRE(pk::type_of(ctx) == pk_t::eckey);
@@ -82,6 +82,7 @@ TEST_CASE("private api tests", "[pk]") {
     }
 
     SECTION("make rsa key") {
+        #if defined(MBEDCRYPTO_PK_KEYGEN)
         constexpr size_t keybits = 1024;
         auto ec = make_rsa_key(ctx, keybits);
         REQUIRE_FALSE(ec);
@@ -129,6 +130,7 @@ TEST_CASE("private api tests", "[pk]") {
         REQUIRE(cap.decrypt == false);
         REQUIRE(cap.sign    == false);
         REQUIRE(cap.verify  == true);
+        #endif
     }
 }
 
