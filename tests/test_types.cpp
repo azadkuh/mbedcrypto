@@ -21,9 +21,23 @@ hasHash(hash_t h) {
     REQUIRE(v == h);
 }
 
-const char*
-has(features f) noexcept {
-    return supports(f) ? "supports" : "does not support";
+template<typename List>
+void
+dump(const List& list) noexcept {
+    const auto size = list.size();
+    for (size_t i = 0; i < size; ++i) {
+        std::printf("%s%s", to_string(list[i]), i == (size-1) ? "" : ", ");
+    }
+}
+
+void
+dump_algorithms(const char* tag, size_t curr, size_t all) noexcept {
+    std::printf("\n  %-12s (%zu of %zu): ", tag, curr, all);
+}
+
+void
+dump_feature(features f, const char* tag, const char* desc) noexcept {
+    std::printf("  %-10s: %-4s (%s)\n", tag, supports(f) ? "yes" : "no", desc);
 }
 
 //-----------------------------------------------------------------------------
@@ -41,62 +55,47 @@ TEST_CASE("mbedcrypto size of types", "[types]") {
 }
 
 TEST_CASE("list supported algorithms", "[types]") {
+    std::printf("this build supports:\nalgorithms:");
     {
         auto list = supported_hashes();
         REQUIRE(list.size() > 0);
-        std::printf("\nsupports %2zu (out of %2zu) hash algorithms: ",
-                list.size(), all_hashes().size());
-        for (auto l : list)
-            std::printf("%s, ", to_string(l));
+        dump_algorithms("hashes", list.size(), all_hashes().size());
+        dump(list);
     }
     {
         auto list = supported_paddings();
         REQUIRE(list.size() > 0);
-        std::printf("\nsupports %2zu (out of %2zu) padding algorithms: ",
-                list.size(), all_paddings().size());
-        for (auto l : list)
-            std::printf("%s, ", to_string(l));
+        dump_algorithms("paddings", list.size(), all_paddings().size());
+        dump(list);
     }
     {
         auto list = supported_block_modes();
         REQUIRE(list.size() > 0);
-        std::printf("\nsupports %2zu (out of %2zu) block modes: ",
-                list.size(), all_block_modes().size());
-        for (auto l : list)
-            std::printf("%s, ", to_string(l));
+        dump_algorithms("block modes", list.size(), all_block_modes().size());
+        dump(list);
     }
     {
         auto list = supported_ciphers();
         REQUIRE(list.size() > 0);
-        std::printf("\nsupports %2zu (out of %2zu) cipher algorithms: ",
-                list.size(), all_ciphers().size());
-        for (auto l : list)
-            std::printf("%s, ", to_string(l));
+        dump_algorithms("ciphers", list.size(), all_ciphers().size());
+        dump(list);
     }
     {
         auto list = supported_pks();
         REQUIRE(list.size() > 0);
-        std::printf("\nsupports %2zu (out of %2zu) pk (public key) algorithms: ",
-                list.size(), all_pks().size());
-        for (auto l : list)
-            std::printf("%s, ", to_string(l));
+        dump_algorithms("PKs", list.size(), all_pks().size());
+        dump(list);
     }
     {
         auto list = supported_curves(); // may be empty
-        std::printf("\nsupports %2zu (out of %2zu) elliptic curves: ",
-                list.size(), all_curves().size());
-        for (auto l : list)
-            std::printf("%s, ", to_string(l));
+        dump_algorithms("EC curves", list.size(), all_curves().size());
+        dump(list);
     }
-    std::printf("\nthis build %s AES-NI (hardware accelarated)",
-            has(features::aes_ni));
-    std::printf("\nthis build %s AEAD (authenticated encryption by additional data)",
-            has(features::aead));
-    std::printf("\nthis build %s RSA key generation",
-            has(features::rsa_keygen));
-    std::printf("\nthis build %s EC (elliptic curve) key generation",
-            has(features::ec_keygen));
-    std::puts("");
+    std::printf("\nfeatures:\n");
+    dump_feature(features::aes_ni,    "aes-ni",    "hardware accelarated aes");
+    dump_feature(features::aead,      "aead",      "authenticated encryption by additional data");
+    dump_feature(features::pk_keygen, "pk-keygen", "private/public key generator");
+    dump_feature(features::pk_ec,     "pk-ec",     "elliptic curve algorithms");
 }
 
 TEST_CASE("mbedcrypto types checkings", "[types]") {
@@ -318,20 +317,27 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
     }
 
     SECTION("pk features") {
-        auto check = pk::supports_rsa_keygen();
-        REQUIRE(check == supports(features::rsa_keygen));
+        auto check = supports(features::pk_keygen);
+        REQUIRE(check == pk::supports_rsa_keygen());
 #if defined(MBEDTLS_GENPRIME)
         REQUIRE(check);
 #else
         REQUIRE_FALSE(check);
-#endif // MBEDTLS_GENPRIME
+#endif
 
-        check = pk::supports_ec_keygen();
-        REQUIRE(check == supports(features::ec_keygen));
+        check = supports(features::pk_ec);
 #if defined(MBEDTLS_ECP_C)
         REQUIRE(check);
-#else  // MBEDTLS_ECP_C
+#else
         REQUIRE_FALSE(check);
-#endif // MBEDTLS_ECP_C
+#endif
+
+        check = supports(features::pk_ec) && supports(features::pk_keygen);
+        REQUIRE(check == pk::supports_ec_keygen());
+#if defined(MBEDTLS_ECP_C) && defined(MBEDTLS_GENPRIME)
+        REQUIRE(check);
+#else
+        REQUIRE_FALSE(check);
+#endif
     }
 }
