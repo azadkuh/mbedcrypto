@@ -596,11 +596,11 @@ supports(features f) noexcept {
 #if defined(MBEDTLS_CIPHER_MODE_AEAD)
         return true;
 #endif
-    } else if (f == features::rsa_keygen) {
+    } else if (f == features::pk_keygen) {
 #if defined(MBEDTLS_GENPRIME)
         return true;
 #endif
-    } else if (f == features::ec_keygen) {
+    } else if (f == features::pk_ec) {
 #if defined(MBEDTLS_ECP_C)
         return true;
 #endif

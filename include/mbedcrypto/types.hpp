@@ -217,8 +217,8 @@ enum class curve_t {
 enum class features {
     aes_ni,     ///< hardware accelerated AES. @sa cipher::supports_aes_ni()
     aead,       ///< authenticated encryption by additional data. @sa cipher::supports_aead()
-    rsa_keygen, ///< RSA key generator. @sa pk::supports_rsa_keygen()
-    ec_keygen,  ///< EC key generator. @sa pk::supports_ec_keygen()
+    pk_keygen,  ///< public-key generator
+    pk_ec,      ///< any of elliptic-curve algorithms
 };
 
 //-----------------------------------------------------------------------------

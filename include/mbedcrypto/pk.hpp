@@ -50,16 +50,16 @@ operator==(const capability& a, const capability& b) {
         && a.verify  == b.verify;
 }
 
-/// returns true only by enabled MBEDCRYPTO_PK_KEYGEN builds
+/// @sa MBEDCRYPTO_PK_KEYGEN
 inline bool
 supports_rsa_keygen() noexcept {
-    return supports(features::rsa_keygen);
+    return supports(features::pk_keygen);
 }
 
-/// returns true only by enabled MBEDCRYPTO_PK_EC builds
+/// @sa MBEDCRYPTO_PK_KEYGEN and MBEDCRYPTO_PK_EC
 inline bool
 supports_ec_keygen() noexcept {
-    return supports(features::ec_keygen);
+    return supports(features::pk_keygen) && supports(features::pk_ec);
 }
 
 //-----------------------------------------------------------------------------
