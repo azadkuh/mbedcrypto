@@ -150,11 +150,11 @@ const details::enum_name<cipher_t> gCiphers[] = {
 
 const details::enum_name<pk_t> gPks[] = {
     {pk_t::rsa,        "rsa"},
-    {pk_t::eckey,      "ec"},
-    {pk_t::eckey_dh,   "ec_dh"},
-    {pk_t::ecdsa,      "ecdsa"},
     {pk_t::rsa_alt,    "rsa_alt"},
     {pk_t::rsassa_pss, "rsassa_pss"},
+    {pk_t::ec,         "ec"},
+    {pk_t::ecdh,       "ecdh"},
+    {pk_t::ecdsa,      "ecdsa"},
     {pk_t::unknown,    "unknown"},
 };
 
@@ -291,11 +291,11 @@ const details::enum_pair<cipher_t, mbedtls_cipher_type_t> gCipherPairs[] = {
 
 const details::enum_pair<pk_t, mbedtls_pk_type_t> gPkPairs[] = {
     {pk_t::rsa,        MBEDTLS_PK_RSA},
-    {pk_t::eckey,      MBEDTLS_PK_ECKEY},
-    {pk_t::eckey_dh,   MBEDTLS_PK_ECKEY_DH},
-    {pk_t::ecdsa,      MBEDTLS_PK_ECDSA},
     {pk_t::rsa_alt,    MBEDTLS_PK_RSA_ALT},
     {pk_t::rsassa_pss, MBEDTLS_PK_RSASSA_PSS},
+    {pk_t::ec,         MBEDTLS_PK_ECKEY},
+    {pk_t::ecdh,       MBEDTLS_PK_ECKEY_DH},
+    {pk_t::ecdsa,      MBEDTLS_PK_ECDSA},
     {pk_t::unknown,    MBEDTLS_PK_NONE},
 };
 

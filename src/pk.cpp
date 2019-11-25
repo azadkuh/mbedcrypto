@@ -11,46 +11,14 @@ is_supported(pk_t t) noexcept {
     switch (t) {
     case pk_t::rsa:
 #if defined(MBEDCRYPTO_PK_EC)
-    case pk_t::eckey:
-    case pk_t::eckey_dh:
+    case pk_t::ec:
+    case pk_t::ecdh:
     case pk_t::ecdsa:
 #endif
         return true;
     default:
         return false;
     }
-}
-
-bool
-is_rsa(pk_t t) noexcept {
-    switch (t) {
-    case pk_t::rsa:
-    case pk_t::rsa_alt:
-    case pk_t::rsassa_pss:
-        return true;
-    default:
-        return false;
-    }
-}
-
-bool
-is_ec(pk_t t) noexcept {
-    switch (t) {
-    case pk_t::eckey:
-    case pk_t::eckey_dh:
-    case pk_t::ecdsa:
-        return true;
-    default:
-        return false;
-    }
-}
-
-bool
-is_compatible(pk_t a, pk_t b) noexcept {
-    return a == pk_t::unknown   // unknown (empty) is compatible with any type
-        || b == pk_t::unknown
-        || (is_rsa(a) && is_rsa(b)) // both have same type
-        || (is_ec(a) && is_ec(b));
 }
 
 template <typename Func, class... Args>
@@ -145,7 +113,7 @@ bool
 can_do(const context& d, pk_t pt) noexcept {
     int ret = mbedtls_pk_can_do(&d.pk, to_native(pt));
     // refine by build options
-    if (type_of(d) == pk_t::eckey && pt == pk_t::ecdsa) {
+    if (type_of(d) == pk_t::ec && pt == pk_t::ecdsa) {
         if (!supports(pk_t::ecdsa))
             ret = 0;
     }
@@ -165,7 +133,7 @@ what_can_do(const context& d) noexcept {
         const auto type = type_of(d);
         if (type == pk_t::rsa && !d.has_pri_key)
             c.decrypt = c.sign = false;
-        else if ((type == pk_t::eckey || type == pk_t::ecdsa) && !d.has_pri_key)
+        else if ((type == pk_t::ec || type == pk_t::ecdsa) && !d.has_pri_key)
             c.sign = false;
     }
     return c;
@@ -203,7 +171,7 @@ std::error_code
 make_ec_key(context& d, curve_t curve) noexcept {
 #if defined(MBEDTLS_ECP_C)
     // resets previous states
-    auto ec = pk::setup(d, pk_t::eckey);
+    auto ec = pk::setup(d, pk_t::ec);
     if (ec)
         return ec;
     int ret = mbedtls_ecp_gen_key(

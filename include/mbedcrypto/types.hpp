@@ -178,11 +178,11 @@ enum class cipher_t {
 /// build.
 enum class pk_t {
     rsa,        ///< RSA (default)
-    eckey,      ///< elliptic curve key
-    eckey_dh,   ///< elliptic curve key for Diffie–Hellman key exchange
-    ecdsa,      ///< elliptic curve key for digital signature algorithm
-    rsa_alt,    ///<
+    rsa_alt,    ///< RSA alternative
     rsassa_pss, ///< RSA standard signature algorithm, probabilistic signature scheme
+    ec,         ///< elliptic curve
+    ecdh,       ///< elliptic curve for Diffie–Hellman key exchange
+    ecdsa,      ///< elliptic curve for digital signature algorithm
     unknown,    ///< unknown or invalid
 };
 
@@ -205,7 +205,7 @@ enum class curve_t {
     bp256r1,    ///< 256-bits Brainpool curve
     bp384r1,    ///< 384-bits Brainpool curve
     bp512r1,    ///< 512-bits Brainpool curve
-    curve25519, ///< Curve25519. limited support (only for ecdh)
+    curve25519, ///< 255-bits limited support (only for ecdh)
     unknown,    ///< unknown or invalid
 };
 
