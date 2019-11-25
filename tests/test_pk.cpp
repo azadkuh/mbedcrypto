@@ -27,8 +27,8 @@ TEST_CASE("private api tests", "[pk]") {
         REQUIRE(pk::can_do(ctx, pk_t::rsa)        == false);
         REQUIRE(pk::can_do(ctx, pk_t::rsa_alt)    == false);
         REQUIRE(pk::can_do(ctx, pk_t::rsassa_pss) == false);
-        REQUIRE(pk::can_do(ctx, pk_t::eckey)      == false);
-        REQUIRE(pk::can_do(ctx, pk_t::eckey_dh)   == false);
+        REQUIRE(pk::can_do(ctx, pk_t::ec)         == false);
+        REQUIRE(pk::can_do(ctx, pk_t::ecdh)       == false);
         REQUIRE(pk::can_do(ctx, pk_t::ecdsa)      == false);
         REQUIRE(pk::what_can_do(ctx)              == pk::capability{});
         pk::context other;
@@ -55,23 +55,23 @@ TEST_CASE("private api tests", "[pk]") {
 
     SECTION("setup ec") {
         if (supports(features::pk_ec)) {
-            auto ec = pk::setup(ctx, pk_t::eckey);
+            auto ec = pk::setup(ctx, pk_t::ec);
             REQUIRE_FALSE(ec);
-            REQUIRE(pk::type_of(ctx) == pk_t::eckey);
+            REQUIRE(pk::type_of(ctx) == pk_t::ec);
 
-            ec = pk::setup(ctx, pk_t::eckey_dh);
+            ec = pk::setup(ctx, pk_t::ecdh);
             REQUIRE_FALSE(ec);
-            REQUIRE(pk::type_of(ctx) == pk_t::eckey_dh);
+            REQUIRE(pk::type_of(ctx) == pk_t::ecdh);
 
             ec = pk::setup(ctx, pk_t::ecdsa);
             REQUIRE_FALSE(ec);
             REQUIRE(pk::type_of(ctx) == pk_t::ecdsa);
         } else {
-            auto ec = pk::setup(ctx, pk_t::eckey);
+            auto ec = pk::setup(ctx, pk_t::ec);
             REQUIRE(ec == make_error_code(error_t::not_supported));
             REQUIRE(pk::type_of(ctx) == pk_t::unknown);
 
-            ec = pk::setup(ctx, pk_t::eckey_dh);
+            ec = pk::setup(ctx, pk_t::ecdh);
             REQUIRE(ec == make_error_code(error_t::not_supported));
             REQUIRE(pk::type_of(ctx) == pk_t::unknown);
 
@@ -84,7 +84,7 @@ TEST_CASE("private api tests", "[pk]") {
     SECTION("make rsa key") {
         constexpr size_t keybits = 1024;
         auto ec = make_rsa_key(ctx, keybits);
-        if (supports(features::pk_keygen)) {
+        if (pk::supports_rsa_keygen()) {
             REQUIRE_FALSE(ec);
             REQUIRE(pk::type_of(ctx)                  == pk_t::rsa);
             REQUIRE(pk::key_bitlen(ctx)               == keybits);
@@ -94,8 +94,8 @@ TEST_CASE("private api tests", "[pk]") {
             REQUIRE(pk::can_do(ctx, pk_t::rsa)        == true);
             REQUIRE(pk::can_do(ctx, pk_t::rsa_alt)    == false);
             REQUIRE(pk::can_do(ctx, pk_t::rsassa_pss) == true);
-            REQUIRE(pk::can_do(ctx, pk_t::eckey)      == false);
-            REQUIRE(pk::can_do(ctx, pk_t::eckey_dh)   == false);
+            REQUIRE(pk::can_do(ctx, pk_t::ec)         == false);
+            REQUIRE(pk::can_do(ctx, pk_t::ecdh)       == false);
             REQUIRE(pk::can_do(ctx, pk_t::ecdsa)      == false);
             auto cap = pk::what_can_do(ctx);
             REQUIRE(cap.encrypt == true);
@@ -122,8 +122,8 @@ TEST_CASE("private api tests", "[pk]") {
             REQUIRE(pk::can_do(pub, pk_t::rsa)        == true);
             REQUIRE(pk::can_do(pub, pk_t::rsa_alt)    == false);
             REQUIRE(pk::can_do(pub, pk_t::rsassa_pss) == true);
-            REQUIRE(pk::can_do(pub, pk_t::eckey)      == false);
-            REQUIRE(pk::can_do(pub, pk_t::eckey_dh)   == false);
+            REQUIRE(pk::can_do(pub, pk_t::ec)         == false);
+            REQUIRE(pk::can_do(pub, pk_t::ecdh)       == false);
             REQUIRE(pk::can_do(pub, pk_t::ecdsa)      == false);
             cap = pk::what_can_do(pub);
             REQUIRE(cap.encrypt == true);
