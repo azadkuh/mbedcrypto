@@ -148,10 +148,15 @@ capability what_can_do(const context&) noexcept;
 std::error_code
 make_rsa_key(context&, size_t key_bitlen, size_t exponent = 65537) noexcept;
 
-/** creates an EC (private) key.
- * @sa supports_ec_keygen()
+/** creates an EC (private) key by an ec algorithm.
+ * @sa supports_ec_keygen() and is_ec()
  */
-std::error_code make_ec_key(context&, curve_t) noexcept;
+std::error_code make_ec_key(context&, pk_t algorithm, curve_t) noexcept;
+
+inline std::error_code
+make_ec_key(context& d, curve_t c) noexcept {
+    return make_ec_key(d, pk_t::ec, c);
+}
 
 /// checks if a public-private pair of keys matches.
 bool is_pri_pub_pair(const context& pri, const context& pub) noexcept;

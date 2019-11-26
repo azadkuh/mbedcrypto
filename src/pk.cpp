@@ -186,10 +186,14 @@ make_rsa_key(context& d, size_t kbits, size_t expo) noexcept {
 }
 
 std::error_code
-make_ec_key(context& d, curve_t curve) noexcept {
+make_ec_key(context& d, pk_t algo, curve_t curve) noexcept {
 #if defined(MBEDTLS_ECP_C)
+    if (!is_ec(algo) || curve == curve_t::unknown)
+        return make_error_code(error_t::usage);
+    if (curve == curve_t::curve25519 && algo != pk_t::ecdh)
+        return make_error_code(error_t::usage);
     // resets previous states
-    auto ec = pk::setup(d, pk_t::ec);
+    auto ec = pk::setup(d, algo);
     if (ec)
         return ec;
     int ret = mbedtls_ecp_gen_key(
