@@ -8,6 +8,7 @@
 namespace {
 using namespace mbedcrypto;
 
+#if 0
 void
 dump_to_file(const char* fname, bin_view_t data) noexcept {
     auto* fp = fopen(fname, "w+b");
@@ -15,6 +16,7 @@ dump_to_file(const char* fname, bin_view_t data) noexcept {
         fwrite(data.data, data.size, 1, fp);
     fclose(fp);
 }
+#endif
 
 //-----------------------------------------------------------------------------
 } // namespace anon
@@ -71,15 +73,25 @@ TEST_CASE("api tests", "[pk]") {
         if (supports(features::pk_ec)) {
             auto ec = pk::setup(ctx, pk_t::ec);
             REQUIRE_FALSE(ec);
+            REQUIRE_FALSE(pk::has_private_key(ctx));
             REQUIRE(pk::type_of(ctx) == pk_t::ec);
+            REQUIRE(pk::can_do(ctx, pk_t::ec)    == true);
+            REQUIRE(pk::can_do(ctx, pk_t::ecdh)  == true);
+            REQUIRE(pk::can_do(ctx, pk_t::ecdsa) == true);
 
             ec = pk::setup(ctx, pk_t::ecdh);
             REQUIRE_FALSE(ec);
             REQUIRE(pk::type_of(ctx) == pk_t::ecdh);
+            REQUIRE(pk::can_do(ctx, pk_t::ec)    == true);
+            REQUIRE(pk::can_do(ctx, pk_t::ecdh)  == true);
+            REQUIRE(pk::can_do(ctx, pk_t::ecdsa) == false);
 
             ec = pk::setup(ctx, pk_t::ecdsa);
             REQUIRE_FALSE(ec);
             REQUIRE(pk::type_of(ctx) == pk_t::ecdsa);
+            REQUIRE(pk::can_do(ctx, pk_t::ec)    == false);
+            REQUIRE(pk::can_do(ctx, pk_t::ecdh)  == false);
+            REQUIRE(pk::can_do(ctx, pk_t::ecdsa) == true);
         } else {
             auto ec = pk::setup(ctx, pk_t::ec);
             REQUIRE(ec == make_error_code(error_t::not_supported));
@@ -213,5 +225,93 @@ TEST_CASE("rsa key import", "[pk]") {
     REQUIRE(cap.decrypt          == false);
     REQUIRE(cap.sign             == false);
     REQUIRE(cap.verify           == true);
+}
+
+TEST_CASE("ec key generation", "[pk]") {
+    if (!pk::supports_ec_keygen())
+        return;
+    auto pri = pk::make_context();
+    // bad inputs
+    {
+    // rsa_alt is not an elliptic curve algorithm
+        auto ec  = pk::make_ec_key(*pri, pk_t::rsa_alt, curve_t::secp192r1);
+        REQUIRE(ec == make_error_code(error_t::usage));
+        // curve_t::curve25519 is limited to ecdh algorithm
+        ec = pk::make_ec_key(*pri, pk_t::ec, curve_t::curve25519);
+        REQUIRE(ec == make_error_code(error_t::usage));
+        ec = pk::make_ec_key(*pri, pk_t::ecdsa, curve_t::curve25519);
+        REQUIRE(ec == make_error_code(error_t::usage));
+    }
+
+    struct test_case_t {
+        curve_t curve;
+        pk_t    type;
+        size_t  kb; ///< key bits
+    };
+    const test_case_t All[] = {
+        {curve_t::secp192r1, pk_t::ec, 192},
+        {curve_t::secp224r1, pk_t::ec, 224},
+        {curve_t::secp256r1, pk_t::ec, 256},
+        {curve_t::secp384r1, pk_t::ec, 384},
+        {curve_t::secp521r1, pk_t::ec, 521},
+        {curve_t::secp192k1, pk_t::ec, 192},
+        {curve_t::secp224k1, pk_t::ec, 224},
+        {curve_t::secp256k1, pk_t::ec, 256},
+        {curve_t::bp256r1,   pk_t::ec, 256},
+        {curve_t::bp384r1,   pk_t::ec, 384},
+        {curve_t::bp512r1,   pk_t::ec, 512},
+    };
+
+    for (const auto& t : All) {
+        auto ec = pk::make_ec_key(*pri, t.type, t.curve);
+        REQUIRE_FALSE(ec);
+        REQUIRE(pk::type_of(*pri)                  == t.type);
+        REQUIRE(pk::key_bitlen(*pri)               == t.kb);
+        REQUIRE(pk::max_crypt_size(*pri)           == 141);
+        REQUIRE(pk::has_private_key(*pri)          == true);
+        REQUIRE(pk::can_do(*pri, pk_t::ec)         == true);
+        REQUIRE(pk::can_do(*pri, pk_t::ecdh)       == true);
+        REQUIRE(pk::can_do(*pri, pk_t::ecdsa)      == true);
+        REQUIRE(pk::can_do(*pri, pk_t::rsa)        == false);
+        REQUIRE(pk::can_do(*pri, pk_t::rsa_alt)    == false);
+        REQUIRE(pk::can_do(*pri, pk_t::rsassa_pss) == false);
+
+        auto pub = pk::make_context();
+        // test pem/der public-key export and import
+        {
+            std::string pem;
+            ec = pk::export_pub_key(obuffer_t{pem}, *pri, pk::key_io_t::pem);
+            INFO("error(" << ec.value() << "): " << ec.message());
+            REQUIRE_FALSE(ec);
+            ec = pk::import_pub_key(*pub, pem);
+            REQUIRE_FALSE(ec);
+            REQUIRE(pk::is_pri_pub_pair(*pri, *pub));
+
+            std::string der;
+            ec = pk::export_pub_key(obuffer_t{der}, *pri, pk::key_io_t::der);
+            REQUIRE_FALSE(ec);
+            ec = pk::import_pub_key(*pub, der);
+            REQUIRE_FALSE(ec);
+            REQUIRE(pk::is_pri_pub_pair(*pri, *pub));
+        }
+
+        auto other = pk::make_context();
+        // test pem/der private-key export and import
+        {
+            std::string pem;
+            ec = pk::export_pri_key(obuffer_t{pem}, *pri, pk::key_io_t::pem);
+            REQUIRE_FALSE(ec);
+            ec = pk::import_pri_key(*other, pem);
+            REQUIRE_FALSE(ec);
+            REQUIRE(pk::is_pri_pub_pair(*other, *pub));
+
+            std::string der;
+            ec = pk::export_pri_key(obuffer_t{der}, *pri, pk::key_io_t::der);
+            REQUIRE_FALSE(ec);
+            ec = pk::import_pri_key(*other, der);
+            REQUIRE_FALSE(ec);
+            REQUIRE(pk::is_pri_pub_pair(*other, *pub));
+        }
+    }
 }
 
