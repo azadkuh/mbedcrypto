@@ -32,14 +32,12 @@ std::error_code
 open_key_impl(context& d, Func fn, Args&&... args) noexcept {
     d.reset();
     int ret = fn(&d.pk, std::forward<Args>(args)...);
-    if (ret != 0)
-        return mbedtls::make_error_code(ret);
-    return std::error_code{};
+    return (ret != 0) ? mbedtls::make_error_code(ret) : std::error_code{};
 }
 
 size_t
 min_pri_export_size(const context& d, key_io_t kio) noexcept {
-    return 47 + (kio == key_io_t::pem ? 2 : 1) * key_size(d);
+    return (kio == key_io_t::pem ? 2 : 1) * key_size(d) * 5;
 }
 
 size_t
@@ -198,7 +196,7 @@ import_pri_key(context& d, bin_view_t pri, bin_view_t pass) noexcept {
         d, mbedtls_pk_parse_key, pri.data, pri.size, pass.data, pass.size);
     if (!ec)
         d.has_pri_key = true;
-    return std::error_code{};
+    return ec;
 }
 
 std::error_code
@@ -211,7 +209,7 @@ open_pri_key(context& d, const char* fpath, const char* pass) noexcept {
     auto ec = open_key_impl(d, mbedtls_pk_parse_keyfile, fpath, pass);
     if (!ec)
         d.has_pri_key = true;
-    return std::error_code{};
+    return ec;
 }
 
 std::error_code
