@@ -65,15 +65,19 @@ supports_ec_keygen() noexcept {
 //-----------------------------------------------------------------------------
 // public-key api
 
-/// generic context of rsa/ec algorithms
+/// generic context for rsa/ec algorithms
 struct context;
 
-/// resets and clean up the memory
-void reset(context&) noexcept;
+using unique_ptr = std::unique_ptr<context, void(*)(context*)>;
+
+/// makes an empty PK context and manages its life time.
+pk::unique_ptr make_context();
 
 /// resets and initializes to the new compatible type.
 /// you rarely need to call this function directly.
 std::error_code setup(context&, pk_t new_type) noexcept;
+
+//-----------------------------------------------------------------------------
 
 /** returns false if the context is uninitialized.
  * note: the context is valid even if it has not any associated key, so

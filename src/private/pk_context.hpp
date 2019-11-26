@@ -31,7 +31,12 @@ struct context
     }
 
     ~context() {
-        pk::reset(*this);
+        reset();
+    }
+
+    void reset() noexcept {
+        has_pri_key = false;
+        mbedtls_pk_free(&pk);
     }
 
     context(const context&) = delete;

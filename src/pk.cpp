@@ -6,6 +6,12 @@ namespace pk {
 namespace {
 //-----------------------------------------------------------------------------
 
+void
+free_context(context* p) noexcept {
+    if (p)
+        delete p;
+}
+
 bool
 is_supported(pk_t t) noexcept {
     switch (t) {
@@ -24,7 +30,7 @@ is_supported(pk_t t) noexcept {
 template <typename Func, class... Args>
 std::error_code
 open_key_impl(context& d, Func fn, Args&&... args) noexcept {
-    reset(d);
+    d.reset();
     int ret = fn(&d.pk, std::forward<Args>(args)...);
     if (ret != 0)
         return mbedtls::make_error_code(ret);
@@ -55,15 +61,15 @@ shift_left(bin_edit_t& be, size_t len) noexcept {
 } // namespace anon
 //-----------------------------------------------------------------------------
 
-void
-reset(context& d) noexcept {
-    d.has_pri_key = false;
-    mbedtls_pk_free(&d.pk);
+pk::unique_ptr
+make_context() {
+    auto* ptr = new context{};
+    return {ptr, free_context};
 }
 
 std::error_code
 setup(context& d, pk_t neu) noexcept {
-    reset(d);
+    d.reset();
     if (!is_supported(neu))
         return make_error_code(error_t::not_supported);
     int ret = mbedtls_pk_setup(&d.pk, find_native_info(neu));
@@ -99,7 +105,7 @@ max_crypt_size(const context& d) noexcept {
         return key_size(d) - 11;
 #   if defined(MBEDTLS_ECDSA_C)
     else if (can_do(d, pk_t::ecdsa))
-        return (size_t)MBEDTLS_ECDSA_MAX_LEN;
+        return static_cast<size_t>(MBEDTLS_ECDSA_MAX_LEN);
 #   endif
     return 0;
 }
