@@ -55,6 +55,75 @@ constexpr uint8_t SignatureSha1[] = {
     0xab, 0xaf, 0x3f, 0x44,
 };
 
+constexpr char RsaPriKey[] = R"xx(-----BEGIN RSA PRIVATE KEY-----
+MIIEogIBAAKCAQEA4EjipWXxJPtz0KYDz5+fYWkGly7ieRJ2Zql9BkaIOjz3By/K
+L+jkYbUIwOQ+jM+FComsII9Y6309Db74sfwtykJoyUGTvMfHsZ/0VmgWOwPcUZ6v
+nw45D6YuOzoTRLSErR/Vd2EIjNlhYlHg8cy6j/M7IqlCrBfz5xdTVYkqU+c0dZ/z
+7FbbTgCA/9VjCPH3NjtJ34OWYY4HIok+ml8ervlZkiBEIRW/rKiOUMBKy4fgGeWZ
+ZBsMaf4wkO8O8fBvfT1CZvxsQnAzN/boRm8t00GT5VmyHsgEHU3rKIf31yA834x5
+WqgOl7WV6GvGnrG9sWOH3/rJClxTadG3HiIarQIDAQABAoIBAHHF51sZzGsDN2vn
+W1WOVo5WdaZpfS8Ho5JOdgKh8ucAGBvILVuCW6AI8qjO38AUYRvIXM2jierje/4m
+GwhGsX/BkmBNaMFB4tYDGzJd2LEVM0UgJ1ybHW0H0rnuqumWXRtpY6MMUQcKGrGC
+cYaXYSg2rY/WpuCfwfU/SuHAE/28/xudngyiJQ0haabYnYPGfIdCgGMarBFLNN9S
+95BhbAMavL+5D2E9p/lYAHih3K8UtYcjwJ8E71NiqBl2+fNYFDSVjB+KhJS07k4l
+1yEnr9hwXPn/04g35oA7XBKOy2JgjN7ylP69XgZsJczpV02OwqJktqEKwt1kt499
+wb0m3yECgYEA9bqXNPciOi29I1pIzhYTIvSQF6Xfr0mW3I6jlUy4dbqdJBj6zI6F
+23KZITUi1N5gBeFQfiVvFkxrtTU69Cr/yVsLHlyEXdOKRZR6lUge+PYaeNULL3JP
+jSBL4kB417qBYugTCWn4cgm1UbbfI7aHXcvlDyX6pk5Gz4ly0UtvAqkCgYEA6ajV
+H/8VbgYlwmmFvbgnolY0mt53jAtVsAGbJTcwZOTwLlbPzJ0MvI3nCAMWM1lfyJKm
+5W2trQlEMCe1tfX/OrM6KrdqR4esk1fSASVVKmH1xhJPcCdlgjD+lSmNU+0vv4EX
+sFIfxwggznwUm8T3a2ZRs4VjavCySb6WKWr8XmUCgYB9MdnEBH2NwqvwjRk21oxd
+bNjVE4/JkOap7IpvkK0SXkedkpSFD8AnNFXMU3QxnDK0DD2kZ5IXfEwMANjOefHk
+NtyNVXmjDBoQpTtnP114XnrSQUj3nXfmYSQIW+y1jLJLIA5C55jLESMuRMufOGnz
+YeSMOT9g59Sv/ElhVNt0MQKBgAsWjfaUvkmYVRZit4wHPyo++QQYZofoycouaVRc
+yBkhnBw21mmZUk9oVHxW2Sjapub3vp/IkqNRe0DlwYO/BrucYbhBN/PpBlF/q2GO
+ifoW5/jcSZTC6dhBxvMBI8nFyaxGzf76BrQFOLlTvg6eTDd2hY4FWHBst6k0OCAD
+CbLZAoGAEnJrPPR7CctuWHkWQeDcP38CmGkPYWPHWBOEf6GpSazKXPBXeSa+nNbt
+0k+n2u+8kymX+iYWsGVdGv3RKXFIzI4R9408SR5OZI1jAF6BZweYaE2RcVaferB3
+wyeaiI5gpvmQb/KVreVvagVNR7TJHO6ybG/rc2ssfVIAXmKHtOI=
+-----END RSA PRIVATE KEY-----)xx";
+
+constexpr char RsaPriKeyEnc[] = R"xx(-----BEGIN RSA PRIVATE KEY-----
+Proc-Type: 4,ENCRYPTED
+DEK-Info: AES-256-CBC,142902F647920CE4B7AE3C2913FDFA10
+
+nagu3l0U8ExoFvhCb8Te4nzsMGnBjdLUmfOm3abYhZLF7nTUv7EHmRGvJJnyHXjp
+roBGiX4iii4FuUyAea1pIJNAi64f6V5XwSN5N+uEjcoHX55gl/o+kaGovXkDWq3A
+xx4WqTeW0Jlr8Z1sx35NUrKf87h3JNRGqMK1cX+E7tmnhUx6orHBL+1ovTIPZ7LW
+0fZHNHUl3tC87TCeHUgUvIZGWPSR3e9tbzfIzV6t68oXe8atvm2MAnRPZnYi8/7c
+dSe77fTo/9rGVjhtg+wLmCqC9mOYOFIVORERcVMK/V2BZe1hsWcjmjFeg+DnaE6s
+eCAV60S/QNkvQlWi/AdF5PRz9hHq8mQbhrPbKppabBQyrVOPytEFy76a7966t62Q
+qtCGAC7aTVw0GKa9KmiD0CYA6aixVtw0+lP4jHquotGNZtletBwme2k/MsckmPK0
+bsf6033SaUKD8uiW0JHQj26JgEgKZx7ZAIhKqEsRtLp0/YEw3kQQBEewBxEvmCE/
+fFpGrE2joB+MvLoVaUv+4Vy2Er4A+C0KBCna8hwEV9yhrE5D4Ny5yp6yIvy9SsN4
+7Nvdg25h7l6o6d0npW6W/w272skb2BlID/EEtwSCmUZLDCRN0chH99t+5OgDcA1N
+qKXjnJpU5uqDzWuVi790Va5dfUE2oh/YSJShlstne4/xFlhHtCPlFPYcnFoJwrjg
+KqahkEAj55qz9W7RU1uTEDt8CGTuPsWMIBsN+n5BDoeM0ZsF3ZcJ1zSXsyVuiYVs
+NzxFlXFg7ZICeLkUFM8QnfkDXo6JLkqUX/mDpG2xZfi41CpgX/k9xW+dTRnHRY2x
+vY0buJijF3GYgzdYHbicT/vdXud0HknN/31kf9M/pesCpIOLYliz91rcuO/6Afcw
+TpUbneaMjWcHdCA4zl54x9HypE9xlbnM0gTiVqS2j8AC4cwVJS7Tjx5jQItojjxh
+tFE5zcJyxp0U9lVOUAGRrJ76C8zZi4Qp2HEc4o+FCQHDrZP6pfAF9q0a0Jrm4rYV
+H2a21Qxij7NHACP4r8/iQEDam5N5aZhQ8cd07+1F48l18iZGBd0FW0wRI2vVyyNG
+hrgK+AI5KVNuYtGzuTI59HMdJ29VK6u3kBV8pc7Haa0pPiAeW559oxQI9NOBA5Hb
+zon80m5yBKvNGUr6mgiFWVvZrtwuDtWo9rGW7Zstpe7QOK3HjidpJMvncDtumb2I
+d+vWVody3ZnMrXqLyNABI0EsgMQzxtUGnTZYBRHDd+unzB4FTBUe6j5z/oR9iQNo
+RhfLJQ8DonXiYxeZyeDs8Ich53esK+1BzjO2TbMEOK4UG37L4il7+t4X9kpkZebU
+f/YCdO3rxvJqv2CeTxqJfYIg++js18Q0aZltNmX/3fw8D7RNCWZzmOJ6S5qwOlNZ
+XTuhmduauf2SGodpU4emhZDUkHJKAmYAsFg/BL0K09lLogHniNmYDoi+I26Dbte3
+Et0P926W1pf7lVnPoj8w2C7VWGOkY/o/bGZFYWEe00jTvZGo2cO0uYI/ivfSFSoc
+RAQ8ivI/WxzhB6YT3yG4jf/oPAMiC8WZEYhIqQd/yfZRRCGaGvjMnw4jYG+vVy+D
+-----END RSA PRIVATE KEY-----)xx";
+
+constexpr char RsaPubKey[] = R"xx(-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4EjipWXxJPtz0KYDz5+f
+YWkGly7ieRJ2Zql9BkaIOjz3By/KL+jkYbUIwOQ+jM+FComsII9Y6309Db74sfwt
+ykJoyUGTvMfHsZ/0VmgWOwPcUZ6vnw45D6YuOzoTRLSErR/Vd2EIjNlhYlHg8cy6
+j/M7IqlCrBfz5xdTVYkqU+c0dZ/z7FbbTgCA/9VjCPH3NjtJ34OWYY4HIok+ml8e
+rvlZkiBEIRW/rKiOUMBKy4fgGeWZZBsMaf4wkO8O8fBvfT1CZvxsQnAzN/boRm8t
+00GT5VmyHsgEHU3rKIf31yA834x5WqgOl7WV6GvGnrG9sWOH3/rJClxTadG3HiIa
+rQIDAQAB
+-----END PUBLIC KEY-----)xx";
+
 //-----------------------------------------------------------------------------
 } // namespace anon
 //-----------------------------------------------------------------------------
@@ -94,84 +163,20 @@ dump_to_file(bin_view_t input, const char* filename) {
 
 bin_view_t
 rsa_private_key() noexcept {
-    constexpr char Key[] = R"xx(-----BEGIN RSA PRIVATE KEY-----
-MIIEogIBAAKCAQEA4EjipWXxJPtz0KYDz5+fYWkGly7ieRJ2Zql9BkaIOjz3By/K
-L+jkYbUIwOQ+jM+FComsII9Y6309Db74sfwtykJoyUGTvMfHsZ/0VmgWOwPcUZ6v
-nw45D6YuOzoTRLSErR/Vd2EIjNlhYlHg8cy6j/M7IqlCrBfz5xdTVYkqU+c0dZ/z
-7FbbTgCA/9VjCPH3NjtJ34OWYY4HIok+ml8ervlZkiBEIRW/rKiOUMBKy4fgGeWZ
-ZBsMaf4wkO8O8fBvfT1CZvxsQnAzN/boRm8t00GT5VmyHsgEHU3rKIf31yA834x5
-WqgOl7WV6GvGnrG9sWOH3/rJClxTadG3HiIarQIDAQABAoIBAHHF51sZzGsDN2vn
-W1WOVo5WdaZpfS8Ho5JOdgKh8ucAGBvILVuCW6AI8qjO38AUYRvIXM2jierje/4m
-GwhGsX/BkmBNaMFB4tYDGzJd2LEVM0UgJ1ybHW0H0rnuqumWXRtpY6MMUQcKGrGC
-cYaXYSg2rY/WpuCfwfU/SuHAE/28/xudngyiJQ0haabYnYPGfIdCgGMarBFLNN9S
-95BhbAMavL+5D2E9p/lYAHih3K8UtYcjwJ8E71NiqBl2+fNYFDSVjB+KhJS07k4l
-1yEnr9hwXPn/04g35oA7XBKOy2JgjN7ylP69XgZsJczpV02OwqJktqEKwt1kt499
-wb0m3yECgYEA9bqXNPciOi29I1pIzhYTIvSQF6Xfr0mW3I6jlUy4dbqdJBj6zI6F
-23KZITUi1N5gBeFQfiVvFkxrtTU69Cr/yVsLHlyEXdOKRZR6lUge+PYaeNULL3JP
-jSBL4kB417qBYugTCWn4cgm1UbbfI7aHXcvlDyX6pk5Gz4ly0UtvAqkCgYEA6ajV
-H/8VbgYlwmmFvbgnolY0mt53jAtVsAGbJTcwZOTwLlbPzJ0MvI3nCAMWM1lfyJKm
-5W2trQlEMCe1tfX/OrM6KrdqR4esk1fSASVVKmH1xhJPcCdlgjD+lSmNU+0vv4EX
-sFIfxwggznwUm8T3a2ZRs4VjavCySb6WKWr8XmUCgYB9MdnEBH2NwqvwjRk21oxd
-bNjVE4/JkOap7IpvkK0SXkedkpSFD8AnNFXMU3QxnDK0DD2kZ5IXfEwMANjOefHk
-NtyNVXmjDBoQpTtnP114XnrSQUj3nXfmYSQIW+y1jLJLIA5C55jLESMuRMufOGnz
-YeSMOT9g59Sv/ElhVNt0MQKBgAsWjfaUvkmYVRZit4wHPyo++QQYZofoycouaVRc
-yBkhnBw21mmZUk9oVHxW2Sjapub3vp/IkqNRe0DlwYO/BrucYbhBN/PpBlF/q2GO
-ifoW5/jcSZTC6dhBxvMBI8nFyaxGzf76BrQFOLlTvg6eTDd2hY4FWHBst6k0OCAD
-CbLZAoGAEnJrPPR7CctuWHkWQeDcP38CmGkPYWPHWBOEf6GpSazKXPBXeSa+nNbt
-0k+n2u+8kymX+iYWsGVdGv3RKXFIzI4R9408SR5OZI1jAF6BZweYaE2RcVaferB3
-wyeaiI5gpvmQb/KVreVvagVNR7TJHO6ybG/rc2ssfVIAXmKHtOI=
------END RSA PRIVATE KEY-----)xx";
-    // sizeof(Key) - 1 excludes null byte, same as std::strlen(Key)
-    return bin_view_t{reinterpret_cast<const uint8_t*>(Key), sizeof(Key) - 1};
+    return bin_view_t{reinterpret_cast<const uint8_t*>(RsaPriKey),
+                      sizeof(RsaPriKey)};
 }
 
 bin_view_t
 rsa_private_key_password() noexcept {
-    constexpr char Key[] = R"xx(-----BEGIN RSA PRIVATE KEY-----
-Proc-Type: 4,ENCRYPTED
-DEK-Info: AES-256-CBC,142902F647920CE4B7AE3C2913FDFA10
-
-nagu3l0U8ExoFvhCb8Te4nzsMGnBjdLUmfOm3abYhZLF7nTUv7EHmRGvJJnyHXjp
-roBGiX4iii4FuUyAea1pIJNAi64f6V5XwSN5N+uEjcoHX55gl/o+kaGovXkDWq3A
-xx4WqTeW0Jlr8Z1sx35NUrKf87h3JNRGqMK1cX+E7tmnhUx6orHBL+1ovTIPZ7LW
-0fZHNHUl3tC87TCeHUgUvIZGWPSR3e9tbzfIzV6t68oXe8atvm2MAnRPZnYi8/7c
-dSe77fTo/9rGVjhtg+wLmCqC9mOYOFIVORERcVMK/V2BZe1hsWcjmjFeg+DnaE6s
-eCAV60S/QNkvQlWi/AdF5PRz9hHq8mQbhrPbKppabBQyrVOPytEFy76a7966t62Q
-qtCGAC7aTVw0GKa9KmiD0CYA6aixVtw0+lP4jHquotGNZtletBwme2k/MsckmPK0
-bsf6033SaUKD8uiW0JHQj26JgEgKZx7ZAIhKqEsRtLp0/YEw3kQQBEewBxEvmCE/
-fFpGrE2joB+MvLoVaUv+4Vy2Er4A+C0KBCna8hwEV9yhrE5D4Ny5yp6yIvy9SsN4
-7Nvdg25h7l6o6d0npW6W/w272skb2BlID/EEtwSCmUZLDCRN0chH99t+5OgDcA1N
-qKXjnJpU5uqDzWuVi790Va5dfUE2oh/YSJShlstne4/xFlhHtCPlFPYcnFoJwrjg
-KqahkEAj55qz9W7RU1uTEDt8CGTuPsWMIBsN+n5BDoeM0ZsF3ZcJ1zSXsyVuiYVs
-NzxFlXFg7ZICeLkUFM8QnfkDXo6JLkqUX/mDpG2xZfi41CpgX/k9xW+dTRnHRY2x
-vY0buJijF3GYgzdYHbicT/vdXud0HknN/31kf9M/pesCpIOLYliz91rcuO/6Afcw
-TpUbneaMjWcHdCA4zl54x9HypE9xlbnM0gTiVqS2j8AC4cwVJS7Tjx5jQItojjxh
-tFE5zcJyxp0U9lVOUAGRrJ76C8zZi4Qp2HEc4o+FCQHDrZP6pfAF9q0a0Jrm4rYV
-H2a21Qxij7NHACP4r8/iQEDam5N5aZhQ8cd07+1F48l18iZGBd0FW0wRI2vVyyNG
-hrgK+AI5KVNuYtGzuTI59HMdJ29VK6u3kBV8pc7Haa0pPiAeW559oxQI9NOBA5Hb
-zon80m5yBKvNGUr6mgiFWVvZrtwuDtWo9rGW7Zstpe7QOK3HjidpJMvncDtumb2I
-d+vWVody3ZnMrXqLyNABI0EsgMQzxtUGnTZYBRHDd+unzB4FTBUe6j5z/oR9iQNo
-RhfLJQ8DonXiYxeZyeDs8Ich53esK+1BzjO2TbMEOK4UG37L4il7+t4X9kpkZebU
-f/YCdO3rxvJqv2CeTxqJfYIg++js18Q0aZltNmX/3fw8D7RNCWZzmOJ6S5qwOlNZ
-XTuhmduauf2SGodpU4emhZDUkHJKAmYAsFg/BL0K09lLogHniNmYDoi+I26Dbte3
-Et0P926W1pf7lVnPoj8w2C7VWGOkY/o/bGZFYWEe00jTvZGo2cO0uYI/ivfSFSoc
-RAQ8ivI/WxzhB6YT3yG4jf/oPAMiC8WZEYhIqQd/yfZRRCGaGvjMnw4jYG+vVy+D
------END RSA PRIVATE KEY-----)xx";
-    return bin_view_t{reinterpret_cast<const uint8_t*>(Key), sizeof(Key) - 1};
+    return bin_view_t{reinterpret_cast<const uint8_t*>(RsaPriKeyEnc),
+                      sizeof(RsaPriKeyEnc)};
 }
 
 bin_view_t
 rsa_public_key() noexcept {
-    constexpr char Key[] = R"xx(-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4EjipWXxJPtz0KYDz5+f
-YWkGly7ieRJ2Zql9BkaIOjz3By/KL+jkYbUIwOQ+jM+FComsII9Y6309Db74sfwt
-ykJoyUGTvMfHsZ/0VmgWOwPcUZ6vnw45D6YuOzoTRLSErR/Vd2EIjNlhYlHg8cy6
-j/M7IqlCrBfz5xdTVYkqU+c0dZ/z7FbbTgCA/9VjCPH3NjtJ34OWYY4HIok+ml8e
-rvlZkiBEIRW/rKiOUMBKy4fgGeWZZBsMaf4wkO8O8fBvfT1CZvxsQnAzN/boRm8t
-00GT5VmyHsgEHU3rKIf31yA834x5WqgOl7WV6GvGnrG9sWOH3/rJClxTadG3HiIa
-rQIDAQAB
------END PUBLIC KEY-----)xx";
-    return bin_view_t{reinterpret_cast<const uint8_t*>(Key), sizeof(Key) - 1};
+    return bin_view_t{reinterpret_cast<const uint8_t*>(RsaPubKey),
+                      sizeof(RsaPubKey)};
 }
 
 bin_view_t
