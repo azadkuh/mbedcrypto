@@ -35,14 +35,28 @@ open_key_impl(context& d, Func fn, Args&&... args) noexcept {
     return (ret != 0) ? mbedtls::make_error_code(ret) : std::error_code{};
 }
 
+// found by a linear interpolation of different rsa/ec * pem/der key samples
 size_t
 min_pri_export_size(const context& d, key_io_t kio) noexcept {
-    return (kio == key_io_t::pem ? 2 : 1) * key_size(d) * 5;
+    constexpr double m_rsa[] = {4.6, 6.2};
+    constexpr double m_ec[]  = {3.0, 4.2};
+    constexpr size_t c[]     = {32,  100};
+    const auto&      m       = is_ec(type_of(d)) ? m_ec : m_rsa;
+    const auto       i       = kio == key_io_t::der ? 0 : 1;
+    const auto       ks      = key_size(d);
+    return m[i] * ks + c[i];
 }
 
+// found by a linear interpolation of different rsa/ec * pem/der key samples
 size_t
 min_pub_export_size(const context& d, key_io_t kio) noexcept {
-    return 47 + (kio == key_io_t::pem ? 2 : 1) * key_size(d);
+    constexpr double m_rsa[] = {1.04, 1.4};
+    constexpr double m_ec[]  = {2.0,  2.8};
+    constexpr size_t c[]     = {32,   96};
+    const auto&      m       = is_ec(type_of(d)) ? m_ec : m_rsa;
+    const auto       i       = kio == key_io_t::der ? 0 : 1;
+    const auto       ks      = key_size(d);
+    return m[i] * ks + c[i];
 }
 
 // TODO: requires performance optimization, use memcpy instead of byte copy

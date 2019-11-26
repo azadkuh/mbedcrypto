@@ -62,6 +62,30 @@ supports_ec_keygen() noexcept {
     return supports(features::pk_keygen) && supports(features::pk_ec);
 }
 
+inline bool
+is_rsa(pk_t t) noexcept {
+    switch (t) {
+    case pk_t::rsa:
+    case pk_t::rsa_alt:
+    case pk_t::rsassa_pss:
+        return true;
+    default:
+        return false;
+    }
+}
+
+inline bool
+is_ec(pk_t t) noexcept {
+    switch (t) {
+    case pk_t::ec:
+    case pk_t::ecdh:
+    case pk_t::ecdsa:
+        return true;
+    default:
+        return false;
+    }
+}
+
 //-----------------------------------------------------------------------------
 // public-key api
 
