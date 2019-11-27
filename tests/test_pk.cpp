@@ -268,9 +268,9 @@ TEST_CASE("sign/verify by rsa key", "[pk]") {
         auto empty = pk::make_context();
         std::string sig1;
         ec = pk::sign(obuffer_t{sig1}, *empty, hashed_message, hash_type);
-        REQUIRE(ec == make_error_code(error_t::usage)); // context is empty (uninitialized)
+        REQUIRE(ec == make_error_code(error_t::bad_input)); // context is empty (uninitialized)
         ec = pk::verify(*empty, hashed_message, hash_type, signature);
-        REQUIRE(ec == make_error_code(error_t::usage)); // context is empty (uninitialized)
+        REQUIRE(ec == make_error_code(error_t::bad_input)); // context is empty (uninitialized)
 
         ec = pk::sign(obuffer_t{sig1}, *pub, hashed_message, hash_type);
         REQUIRE(ec); // can not sign with public key
@@ -285,6 +285,57 @@ TEST_CASE("sign/verify by rsa key", "[pk]") {
 
         ec = pk::verify(*pub, test::long_text(), hash_type, signature);
         REQUIRE(ec == make_error_code(error_t::bad_input));
+    }
+}
+
+TEST_CASE("encrypt/decrypt by rsa key", "[pk]") {
+    auto pri = pk::make_context();
+    auto pub = pk::make_context();
+    auto ec  = pk::import_pri_key(*pri, test::rsa_private_key());
+    REQUIRE_FALSE(ec);
+    ec = pk::import_pub_key(*pub, test::rsa_public_key());
+    REQUIRE_FALSE(ec);
+
+    const std::string source{"Now frontiers shift like desert sands\nWhile nations wash their bloodied hands"};
+    REQUIRE(source.size() < pk::max_crypt_size(*pub));
+
+    std::vector<uint8_t> enc;
+    ec = pk::encrypt(obuffer_t{enc}, *pub, source);
+    REQUIRE_FALSE(ec);
+
+    std::vector<uint8_t> dec;
+    ec = pk::decrypt(obuffer_t{dec}, *pri, enc);
+    REQUIRE_FALSE(ec);
+    REQUIRE(bin_view_t{source} == bin_view_t{dec});
+
+    enc.clear();
+    ec = pk::encrypt(obuffer_t{enc}, *pri, source); // pri-key includes a pub key
+    REQUIRE_FALSE(ec);
+
+    std::printf("source: %zu/%zu - enc: %zu/%zu - dec: %zu/%zu\n",
+            source.size(), source.capacity(),
+            enc.size(), enc.capacity(),
+            dec.size(), dec.capacity());
+
+    // test bad things
+    {
+        auto empty = pk::make_context();
+        std::string enc1, dec1;
+        ec = pk::encrypt(obuffer_t{enc1}, *empty, source);
+        REQUIRE(ec == make_error_code(error_t::bad_input));
+        ec = pk::decrypt(obuffer_t{dec1}, *empty, enc);
+        REQUIRE(ec == make_error_code(error_t::bad_input));
+
+        enc1.resize(4); // small size
+        bin_edit_t box{enc1};
+        ec = pk::encrypt(box, *pub, source);
+        REQUIRE(ec == make_error_code(error_t::small_output));
+
+        ec = pk::encrypt(obuffer_t{enc1}, *pub, test::long_text());
+        REQUIRE(ec == make_error_code(error_t::bad_input)); // input is larger than max_crypt_size()
+
+        ec = pk::decrypt(obuffer_t{dec1}, *pub, enc);
+        REQUIRE(ec == make_error_code(error_t::bad_input)); // can't decrypt by public key
     }
 }
 
