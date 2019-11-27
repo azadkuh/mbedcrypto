@@ -60,7 +60,7 @@ protected:
                 md.update(bin_view_t{bin, size});
             });
             std::string output;
-            ec = md.finish(output);
+            ec = md.finish(obuffer_t{output});
             REQUIRE_FALSE(ec);
             REQUIRE(output.size() == hsize);
             REQUIRE(output == digest.first);
@@ -84,7 +84,7 @@ protected:
                 mac.update(bin_view_t{bin, size});
             });
             std::string output;
-            ec = mac.finish(output);
+            ec = mac.finish(obuffer_t{output});
             REQUIRE_FALSE(ec);
             REQUIRE(output.size() == hsize);
             REQUIRE(output == digest.first);

@@ -150,7 +150,7 @@ struct obuffer_t final : bin_edit_t
         typename = decltype(mbedcrypto::resize(std::declval<Container&>(), 42)),
         typename = std::enable_if_t<std::is_constructible<bin_edit_t, Container&>::value>
     >
-    obuffer_t(Container& ref)
+    explicit obuffer_t(Container& ref)
         : pimpl{/*placement*/ new (stack) model<Container>{*this, ref}} {}
 
     ~obuffer_t() { pimpl->~concept_t(); }
