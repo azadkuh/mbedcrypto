@@ -165,15 +165,16 @@ is_pri_pub_pair(const context& pri, const context& pub) noexcept {
 
 std::error_code
 sign(bin_edit_t& out, context& d, bin_view_t input, hash_t ht) noexcept {
-    const auto min_size = 32 + max_crypt_size(d);
-    if (is_empty(out)) {
+    const auto hsize    = hash_size(ht);
+    const auto min_size = 16 + max_crypt_size(d);
+    if (type_of(d) != pk_t::rsa && !can_do(d, pk_t::ecdsa)) {
+        return make_error_code(error_t::usage);
+    } else if (input.size != hsize) {
+        return make_error_code(error_t::bad_input);
+    } else if (is_empty(out)) {
         out.size = min_size;
     } else if (out.size < min_size) {
         return make_error_code(error_t::small_output);
-    } else if (type_of(d) != pk_t::rsa && !can_do(d, pk_t::ecdsa)) {
-        return make_error_code(error_t::usage);
-    } else if (hash_size(ht) != input.size) {
-        return make_error_code(error_t::bad_input);
     } else {
         auto olen = out.size;
         int  ret  = mbedtls_pk_sign(

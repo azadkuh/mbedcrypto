@@ -143,6 +143,7 @@ capability what_can_do(const context&) noexcept;
 
 /// signs a hashed message by private key of context.
 /// the signature may be padded (PKCS#1 v1.5 by rsa keys.
+/// @warning: the size of hashed_msg must be equal to the hash size.
 std::error_code
 sign(bin_edit_t& out, context&, bin_view_t hashed_msg, hash_t) noexcept;
 
