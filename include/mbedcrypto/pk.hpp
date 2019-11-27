@@ -139,6 +139,23 @@ bool can_do(const context&, pk_t other_type) noexcept;
 capability what_can_do(const context&) noexcept;
 
 //-----------------------------------------------------------------------------
+// cryptographic facilities
+
+/// signs a hashed message by private key of context.
+/// the signature may be padded (PKCS#1 v1.5 by rsa keys.
+std::error_code
+sign(bin_edit_t& out, context&, bin_view_t hashed_msg, hash_t) noexcept;
+
+/// overload
+std::error_code
+sign(obuffer_t&& out, context&, bin_view_t hashed_msg, hash_t);
+
+/// verifies a signature and a hashed-message by public key of context.
+/// returns error if the signature fails
+std::error_code
+verify(context&, bin_view_t hashed_msg, hash_t, bin_view_t signature) noexcept;
+
+//-----------------------------------------------------------------------------
 // key tools
 
 /** creates an RSA (private) key.

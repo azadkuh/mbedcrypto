@@ -1,4 +1,5 @@
 #include "./private/pk_context.hpp"
+#include "mbedcrypto/hash.hpp"
 
 //-----------------------------------------------------------------------------
 namespace mbedcrypto {
@@ -161,6 +162,70 @@ bool
 is_pri_pub_pair(const context& pri, const context& pub) noexcept {
     return mbedtls_pk_check_pair(&pub.pk, &pri.pk) == 0;
 }
+
+std::error_code
+sign(bin_edit_t& out, context& d, bin_view_t input, hash_t ht) noexcept {
+    const auto min_size = 32 + max_crypt_size(d);
+    if (is_empty(out)) {
+        out.size = min_size;
+    } else if (out.size < min_size) {
+        return make_error_code(error_t::small_output);
+    } else if (type_of(d) != pk_t::rsa && !can_do(d, pk_t::ecdsa)) {
+        return make_error_code(error_t::usage);
+    } else if (hash_size(ht) != input.size) {
+        return make_error_code(error_t::bad_input);
+    } else {
+        auto olen = out.size;
+        int  ret  = mbedtls_pk_sign(
+            &d.pk,
+            to_native(ht),
+            input.data,
+            input.size,
+            out.data,
+            &olen,
+            ctr_drbg::make,
+            &d.rnd);
+        if (ret != 0)
+            return mbedtls::make_error_code(ret);
+        out.size = olen;
+    }
+    return std::error_code{};
+}
+
+std::error_code
+sign(obuffer_t&& out, context& d, bin_view_t input, hash_t ht) {
+    bin_edit_t expected;
+    auto       ec = sign(expected, d, input, ht);
+    if (ec)
+        return ec;
+    out.resize(expected.size);
+    ec = sign(static_cast<bin_edit_t&>(out), d, input, ht);
+    if (!ec)
+        out.resize(out.size);
+    return ec;
+}
+
+std::error_code
+verify(context& d, bin_view_t hash_msg, hash_t ht, bin_view_t sig) noexcept {
+    const auto hsize = hash_size(ht);
+    if (hash_msg.size != hsize || sig.size < hsize) {
+        return make_error_code(error_t::bad_input);
+    } else if (type_of(d) != pk_t::rsa && !can_do(d, pk_t::ecdsa)) {
+        return make_error_code(error_t::usage);
+    } else {
+        int ret = mbedtls_pk_verify(
+            &d.pk,
+            to_native(ht),
+            hash_msg.data,
+            hash_msg.size,
+            sig.data,
+            sig.size);
+        if (ret != 0)
+            return mbedtls::make_error_code(ret);
+    }
+    return std::error_code{};
+}
+
 
 std::error_code
 make_rsa_key(context& d, size_t kbits, size_t expo) noexcept {
