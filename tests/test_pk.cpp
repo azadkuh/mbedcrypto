@@ -17,8 +17,16 @@ dump_to_file(const char* fname, bin_view_t data) noexcept {
         fwrite(data.data, data.size, 1, fp);
     fclose(fp);
 }
-#endif
 
+void
+dump(const std::error_code& ec) {
+    std::printf(
+        "ec(%s:%d): %s\n",
+        ec.category().name(),
+        ec.value(),
+        ec.message().data());
+}
+#endif
 //-----------------------------------------------------------------------------
 } // namespace anon
 //-----------------------------------------------------------------------------
@@ -271,11 +279,12 @@ TEST_CASE("sign/verify by rsa key", "[pk]") {
         REQUIRE(ec == make_error_code(error_t::bad_input)); // invalid message size
 
         sig1.resize(10); // small output
-        ec = pk::sign(sig1, *pri, hashed_message, hash_type);
-        REQUIRE_FALSE(ec == make_error_code(error_t::small_output));
+        bin_edit_t box{sig1};
+        ec = pk::sign(box, *pri, hashed_message, hash_type);
+        REQUIRE(ec == make_error_code(error_t::small_output));
 
         ec = pk::verify(*pub, test::long_text(), hash_type, signature);
-        REQUIRE_FALSE(ec == make_error_code(error_t::bad_input));
+        REQUIRE(ec == make_error_code(error_t::bad_input));
     }
 }
 
