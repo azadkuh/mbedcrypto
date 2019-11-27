@@ -168,7 +168,7 @@ sign(bin_edit_t& out, context& d, bin_view_t input, hash_t ht) noexcept {
     const auto hsize    = hash_size(ht);
     const auto min_size = 16 + max_crypt_size(d);
     if (type_of(d) != pk_t::rsa && !can_do(d, pk_t::ecdsa)) {
-        return make_error_code(error_t::usage);
+        return make_error_code(error_t::bad_input);
     } else if (input.size != hsize) {
         return make_error_code(error_t::bad_input);
     } else if (is_empty(out)) {
@@ -212,7 +212,7 @@ verify(context& d, bin_view_t hash_msg, hash_t ht, bin_view_t sig) noexcept {
     if (hash_msg.size != hsize || sig.size < hsize) {
         return make_error_code(error_t::bad_input);
     } else if (type_of(d) != pk_t::rsa && !can_do(d, pk_t::ecdsa)) {
-        return make_error_code(error_t::usage);
+        return make_error_code(error_t::bad_input);
     } else {
         int ret = mbedtls_pk_verify(
             &d.pk,
@@ -231,7 +231,7 @@ std::error_code
 encrypt(bin_edit_t& out, context& d, bin_view_t input) noexcept {
     const auto csize    = max_crypt_size(d);
     const auto min_size = 16 + csize;
-    if (input.size > csize) {
+    if (key_bitlen(d) == 0 || input.size > csize) {
         return make_error_code(error_t::bad_input);
     } else if (is_empty(out)) {
         out.size = min_size;
@@ -271,7 +271,7 @@ encrypt(obuffer_t&& out, context& d, bin_view_t input) {
 std::error_code
 decrypt(bin_edit_t& out, context& d, bin_view_t input) noexcept {
     const auto min_size = 16 + max_crypt_size(d);
-    if ((input.size << 3) > key_bitlen(d)) {
+    if (!d.has_pri_key || (input.size << 3) > key_bitlen(d)) {
         return make_error_code(error_t::bad_input);
     } else if (is_empty(out)) {
         out.size = min_size;
