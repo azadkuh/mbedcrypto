@@ -142,7 +142,7 @@ capability what_can_do(const context&) noexcept;
 // cryptographic facilities
 
 /// signs a hashed message by private key of context.
-/// the signature may be padded (PKCS#1 v1.5 by rsa keys.
+/// the output may be padded (PKCS#1 v1.5 for rsa keys).
 /// @warning: the size of hashed_msg must be equal to the hash size.
 std::error_code
 sign(bin_edit_t& out, context&, bin_view_t hashed_msg, hash_t) noexcept;
@@ -155,6 +155,21 @@ sign(obuffer_t&& out, context&, bin_view_t hashed_msg, hash_t);
 /// returns error if the signature fails
 std::error_code
 verify(context&, bin_view_t hashed_msg, hash_t, bin_view_t signature) noexcept;
+
+/// encrypts input by public key (adds padding if relevant).
+/// the output may be padded (PKCS#1 v1.5 for rsa keys).
+/// @warning: input.size < max_crypt_size() or reports an error.
+std::error_code encrypt(bin_edit_t& out, context&, bin_view_t input) noexcept;
+
+/// overload
+std::error_code encrypt(obuffer_t&& out, context&, bin_view_t input);
+
+/// encrypts input by public key (adds padding if relevant).
+/// @sa encrypt()
+std::error_code decrypt(bin_edit_t& out, context&, bin_view_t input) noexcept;
+
+/// overload
+std::error_code decrypt(obuffer_t&& out, context&, bin_view_t input);
 
 //-----------------------------------------------------------------------------
 // key tools

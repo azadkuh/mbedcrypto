@@ -227,6 +227,86 @@ verify(context& d, bin_view_t hash_msg, hash_t ht, bin_view_t sig) noexcept {
     return std::error_code{};
 }
 
+std::error_code
+encrypt(bin_edit_t& out, context& d, bin_view_t input) noexcept {
+    const auto csize    = max_crypt_size(d);
+    const auto min_size = 16 + csize;
+    if (input.size > csize) {
+        return make_error_code(error_t::bad_input);
+    } else if (is_empty(out)) {
+        out.size = min_size;
+    } else if (out.size < min_size) {
+        return make_error_code(error_t::small_output);
+    } else {
+        size_t olen = out.size;
+        int    ret  = mbedtls_pk_encrypt(
+            &d.pk,
+            input.data,
+            input.size,
+            out.data,
+            &olen,
+            out.size,
+            ctr_drbg::make,
+            &d.rnd);
+        if (ret != 0)
+            return mbedtls::make_error_code(ret);
+        out.size = olen;
+    }
+    return std::error_code{};
+}
+
+std::error_code
+encrypt(obuffer_t&& out, context& d, bin_view_t input) {
+    bin_edit_t expected;
+    auto       ec = encrypt(expected, d, input);
+    if (ec)
+        return ec;
+    out.resize(expected.size);
+    ec = encrypt(static_cast<bin_edit_t&>(out), d, input);
+    if (!ec)
+        out.resize(out.size);
+    return ec;
+}
+
+std::error_code
+decrypt(bin_edit_t& out, context& d, bin_view_t input) noexcept {
+    const auto min_size = 16 + max_crypt_size(d);
+    if ((input.size << 3) > key_bitlen(d)) {
+        return make_error_code(error_t::bad_input);
+    } else if (is_empty(out)) {
+        out.size = min_size;
+    } else if (out.size < min_size) {
+        return make_error_code(error_t::small_output);
+    } else {
+        size_t olen = out.size;
+        int    ret  = mbedtls_pk_decrypt(
+            &d.pk,
+            input.data,
+            input.size,
+            out.data,
+            &olen,
+            out.size,
+            ctr_drbg::make,
+            &d.rnd);
+        if (ret != 0)
+            return mbedtls::make_error_code(ret);
+        out.size = olen;
+    }
+    return std::error_code{};
+}
+
+std::error_code
+decrypt(obuffer_t&& out, context& d, bin_view_t input) {
+    bin_edit_t expected;
+    auto       ec = decrypt(expected, d, input);
+    if (ec)
+        return ec;
+    out.resize(expected.size);
+    ec = decrypt(static_cast<bin_edit_t&>(out), d, input);
+    if (!ec)
+        out.resize(out.size);
+    return ec;
+}
 
 std::error_code
 make_rsa_key(context& d, size_t kbits, size_t expo) noexcept {
