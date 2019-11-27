@@ -2,6 +2,7 @@
 
 #include "./helper.hpp"
 #include "mbedcrypto/text_codec.hpp"
+#include "mbedcrypto/hash.hpp"
 #include "mbedcrypto/pk.hpp"
 
 //-----------------------------------------------------------------------------
@@ -225,6 +226,57 @@ TEST_CASE("rsa key import", "[pk]") {
     REQUIRE(cap.decrypt          == false);
     REQUIRE(cap.sign             == false);
     REQUIRE(cap.verify           == true);
+}
+
+TEST_CASE("sign/verify by rsa key", "[pk]") {
+    auto pri = pk::make_context();
+    auto pub = pk::make_context();
+    auto ec  = pk::import_pri_key(*pri, test::rsa_private_key());
+    REQUIRE_FALSE(ec);
+    ec = pk::import_pub_key(*pub, test::rsa_public_key());
+    REQUIRE_FALSE(ec);
+
+    // make hash
+    constexpr auto hash_type = hash_t::sha1;
+    std::vector<uint8_t> hashed_message;
+    ec = make_hash(obuffer_t{hashed_message}, test::long_text(), hash_type);
+    REQUIRE_FALSE(ec);
+
+    // make signature by private key
+    std::vector<uint8_t> signature;
+    ec = pk::sign(obuffer_t{signature}, *pri, hashed_message, hash_type);
+    REQUIRE_FALSE(ec);
+    REQUIRE(test::long_text_signature() == signature);
+
+    // verify signature by public key
+    ec = pk::verify(*pub, hashed_message, hash_type, signature);
+    REQUIRE_FALSE(ec);
+    // a private key contains the public key internally, so it also can verify
+    ec = pk::verify(*pri, hashed_message, hash_type, signature);
+    REQUIRE_FALSE(ec);
+
+    // test bad things
+    {
+        auto empty = pk::make_context();
+        std::string sig1;
+        ec = pk::sign(obuffer_t{sig1}, *empty, hashed_message, hash_type);
+        REQUIRE(ec == make_error_code(error_t::usage)); // context is empty (uninitialized)
+        ec = pk::verify(*empty, hashed_message, hash_type, signature);
+        REQUIRE(ec == make_error_code(error_t::usage)); // context is empty (uninitialized)
+
+        ec = pk::sign(obuffer_t{sig1}, *pub, hashed_message, hash_type);
+        REQUIRE(ec); // can not sign with public key
+
+        ec = pk::sign(obuffer_t{sig1}, *pri, test::long_text(), hash_type);
+        REQUIRE(ec == make_error_code(error_t::bad_input)); // invalid message size
+
+        sig1.resize(10); // small output
+        ec = pk::sign(sig1, *pri, hashed_message, hash_type);
+        REQUIRE_FALSE(ec == make_error_code(error_t::small_output));
+
+        ec = pk::verify(*pub, test::long_text(), hash_type, signature);
+        REQUIRE_FALSE(ec == make_error_code(error_t::bad_input));
+    }
 }
 
 TEST_CASE("ec key generation", "[pk]") {
