@@ -312,11 +312,6 @@ TEST_CASE("encrypt/decrypt by rsa key", "[pk]") {
     ec = pk::encrypt(obuffer_t{enc}, *pri, source); // pri-key includes a pub key
     REQUIRE_FALSE(ec);
 
-    std::printf("source: %zu/%zu - enc: %zu/%zu - dec: %zu/%zu\n",
-            source.size(), source.capacity(),
-            enc.size(), enc.capacity(),
-            dec.size(), dec.capacity());
-
     // test bad things
     {
         auto empty = pk::make_context();
@@ -374,6 +369,10 @@ TEST_CASE("ec key generation", "[pk]") {
         {curve_t::bp512r1,   pk_t::ec, 512},
     };
 
+    constexpr auto hash_type = hash_t::sha256;
+    std::vector<uint8_t> hashed_msg;
+    make_hash(obuffer_t{hashed_msg}, test::long_text(), hash_type);
+
     for (const auto& t : All) {
         auto ec = pk::make_ec_key(*pri, t.type, t.curve);
         REQUIRE_FALSE(ec);
@@ -424,6 +423,17 @@ TEST_CASE("ec key generation", "[pk]") {
             REQUIRE_FALSE(ec);
             REQUIRE(pk::is_pri_pub_pair(*other, *pub));
         }
+        auto c = pk::what_can_do(*pri);
+        REQUIRE((c.sign && c.verify)); // both sign and verifes
+        REQUIRE_FALSE((c.encrypt || c.decrypt)); // can not do direct encryption/decryption
+        // test sign/verify
+        {
+            std::vector<uint8_t> signature;
+            ec = pk::sign(obuffer_t{signature}, *pri, hashed_msg, hash_type);
+            REQUIRE_FALSE(ec);
+
+            ec = pk::verify(*pub, hashed_msg, hash_type, signature);
+            REQUIRE_FALSE(ec);
+        }
     }
 }
-
