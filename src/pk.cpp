@@ -231,7 +231,7 @@ std::error_code
 encrypt(bin_edit_t& out, context& d, bin_view_t input) noexcept {
     const auto csize    = max_crypt_size(d);
     const auto min_size = 16 + csize;
-    if (key_bitlen(d) == 0 || input.size > csize) {
+    if (!is_rsa(d) || key_bitlen(d) == 0 || input.size > csize) {
         return make_error_code(error_t::bad_input);
     } else if (is_empty(out)) {
         out.size = min_size;
@@ -271,7 +271,7 @@ encrypt(obuffer_t&& out, context& d, bin_view_t input) {
 std::error_code
 decrypt(bin_edit_t& out, context& d, bin_view_t input) noexcept {
     const auto min_size = 16 + max_crypt_size(d);
-    if (!d.has_pri_key || (input.size << 3) > key_bitlen(d)) {
+    if (!is_rsa(d) || !d.has_pri_key || (input.size << 3) > key_bitlen(d)) {
         return make_error_code(error_t::bad_input);
     } else if (is_empty(out)) {
         out.size = min_size;

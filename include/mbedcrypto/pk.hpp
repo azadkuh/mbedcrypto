@@ -138,12 +138,16 @@ bool can_do(const context&, pk_t other_type) noexcept;
 /// returns capability based on algorithms, and/or pub/priv key.
 capability what_can_do(const context&) noexcept;
 
+inline bool is_rsa(const context& d) noexcept { return is_rsa(type_of(d)); }
+inline bool is_ec(const context& d)  noexcept { return is_ec(type_of(d));  }
+
 //-----------------------------------------------------------------------------
 // cryptographic facilities
 
 /// signs a hashed message by private key of context.
 /// the output may be padded (PKCS#1 v1.5 for rsa keys).
 /// @warning: the size of hashed_msg must be equal to the hash size.
+/// supports both pk_t::rsa and pk_t::ec/ecdsa
 std::error_code
 sign(bin_edit_t& out, context&, bin_view_t hashed_msg, hash_t) noexcept;
 
@@ -153,19 +157,22 @@ sign(obuffer_t&& out, context&, bin_view_t hashed_msg, hash_t);
 
 /// verifies a signature and a hashed-message by public key of context.
 /// returns error if the signature fails
+/// supports both pk_t::rsa and pk_t::ec/ecdsa
 std::error_code
 verify(context&, bin_view_t hashed_msg, hash_t, bin_view_t signature) noexcept;
 
-/// encrypts input by public key (adds padding if relevant).
-/// the output may be padded (PKCS#1 v1.5 for rsa keys).
+/// encrypts input by public rsa key (adds padding if relevant).
+/// the output may be padded (PKCS#1 v1.5).
 /// @warning: input.size < max_crypt_size() or reports an error.
+/// @warning: only supports pk_t::rsa
 std::error_code encrypt(bin_edit_t& out, context&, bin_view_t input) noexcept;
 
 /// overload
 std::error_code encrypt(obuffer_t&& out, context&, bin_view_t input);
 
-/// encrypts input by public key (adds padding if relevant).
+/// encrypts input by private rsa key (adds padding if relevant).
 /// @sa encrypt()
+/// @warning: only supports pk_t::rsa
 std::error_code decrypt(bin_edit_t& out, context&, bin_view_t input) noexcept;
 
 /// overload
