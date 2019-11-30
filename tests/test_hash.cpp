@@ -175,3 +175,43 @@ TEST_CASE("hash tests", "[hash]") {
 
     t.fail(hash_t::unknown);
 }
+
+TEST_CASE("pbkdf2-hmac tests", "[hash]") {
+    std::vector<uint8_t> salt;
+    auto ec = from_hex(obuffer_t{salt}, "aaef2d3f4d77ac66e9c5a6c3d8f921d1");
+    REQUIRE_FALSE(ec);
+
+    uint8_t buff[32] = {0};
+    bin_edit_t out{buff, 32};
+    ec = make_hmac_pbkdf2(out, hash_t::sha256, "p@$Sw0rD~1", salt, 50000);
+    REQUIRE_FALSE(ec);
+
+    std::string hexed;
+    ec = to_hex(obuffer_t{hexed}, out);
+    REQUIRE_FALSE(ec);
+    REQUIRE(hexed == "52c5efa16e7022859051b1dec28bc65d9696a3005d0f97e506c42843bc3bdbc0");
+
+    // by empty salt: not recommended
+    ec = make_hmac_pbkdf2(out, hash_t::sha512, "a bad pass", bin_view_t{}, 32);
+    REQUIRE_FALSE(ec);
+    ec = to_hex(obuffer_t{hexed}, out);
+    REQUIRE_FALSE(ec);
+    REQUIRE(hexed == "e04edf3b8fd8efd5eea249c57fead6a939ee55c858e87f45f5a1aaec7b7a1c8e");
+
+    // bad inputs
+    {
+        bin_edit_t empty;
+        ec = make_hmac_pbkdf2(empty, hash_t::sha256, "some pass", bin_view_t{}, 32);
+        REQUIRE(ec == make_error_code(error_t::bad_input)); // empty output
+
+        ec = make_hmac_pbkdf2(out, hash_t::unknown, "some pass", bin_view_t{}, 32);
+        REQUIRE(ec == make_error_code(error_t::bad_input)); // bad hash
+
+        ec = make_hmac_pbkdf2(out, hash_t::sha256, bin_view_t{}, bin_view_t{}, 32);
+        REQUIRE(ec == make_error_code(error_t::bad_input)); // empty password
+
+        ec = make_hmac_pbkdf2(out, hash_t::sha256, "some pass", bin_view_t{}, 0);
+        REQUIRE(ec == make_error_code(error_t::bad_input)); // bad iterations
+    }
+}
+
