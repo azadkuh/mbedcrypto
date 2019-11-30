@@ -2,6 +2,7 @@
 #include "./private/conversions.hpp"
 
 #include <mbedtls/md.h>
+#include <mbedtls/pkcs5.h>
 #include <type_traits>
 //-----------------------------------------------------------------------------
 namespace mbedcrypto {
@@ -125,6 +126,34 @@ make_hmac(obuffer_t&& output, bin_view_t input, bin_view_t key, hash_t algo) {
         return ec;
     output.resize(exptected.size);
     return make_hmac(static_cast<bin_edit_t&>(output), input, key, algo);
+}
+
+std::error_code
+make_hmac_pbkdf2(
+    bin_edit_t& out,
+    hash_t      algo,
+    bin_view_t  pass,
+    bin_view_t  salt,
+    size_t      iters) noexcept {
+    const auto* info = find_native_info(algo);
+    if (info == nullptr || is_empty(out) || is_empty(pass) || iters == 0)
+        return make_error_code(error_t::bad_input);
+    int         ret  = 0;
+    impl_base   d;
+    if ((ret = d.setup(info, true)) != 0)
+        return mbedtls::make_error_code(ret);
+    ret = mbedtls_pkcs5_pbkdf2_hmac(
+        &d.ctx,
+        pass.data,
+        pass.size,
+        salt.data,
+        salt.size,
+        static_cast<unsigned int>(iters),
+        static_cast<uint32_t>(out.size),
+        out.data);
+    if (ret != 0)
+        return mbedtls::make_error_code(ret);
+    return std::error_code{};
 }
 
 std::error_code

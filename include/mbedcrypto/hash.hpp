@@ -29,7 +29,7 @@ size_t hash_size(hash_t) noexcept;
 /// the output,data and output.size should be large enough @sa hash_size()
 std::error_code
 make_hash(bin_edit_t& output, bin_view_t input, hash_t algorithm) noexcept;
-/// overload with contaienr apdapter
+/// overload with container adapter
 std::error_code
 make_hash(obuffer_t&& output, bin_view_t input, hash_t algorithm);
 
@@ -40,7 +40,7 @@ make_hmac(
     bin_view_t  input,
     bin_view_t  key,
     hash_t      algorithm) noexcept;
-/// overload with contaienr apdapter
+/// overload with container adapter
 std::error_code
 make_hmac(
     obuffer_t&& output,
@@ -53,9 +53,25 @@ make_hmac(
 std::error_code
 make_file_hash(
     bin_edit_t& output, const char* filename, hash_t algorithm) noexcept;
-/// overload with contaienr apdapter
+/// overload with container adapter
 std::error_code
 make_file_hash(obuffer_t& output, const char* filename, hash_t algorithm);
+
+/** makes a secure key by a password-based key-derivation function (PKCS#5 PBKDF2)
+ * the size of the output key is defined by output.size.
+ * requires valid algorithm, password and iterations (>0). it is possible to pass
+ * empty salt, but it is not recommended.
+ *
+ * @warning: this function is computationally intensive and slow by design,
+ * used to reduce vulnerabilities to to brute force attack.
+ */
+std::error_code
+make_hmac_pbkdf2(
+    bin_edit_t& output,
+    hash_t      algorithm,
+    bin_view_t  password,
+    bin_view_t  salt,
+    size_t      iterations) noexcept;
 
 //-----------------------------------------------------------------------------
 

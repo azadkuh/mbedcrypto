@@ -24,6 +24,7 @@
 #define MBEDTLS_SHA1_C
 #define MBEDTLS_SHA256_C
 #define MBEDTLS_SHA512_C
+#define MBEDTLS_PKCS5_C
 
 // cipher
 #define MBEDTLS_CIPHER_MODE_CBC
