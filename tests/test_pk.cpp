@@ -8,27 +8,7 @@
 //-----------------------------------------------------------------------------
 namespace {
 using namespace mbedcrypto;
-
-#if 0
-void
-dump_to_file(const char* fname, bin_view_t data) noexcept {
-    auto* fp = fopen(fname, "w+b");
-    if (fp)
-        fwrite(data.data, data.size, 1, fp);
-    fclose(fp);
 }
-
-void
-dump(const std::error_code& ec) {
-    std::printf(
-        "ec(%s:%d): %s\n",
-        ec.category().name(),
-        ec.value(),
-        ec.message().data());
-}
-#endif
-//-----------------------------------------------------------------------------
-} // namespace anon
 //-----------------------------------------------------------------------------
 
 TEST_CASE("public-key capabilities", "[pk]") {

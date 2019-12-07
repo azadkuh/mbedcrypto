@@ -111,13 +111,6 @@ make_source(bin_view_t in, const cipher_properties& p) noexcept {
     return copy;
 }
 
-void
-write_to_file(const char* fname, bin_view_t binary) noexcept {
-    auto* fp = fopen(fname, "wb");
-    fwrite(binary.data, binary.size, 1, fp);
-    fclose(fp);
-}
-
 //-----------------------------------------------------------------------------
 
 struct streamer {
@@ -250,8 +243,8 @@ protected:
         streamer stm;
         stm.encrypt(source, ci);
         if (false) {
-            write_to_file("output.enc", enc);
-            write_to_file("output.stm", stm.result());
+            test::write_to_file("output.enc", enc);
+            test::write_to_file("output.stm", stm.result());
         }
         REQUIRE(stm.result() == enc);
 

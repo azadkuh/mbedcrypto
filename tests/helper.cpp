@@ -155,12 +155,6 @@ long_binary() noexcept {
     return bin_view_t{BinaryLong, sizeof(BinaryLong)};
 }
 
-void
-dump_to_file(bin_view_t input, const char* filename) {
-    std::fstream f{filename, std::fstream::out | std::fstream::binary};
-    f.write(reinterpret_cast<const char*>(input.data), input.size);
-}
-
 bin_view_t
 rsa_private_key() noexcept {
     return bin_view_t{reinterpret_cast<const uint8_t*>(RsaPriKey),
@@ -183,6 +177,16 @@ bin_view_t
 long_text_signature() noexcept {
     return bin_view_t{reinterpret_cast<const uint8_t*>(SignatureSha1),
                       sizeof(SignatureSha1)};
+}
+
+size_t
+write_to_file(const char* fname, bin_view_t in) noexcept {
+    auto* fp = fopen(fname, "w+b");
+    if (fp == nullptr)
+        return 0;
+    auto actual = fwrite(in.data, in.size, 1, fp);
+    fclose(fp);
+    return actual;
 }
 
 //-----------------------------------------------------------------------------
