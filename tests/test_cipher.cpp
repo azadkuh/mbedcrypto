@@ -13,89 +13,86 @@ namespace {
 using namespace mbedcrypto;
 //-----------------------------------------------------------------------------
 
-struct cipher_properties {
-    cipher_t  type;
-    size_t    block_size;
-    size_t    iv_size;
-    size_t    key_bits;
-    cipher_bm bmode;
+struct cipher_feats_t {
+    cipher_t         type;
+    cipher::traits_t traits;
 };
 
-const cipher_properties Props[] = {
-    // id                       block  iv key    block mode
-    {cipher_t::null,                0,  0,  0,   cipher_bm::unknown},
-    {cipher_t::aes_128_ecb,         16, 0,  128, cipher_bm::ecb},
-    {cipher_t::aes_192_ecb,         16, 0,  192, cipher_bm::ecb},
-    {cipher_t::aes_256_ecb,         16, 0,  256, cipher_bm::ecb},
-    {cipher_t::aes_128_cbc,         16, 16, 128, cipher_bm::cbc},
-    {cipher_t::aes_192_cbc,         16, 16, 192, cipher_bm::cbc},
-    {cipher_t::aes_256_cbc,         16, 16, 256, cipher_bm::cbc},
-    {cipher_t::aes_128_cfb128,      16, 16, 128, cipher_bm::cfb},
-    {cipher_t::aes_192_cfb128,      16, 16, 192, cipher_bm::cfb},
-    {cipher_t::aes_256_cfb128,      16, 16, 256, cipher_bm::cfb},
-    {cipher_t::aes_128_ctr,         16, 16, 128, cipher_bm::ctr},
-    {cipher_t::aes_192_ctr,         16, 16, 192, cipher_bm::ctr},
-    {cipher_t::aes_256_ctr,         16, 16, 256, cipher_bm::ctr},
-    {cipher_t::aes_128_gcm,         16, 12, 128, cipher_bm::gcm},
-    {cipher_t::aes_192_gcm,         16, 12, 192, cipher_bm::gcm},
-    {cipher_t::aes_256_gcm,         16, 12, 256, cipher_bm::gcm},
-    {cipher_t::camellia_128_ecb,    16, 16, 128, cipher_bm::ecb},
-    {cipher_t::camellia_192_ecb,    16, 16, 192, cipher_bm::ecb},
-    {cipher_t::camellia_256_ecb,    16, 16, 256, cipher_bm::ecb},
-    {cipher_t::camellia_128_cbc,    16, 16, 128, cipher_bm::cbc},
-    {cipher_t::camellia_192_cbc,    16, 16, 192, cipher_bm::cbc},
-    {cipher_t::camellia_256_cbc,    16, 16, 256, cipher_bm::cbc},
-    {cipher_t::camellia_128_cfb128, 16, 16, 128, cipher_bm::cfb},
-    {cipher_t::camellia_192_cfb128, 16, 16, 192, cipher_bm::cfb},
-    {cipher_t::camellia_256_cfb128, 16, 16, 256, cipher_bm::cfb},
-    {cipher_t::camellia_128_ctr,    16, 16, 128, cipher_bm::ctr},
-    {cipher_t::camellia_192_ctr,    16, 16, 192, cipher_bm::ctr},
-    {cipher_t::camellia_256_ctr,    16, 16, 256, cipher_bm::ctr},
-    {cipher_t::camellia_128_gcm,    16, 12, 128, cipher_bm::gcm},
-    {cipher_t::camellia_192_gcm,    16, 12, 192, cipher_bm::gcm},
-    {cipher_t::camellia_256_gcm,    16, 12, 256, cipher_bm::gcm},
-    {cipher_t::des_ecb,             8,  8,  64,  cipher_bm::ecb},
-    {cipher_t::des_cbc,             8,  8,  64,  cipher_bm::cbc},
-    {cipher_t::des_ede_ecb,         8,  8,  128, cipher_bm::ecb},
-    {cipher_t::des_ede_cbc,         8,  8,  128, cipher_bm::cbc},
-    {cipher_t::des_ede3_ecb,        8,  8,  192, cipher_bm::ecb},
-    {cipher_t::des_ede3_cbc,        8,  8,  192, cipher_bm::cbc},
-    {cipher_t::blowfish_ecb,        8,  8,  128, cipher_bm::ecb},
-    {cipher_t::blowfish_cbc,        8,  8,  128, cipher_bm::cbc},
-    {cipher_t::blowfish_cfb64,      8,  8,  128, cipher_bm::cfb},
-    {cipher_t::blowfish_ctr,        8,  8,  128, cipher_bm::ctr},
-    {cipher_t::arc4_128,            1,  0,  128, cipher_bm::stream},
-    {cipher_t::aes_128_ccm,         16, 12, 128, cipher_bm::ccm},
-    {cipher_t::aes_192_ccm,         16, 12, 192, cipher_bm::ccm},
-    {cipher_t::aes_256_ccm,         16, 12, 256, cipher_bm::ccm},
-    {cipher_t::camellia_128_ccm,    16, 12, 128, cipher_bm::ccm},
-    {cipher_t::camellia_192_ccm,    16, 12, 192, cipher_bm::ccm},
-    {cipher_t::camellia_256_ccm,    16, 12, 256, cipher_bm::ccm},
-    {cipher_t::aria_128_ecb,        16, 16, 128, cipher_bm::ecb},
-    {cipher_t::aria_192_ecb,        16, 16, 192, cipher_bm::ecb},
-    {cipher_t::aria_256_ecb,        16, 16, 256, cipher_bm::ecb},
-    {cipher_t::aria_128_cbc,        16, 16, 128, cipher_bm::cbc},
-    {cipher_t::aria_192_cbc,        16, 16, 192, cipher_bm::cbc},
-    {cipher_t::aria_256_cbc,        16, 16, 256, cipher_bm::cbc},
-    {cipher_t::aria_128_cfb128,     16, 16, 128, cipher_bm::cfb},
-    {cipher_t::aria_192_cfb128,     16, 16, 192, cipher_bm::cfb},
-    {cipher_t::aria_256_cfb128,     16, 16, 256, cipher_bm::cfb},
-    {cipher_t::aria_128_ctr,        16, 16, 128, cipher_bm::ctr},
-    {cipher_t::aria_192_ctr,        16, 16, 192, cipher_bm::ctr},
-    {cipher_t::aria_256_ctr,        16, 16, 256, cipher_bm::ctr},
-    {cipher_t::aria_128_gcm,        16, 12, 128, cipher_bm::gcm},
-    {cipher_t::aria_192_gcm,        16, 12, 192, cipher_bm::gcm},
-    {cipher_t::aria_256_gcm,        16, 12, 256, cipher_bm::gcm},
-    {cipher_t::aria_128_ccm,        16, 12, 128, cipher_bm::ccm},
-    {cipher_t::aria_192_ccm,        16, 12, 192, cipher_bm::ccm},
-    {cipher_t::aria_256_ccm,        16, 12, 256, cipher_bm::ccm},
-    {cipher_t::aes_128_ofb,         16, 16, 128, cipher_bm::ofb},
-    {cipher_t::aes_192_ofb,         16, 16, 192, cipher_bm::ofb},
-    {cipher_t::aes_256_ofb,         16, 16, 256, cipher_bm::ofb},
-    {cipher_t::aes_128_xts,         16, 16, 256, cipher_bm::xts},
-    {cipher_t::aes_256_xts,         16, 16, 512, cipher_bm::xts},
-    {cipher_t::chacha20,            1,  12, 256, cipher_bm::stream},
-    {cipher_t::chacha20_poly1305,   1,  12, 256, cipher_bm::chachapoly},
+const cipher_feats_t Features[] = {
+    // id                          block key iv   block mode           padding  anyin  v_iv   v_key
+    {cipher_t::null,                {0,  0,   0,  cipher_bm::unknown,    false, false, false, false}},
+    {cipher_t::aes_128_ecb,         {16, 128, 0,  cipher_bm::ecb,        false, false, false, false}},
+    {cipher_t::aes_192_ecb,         {16, 192, 0,  cipher_bm::ecb,        false, false, false, false}},
+    {cipher_t::aes_256_ecb,         {16, 256, 0,  cipher_bm::ecb,        false, false, false, false}},
+    {cipher_t::aes_128_cbc,         {16, 128, 16, cipher_bm::cbc,        true,  true,  false, false}},
+    {cipher_t::aes_192_cbc,         {16, 192, 16, cipher_bm::cbc,        true,  true,  false, false}},
+    {cipher_t::aes_256_cbc,         {16, 256, 16, cipher_bm::cbc,        true,  true,  false, false}},
+    {cipher_t::aes_128_cfb128,      {16, 128, 16, cipher_bm::cfb,        false, true,  false, false}},
+    {cipher_t::aes_192_cfb128,      {16, 192, 16, cipher_bm::cfb,        false, true,  false, false}},
+    {cipher_t::aes_256_cfb128,      {16, 256, 16, cipher_bm::cfb,        false, true,  false, false}},
+    {cipher_t::aes_128_ctr,         {16, 128, 16, cipher_bm::ctr,        false, true,  false, false}},
+    {cipher_t::aes_192_ctr,         {16, 192, 16, cipher_bm::ctr,        false, true,  false, false}},
+    {cipher_t::aes_256_ctr,         {16, 256, 16, cipher_bm::ctr,        false, true,  false, false}},
+    {cipher_t::aes_128_gcm,         {16, 128, 12, cipher_bm::gcm,        false, true,  true,  false}},
+    {cipher_t::aes_192_gcm,         {16, 192, 12, cipher_bm::gcm,        false, true,  true,  false}},
+    {cipher_t::aes_256_gcm,         {16, 256, 12, cipher_bm::gcm,        false, true,  true,  false}},
+    {cipher_t::camellia_128_ecb,    {16, 128, 16, cipher_bm::ecb,        false, false, false, false}},
+    {cipher_t::camellia_192_ecb,    {16, 192, 16, cipher_bm::ecb,        false, false, false, false}},
+    {cipher_t::camellia_256_ecb,    {16, 256, 16, cipher_bm::ecb,        false, false, false, false}},
+    {cipher_t::camellia_128_cbc,    {16, 128, 16, cipher_bm::cbc,        true,  true,  false, false}},
+    {cipher_t::camellia_192_cbc,    {16, 192, 16, cipher_bm::cbc,        true,  true,  false, false}},
+    {cipher_t::camellia_256_cbc,    {16, 256, 16, cipher_bm::cbc,        true,  true,  false, false}},
+    {cipher_t::camellia_128_cfb128, {16, 128, 16, cipher_bm::cfb,        false, true,  false, false}},
+    {cipher_t::camellia_192_cfb128, {16, 192, 16, cipher_bm::cfb,        false, true,  false, false}},
+    {cipher_t::camellia_256_cfb128, {16, 256, 16, cipher_bm::cfb,        false, true,  false, false}},
+    {cipher_t::camellia_128_ctr,    {16, 128, 16, cipher_bm::ctr,        false, true,  false, false}},
+    {cipher_t::camellia_192_ctr,    {16, 192, 16, cipher_bm::ctr,        false, true,  false, false}},
+    {cipher_t::camellia_256_ctr,    {16, 256, 16, cipher_bm::ctr,        false, true,  false, false}},
+    {cipher_t::camellia_128_gcm,    {16, 128, 12, cipher_bm::gcm,        false, true,  true,  false}},
+    {cipher_t::camellia_192_gcm,    {16, 192, 12, cipher_bm::gcm,        false, true,  true,  false}},
+    {cipher_t::camellia_256_gcm,    {16, 256, 12, cipher_bm::gcm,        false, true,  true,  false}},
+    {cipher_t::des_ecb,             {8,  64,  8,  cipher_bm::ecb,        false, false, false, false}},
+    {cipher_t::des_cbc,             {8,  64,  8,  cipher_bm::cbc,        true,  true,  false, false}},
+    {cipher_t::des_ede_ecb,         {8,  128, 8,  cipher_bm::ecb,        false, false, false, false}},
+    {cipher_t::des_ede_cbc,         {8,  128, 8,  cipher_bm::cbc,        true,  true,  false, false}},
+    {cipher_t::des_ede3_ecb,        {8,  192, 8,  cipher_bm::ecb,        false, false, false, false}},
+    {cipher_t::des_ede3_cbc,        {8,  192, 8,  cipher_bm::cbc,        true,  true,  false, false}},
+    {cipher_t::blowfish_ecb,        {8,  128, 8,  cipher_bm::ecb,        false, false, false, true }},
+    {cipher_t::blowfish_cbc,        {8,  128, 8,  cipher_bm::cbc,        true,  true,  false, true }},
+    {cipher_t::blowfish_cfb64,      {8,  128, 8,  cipher_bm::cfb,        false, true,  false, true }},
+    {cipher_t::blowfish_ctr,        {8,  128, 8,  cipher_bm::ctr,        false, true,  false, true }},
+    {cipher_t::arc4_128,            {1,  128, 0,  cipher_bm::stream,     false, true,  false, false}},
+    {cipher_t::aes_128_ccm,         {16, 128, 12, cipher_bm::ccm,        false, true,  true,  false}},
+    {cipher_t::aes_192_ccm,         {16, 192, 12, cipher_bm::ccm,        false, true,  true,  false}},
+    {cipher_t::aes_256_ccm,         {16, 256, 12, cipher_bm::ccm,        false, true,  true,  false}},
+    {cipher_t::camellia_128_ccm,    {16, 128, 12, cipher_bm::ccm,        false, true,  true,  false}},
+    {cipher_t::camellia_192_ccm,    {16, 192, 12, cipher_bm::ccm,        false, true,  true,  false}},
+    {cipher_t::camellia_256_ccm,    {16, 256, 12, cipher_bm::ccm,        false, true,  true,  false}},
+    {cipher_t::aria_128_ecb,        {16, 128, 16, cipher_bm::ecb,        false, false, false, false}},
+    {cipher_t::aria_192_ecb,        {16, 192, 16, cipher_bm::ecb,        false, false, false, false}},
+    {cipher_t::aria_256_ecb,        {16, 256, 16, cipher_bm::ecb,        false, false, false, false}},
+    {cipher_t::aria_128_cbc,        {16, 128, 16, cipher_bm::cbc,        true,  true,  false, false}},
+    {cipher_t::aria_192_cbc,        {16, 192, 16, cipher_bm::cbc,        true,  true,  false, false}},
+    {cipher_t::aria_256_cbc,        {16, 256, 16, cipher_bm::cbc,        true,  true,  false, false}},
+    {cipher_t::aria_128_cfb128,     {16, 128, 16, cipher_bm::cfb,        false, true,  false, false}},
+    {cipher_t::aria_192_cfb128,     {16, 192, 16, cipher_bm::cfb,        false, true,  false, false}},
+    {cipher_t::aria_256_cfb128,     {16, 256, 16, cipher_bm::cfb,        false, true,  false, false}},
+    {cipher_t::aria_128_ctr,        {16, 128, 16, cipher_bm::ctr,        false, true,  false, false}},
+    {cipher_t::aria_192_ctr,        {16, 192, 16, cipher_bm::ctr,        false, true,  false, false}},
+    {cipher_t::aria_256_ctr,        {16, 256, 16, cipher_bm::ctr,        false, true,  false, false}},
+    {cipher_t::aria_128_gcm,        {16, 128, 12, cipher_bm::gcm,        false, true,  true,  false}},
+    {cipher_t::aria_192_gcm,        {16, 192, 12, cipher_bm::gcm,        false, true,  true,  false}},
+    {cipher_t::aria_256_gcm,        {16, 256, 12, cipher_bm::gcm,        false, true,  true,  false}},
+    {cipher_t::aria_128_ccm,        {16, 128, 12, cipher_bm::ccm,        false, true,  true,  false}},
+    {cipher_t::aria_192_ccm,        {16, 192, 12, cipher_bm::ccm,        false, true,  true,  false}},
+    {cipher_t::aria_256_ccm,        {16, 256, 12, cipher_bm::ccm,        false, true,  true,  false}},
+    {cipher_t::aes_128_ofb,         {16, 128, 16, cipher_bm::ofb,        false, true,  false, false}},
+    {cipher_t::aes_192_ofb,         {16, 192, 16, cipher_bm::ofb,        false, true,  false, false}},
+    {cipher_t::aes_256_ofb,         {16, 256, 16, cipher_bm::ofb,        false, true,  false, false}},
+    {cipher_t::aes_128_xts,         {16, 256, 16, cipher_bm::xts,        false, true,  false, false}},
+    {cipher_t::aes_256_xts,         {16, 512, 16, cipher_bm::xts,        false, true,  false, false}},
+    {cipher_t::chacha20,            {1,  256, 12, cipher_bm::stream,     false, true,  false, false}},
+    {cipher_t::chacha20_poly1305,   {1,  256, 12, cipher_bm::chachapoly, false, true,  false, false}},
 };
 
 auto
@@ -104,10 +101,10 @@ padding_of(cipher_bm bm) noexcept {
 }
 
 bin_view_t
-make_source(bin_view_t in, const cipher_properties& p) noexcept {
+make_source(bin_view_t in, const cipher_feats_t& f) noexcept {
     auto copy{in};
-    if (p.bmode == cipher_bm::ecb)
-        copy.size -= (in.size % p.block_size); // must be N % block_size
+    if (f.traits.block_mode == cipher_bm::ecb)
+        copy.size -= (in.size % f.traits.block_size); // must be N % block_size
     return copy;
 }
 
@@ -138,11 +135,11 @@ protected:
 
     void prepare(size_t input_size, cipher_t type) {
         buffer.resize(input_size + 64); // initial guess
-        const auto bm = mbedcrypto::block_mode(type);
-        if (bm == cipher_bm::ecb)
-            chunk_size = mbedcrypto::block_size(type);
-        else if (bm == cipher_bm::gcm)
-            chunk_size = 3 * mbedcrypto::block_size(type); // N * block_size
+        const auto tr = cipher::traits(type);
+        if (tr.block_mode == cipher_bm::ecb)
+            chunk_size = tr.block_size;
+        else if (tr.block_mode == cipher_bm::gcm)
+            chunk_size = 3 * tr.block_size; // N * block_size
         else
             chunk_size = 42; // custom input size fittable into temp
     }
@@ -176,49 +173,50 @@ protected:
 //-----------------------------------------------------------------------------
 
 struct tester {
-    explicit tester(const cipher_properties& p) noexcept : prop{p} {}
+    explicit tester(const cipher_feats_t& f) noexcept : feats{f} {}
 
     void run() const {
         check_props();
-        cypt();
+        crypt();
         auth_crypt();
     }
 
 protected:
-    cipher_properties prop;
+    cipher_feats_t feats;
 
     void check_props() const {
-        const auto bsize = block_size(prop.type);
-        const auto isize = iv_size(prop.type);
-        const auto kbits = key_bitlen(prop.type);
-        const auto bmode = block_mode(prop.type);
-        REQUIRE(bsize == prop.block_size);
-        REQUIRE(isize == prop.iv_size);
-        REQUIRE(kbits == prop.key_bits);
-        REQUIRE(bmode == prop.bmode);
+        const auto tr = cipher::traits(feats.type);
+        REQUIRE(tr.block_size               == feats.traits.block_size);
+        REQUIRE(tr.key_bitlen               == feats.traits.key_bitlen);
+        REQUIRE(tr.iv_size                  == feats.traits.iv_size);
+        REQUIRE(tr.block_mode               == feats.traits.block_mode);
+        REQUIRE(tr.requires_padding         == feats.traits.requires_padding);
+        REQUIRE(tr.accept_any_input_size    == feats.traits.accept_any_input_size);
+        REQUIRE(tr.accept_variable_key_size == feats.traits.accept_variable_key_size);
+        REQUIRE(tr.accept_variable_iv_size  == feats.traits.accept_variable_iv_size);
         cipher::info_t ci;
-        ci.type = prop.type;
+        ci.type = feats.type;
         ci.key  = test::long_binary();
         ci.iv   = test::long_binary();
         REQUIRE_FALSE(is_valid(ci)); // bad key/iv size
-        ci.key.size = kbits >> 3; // in bytes
-        ci.iv.size  = isize;      // in bytes
+        ci.key.size = tr.key_bitlen >> 3; // in bytes
+        ci.iv.size  = tr.iv_size;      // in bytes
         REQUIRE(is_valid(ci));
     }
 
-    void cypt() const {
-        if (prop.bmode == cipher_bm::ccm) // CCM is only for AEAD
+    void crypt() const {
+        if (feats.traits.block_mode == cipher_bm::ccm) // CCM is only for AEAD
             return;
 #if VERBOSE_CIPHER > 0
         std::printf("%-20s", to_string(prop.type));
 #endif
         cipher::info_t ci;
         prepare(ci);
-        if (prop.bmode == cipher_bm::chachapoly) {
+        if (feats.traits.block_mode == cipher_bm::chachapoly) {
             ci.ad = bin_view_t("some additional data is required");
         }
 
-        const auto source = make_source(test::long_text(), prop);
+        const auto source = make_source(test::long_text(), feats);
 
         std::vector<uint8_t> enc;
         auto ec = cipher::encrypt(obuffer_t{enc}, source, ci);
@@ -238,7 +236,7 @@ protected:
         REQUIRE(dec == source);
 
         // streamin-api
-        if (prop.bmode == cipher_bm::xts)
+        if (feats.traits.block_mode == cipher_bm::xts)
             return; // does not support
         streamer stm;
         stm.encrypt(source, ci);
@@ -253,7 +251,7 @@ protected:
     }
 
     void auth_crypt() const {
-        switch (prop.bmode) {
+        switch (feats.traits.block_mode) {
             case cipher_bm::ccm:
             case cipher_bm::gcm:
             case cipher_bm::chachapoly:
@@ -268,7 +266,7 @@ protected:
         prepare(ci);
         ci.ad = bin_view_t("some additional data is required");
 
-        const auto source = make_source(test::long_text(), prop);
+        const auto source = make_source(test::long_text(), feats);
 
         std::vector<uint8_t> enc;
         std::vector<uint8_t> tag;
@@ -293,14 +291,14 @@ protected:
 
 private:
     void prepare(cipher::info_t& ci) const noexcept {
-        ci.type    = prop.type;
-        ci.padding = padding_of(prop.bmode);
+        ci.type    = feats.type;
+        ci.padding = padding_of(feats.traits.block_mode);
         ci.key     = test::short_binary();
         ci.iv      = test::short_text();
-        REQUIRE(ci.iv.size > prop.iv_size);
+        REQUIRE(ci.iv.size > feats.traits.iv_size);
         // adjust to exact size
-        ci.iv.size  = prop.iv_size;
-        ci.key.size = prop.key_bits >> 3; // to byte
+        ci.iv.size  = feats.traits.iv_size;
+        ci.key.size = feats.traits.key_bitlen >> 3; // to byte
     }
 };
 
@@ -309,24 +307,41 @@ private:
 //-----------------------------------------------------------------------------
 
 TEST_CASE("cipher properties", "[cipher]") {
+    SECTION("empty traits") {
+        cipher::traits_t tr{};
+        REQUIRE_FALSE(is_valid(tr));
+        tr.block_size = 16;
+        REQUIRE_FALSE(is_valid(tr));
+        tr.key_bitlen = 128;
+        REQUIRE_FALSE(is_valid(tr));
+        tr.block_mode = cipher_bm::ecb;
+        REQUIRE(is_valid(tr)); // ecb can come with iv_size=0
+        tr.block_mode = cipher_bm::gcm;
+        REQUIRE_FALSE(is_valid(tr)); // requires iv
+        tr.iv_size = 16;
+        REQUIRE(is_valid(tr));
+    }
+
     SECTION("empty ciphers") {
         cipher::info_t ci;
         REQUIRE_FALSE(is_valid(ci));
-        REQUIRE(block_size(ci.type) == 0);
-        REQUIRE(iv_size(ci.type)    == 0);
-        REQUIRE(key_bitlen(ci.type) == 0);
-        REQUIRE(block_mode(ci.type) == cipher_bm::unknown);
+        auto tr = cipher::traits(ci.type);
+        REQUIRE(tr.block_size == 0);
+        REQUIRE(tr.key_bitlen == 0);
+        REQUIRE(tr.iv_size    == 0);
+        REQUIRE(tr.block_mode == cipher_bm::unknown);
     }
 
     SECTION("all supported ciphers") {
-        for (const auto& p : Props) {
-            if (supports(p.type)) {
-                tester{p}.run();
+        for (const auto& f : Features) {
+            if (supports(f.type)) {
+                tester{f}.run();
             } else {
-                REQUIRE(block_size(p.type) == 0);
-                REQUIRE(iv_size(p.type)    == 0);
-                REQUIRE(key_bitlen(p.type) == 0);
-                REQUIRE(block_mode(p.type) == cipher_bm::unknown);
+                const auto& tr = f.traits;
+                REQUIRE(tr.block_size == 0);
+                REQUIRE(tr.key_bitlen == 0);
+                REQUIRE(tr.iv_size == 0);
+                REQUIRE(tr.block_mode == cipher_bm::unknown);
             }
         }
     }
