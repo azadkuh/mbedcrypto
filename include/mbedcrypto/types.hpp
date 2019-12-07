@@ -215,8 +215,8 @@ enum class curve_t {
  * @sa supports()
  */
 enum class features {
-    aes_ni,     ///< hardware accelerated AES. @sa cipher::supports_aes_ni()
-    aead,       ///< authenticated encryption by additional data. @sa cipher::supports_aead()
+    aes_ni,     ///< hardware accelerated AES. @sa supports_aes_ni()
+    aead,       ///< authenticated encryption by additional data. @sa supports_aead()
     pk_keygen,  ///< public-key generator
     pk_ec,      ///< any of elliptic-curve algorithms
 };
@@ -298,6 +298,31 @@ std::vector<cipher_bm> supported_block_modes();
 std::vector<cipher_t>  supported_ciphers();
 std::vector<pk_t>      supported_pks();
 std::vector<curve_t>   supported_curves();
+
+/** checks if current build and the CPU/OS supports AESNI.
+ * @sa features::aes_ni
+ * AESNI is an extension to the x86 instruction set architecture
+ *  for microprocessors from Intel and AMD proposed by Intel in March 2008.
+ *  The purpose of the instruction set is to improve the speed of
+ *  applications performing encryption and decryption using AES.
+ *
+ * @warning mbedcrypto (mbedcrypto) automatically switches to AESNI
+ *  automatically for supported systems.
+ * @sa http://en.wikipedia.org/wiki/AES_instruction_set
+ */
+inline bool
+supports_aes_ni() noexcept {
+    return supports(features::aes_ni);
+}
+
+/** authenticated encryption by additional data.
+ * returns true if any of MBEDCRYPTO_BM_GCM or MBEDCRYPTO_BM_CCM has been
+ * activated.  @sa features::aead
+ */
+inline bool
+supports_aead() noexcept {
+    return supports(features::aead);
+}
 
 // clang-format on
 //-----------------------------------------------------------------------------

@@ -47,30 +47,6 @@ size_t key_bitlen(cipher_t) noexcept;
 /// returns block mode of a cipher type
 cipher_bm block_mode(cipher_t) noexcept;
 
-/** checks if current build and the CPU/OS supports AESNI.
- * @sa features::aes_ni
- * AESNI is an extension to the x86 instruction set architecture
- *  for microprocessors from Intel and AMD proposed by Intel in March 2008.
- *  The purpose of the instruction set is to improve the speed of
- *  applications performing encryption and decryption using AES.
- *
- * @warning mbedcrypto (mbedcrypto) automatically switches to AESNI
- *  automatically for supported systems.
- * @sa http://en.wikipedia.org/wiki/AES_instruction_set
- */
-inline bool
-supports_aes_ni() noexcept {
-    return supports(features::aes_ni);
-}
-
-/** authenticated encryption by additional data.
- * returns true if any of MBEDCRYPTO_BM_GCM or MBEDCRYPTO_BM_CCM has been
- * activated.  @sa features::aead
- */
-inline bool
-supports_aead() noexcept {
-    return supports(features::aead);
-}
 
 //-----------------------------------------------------------------------------
 namespace cipher {
@@ -90,17 +66,17 @@ bool is_valid(const info_t&) noexcept;
 //-----------------------------------------------------------------------------
 
 /** encrypts input and writes into output by a one-shot call.
- * if ouput.data == nullptr or output.size == 0, then computes the required
+ * if output.data == nullptr or output.size == 0, then computes the required
  * output size and report by updating the output.size.
  *
- * @warning: cipher_bm::ecb algorithms only operate on a single block_size() of
- * that cipher. so the input.size should be exactly N * block_size().  other
+ * @warning: cipher_bm::ecb algorithms only operate on a single block_size of
+ * that cipher. so the input.size should be exactly N * block_size. other
  * block modes accept any input.size via padding_t.
  */
 std::error_code
 encrypt(bin_edit_t& output, bin_view_t input, const info_t& ci) noexcept;
 
-/// overlad with container adapter.
+/// overload with container adapter.
 std::error_code
 encrypt(obuffer_t&& output, bin_view_t input, const info_t& ci);
 
@@ -108,7 +84,7 @@ encrypt(obuffer_t&& output, bin_view_t input, const info_t& ci);
 std::error_code
 decrypt(bin_edit_t& output, bin_view_t input, const info_t& ci) noexcept;
 
-/// overlad with container adapter.
+/// overload with container adapter.
 std::error_code
 decrypt(obuffer_t&& output, bin_view_t input, const info_t& ci);
 
@@ -143,7 +119,7 @@ auth_decrypt(
     bin_view_t    input,
     const info_t& ci) noexcept;
 
-/// overload with contaienr adapter.
+/// overload with container adapter.
 std::error_code
 auth_decrypt(
     obuffer_t&&   output,
@@ -187,8 +163,8 @@ public:
 
     /** adds chunk of input to cipher context and computes output segment.
      * @warning you can use any cipher type with any chunk size except:
-     *  - cipher_bm::ecb: requires chunk.size = block_size()
-     *  - cipher_bm::gcm: requires chunk.size = N * block_size()
+     *  - cipher_bm::ecb: requires chunk.size = block_size
+     *  - cipher_bm::gcm: requires chunk.size = N * block_size
      *  - cipher_bm::xts: not supported yet, use cipher::encrypt()/decrypt()
      */
     std::error_code update(bin_edit_t& output, bin_view_t chunk) noexcept;
