@@ -339,35 +339,37 @@ struct engine {
 } // namespace anon
 //-----------------------------------------------------------------------------
 
-size_t
-block_size(cipher_t t) noexcept {
-    const auto* info = find_native_info(t);
-    return info == nullptr ? 0 : info->block_size;
-}
-
-size_t
-iv_size(cipher_t t) noexcept {
-    const auto* info = find_native_info(t);
-    return info == nullptr ? 0 : info->iv_size;
-}
-
-size_t
-key_bitlen(cipher_t t) noexcept {
-    const auto* info = find_native_info(t);
-    return info == nullptr ? 0 : info->key_bitlen;
-}
-
-cipher_bm
-block_mode(cipher_t t) noexcept {
-    const auto* info = find_native_info(t);
-    if (info == nullptr)
-        return cipher_bm::unknown;
-    return from_native(info->mode);
-}
-
 //-----------------------------------------------------------------------------
 namespace cipher {
 //-----------------------------------------------------------------------------
+
+bool
+is_valid(const traits_t& t) noexcept {
+    if (t.block_size == 0 || t.key_bitlen == 0 || t.block_mode == cipher_bm::unknown)
+        return false;
+    if (t.block_mode != cipher_bm::ecb)
+        return t.iv_size > 0;
+    return true;
+}
+
+traits_t
+traits(cipher_t t) noexcept {
+    traits_t    tr{};
+    const auto* info = find_native_info(t);
+    if (info) {
+        tr.block_size            = info->block_size;
+        tr.key_bitlen            = info->key_bitlen;
+        tr.iv_size               = info->iv_size;
+        tr.block_mode            = from_native(info->mode);
+        tr.requires_padding      = tr.block_mode == cipher_bm::cbc;
+        tr.accept_any_input_size = tr.block_mode != cipher_bm::ecb;
+        tr.accept_variable_iv_size =
+            info->flags & MBEDTLS_CIPHER_VARIABLE_IV_LEN;
+        tr.accept_variable_key_size =
+            info->flags & MBEDTLS_CIPHER_VARIABLE_KEY_LEN;
+    }
+    return tr;
+}
 
 bool
 is_valid(const info_t& ci) noexcept {

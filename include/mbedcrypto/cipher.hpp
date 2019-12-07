@@ -33,30 +33,47 @@
 
 //-----------------------------------------------------------------------------
 namespace mbedcrypto {
-//-----------------------------------------------------------------------------
-
-/// returns block size (in bytes) for a cipher or 0 as error.
-size_t block_size(cipher_t) noexcept;
-
-/// returns iv size (in bytes) for a cipher or 0 as error.
-size_t iv_size(cipher_t) noexcept;
-
-/// returns key length (in bits) for a cipher or 0 as error.
-size_t key_bitlen(cipher_t) noexcept;
-
-/// returns block mode of a cipher type
-cipher_bm block_mode(cipher_t) noexcept;
-
-
-//-----------------------------------------------------------------------------
 namespace cipher {
 //-----------------------------------------------------------------------------
 
+/// static attributes of each cipher_t by design.
+struct traits_t {
+    /// internal block size in bytes, is defined by cipher algorithm.
+    size_t block_size = 0;
+
+    /// in bits, key length is fixed, except for some algorithms (ex. blowfish)
+    /// is such cases this field shows the recommended value.
+    /// @sa accept_variable_key_size
+    size_t key_bitlen = 0;
+
+    /// in bytes, iv size is fixed, except for some cipher_bm (gcm, ccm) where
+    /// this field represents thee recommended value.
+    /// @sa accept_variable_iv_size
+    size_t iv_size = 0;
+
+    cipher_bm block_mode = cipher_bm::unknown;
+
+    bool requires_padding         = false; ///< only for cipher_bm::cbc
+    bool accept_any_input_size    = false; ///< @sa cipher_bm docs
+    bool accept_variable_iv_size  = false;
+    bool accept_variable_key_size = false;
+};
+
+bool is_valid(const traits_t& t) noexcept;
+
+/// gives the traits of a cipher, or returns an invalid traits_t if the cipher
+/// is not supported.
+/// @sa is_valid(traits_t) and supports(cipher_t)
+traits_t traits(cipher_t) noexcept;
+
+//-----------------------------------------------------------------------------
+
+/// information required to setup a cipher context for encryption/decryption.
 struct info_t {
     cipher_t   type    = cipher_t::unknown;
-    padding_t  padding = padding_t::unknown; ///< only for cipher_bm::cbc
-    bin_view_t key; ///< symmetric key, @sa key_bitlen()
-    bin_view_t iv;  ///< initial vector if type support, @sa iv_size()
+    padding_t  padding = padding_t::unknown; ///< @sa traits_t::requires_padding
+    bin_view_t key; ///< symmetric key, @sa key_bitlen
+    bin_view_t iv;  ///< initial vector if type support, @sa iv_size
     bin_view_t ad;  ///< optional additional data, @sa supports_aead()
 };
 
@@ -70,7 +87,7 @@ bool is_valid(const info_t&) noexcept;
  * output size and report by updating the output.size.
  *
  * @warning: cipher_bm::ecb algorithms only operate on a single block_size of
- * that cipher. so the input.size should be exactly N * block_size. other
+ * that cipher. so the input.size should be exactly N * block_size.  other
  * block modes accept any input.size via padding_t.
  */
 std::error_code
