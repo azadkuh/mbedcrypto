@@ -69,12 +69,15 @@ chunker(bin_view_t input, size_t chunk_size, Func&& func, Args&&... args) {
     }
 }
 
-inline void dump(const std::error_code& ec) {
-    std::printf(
-        "ec(%s:%d): %s\n",
-        ec.category().name(),
-        ec.value(),
-        ec.message().data());
+inline void
+dump(const std::error_code& ec) {
+    if (ec) {
+        std::printf(
+            "ec(%s:%d): %s\n",
+            ec.category().name(),
+            ec.value(),
+            ec.message().data());
+    }
 }
 
 /// (over-)writes the binary data into the file, returns number of bytes written
