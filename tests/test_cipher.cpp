@@ -101,10 +101,10 @@ padding_of(cipher_bm bm) noexcept {
 }
 
 bin_view_t
-make_source(bin_view_t in, const cipher_feats_t& f) noexcept {
+make_source(bin_view_t in, const cipher::traits_t& tr) noexcept {
     auto copy{in};
-    if (f.traits.block_mode == cipher_bm::ecb)
-        copy.size -= (in.size % f.traits.block_size); // must be N % block_size
+    if (tr.block_mode == cipher_bm::ecb)
+        copy.size -= (in.size % tr.block_size); // must be N % block_size
     return copy;
 }
 
@@ -216,7 +216,7 @@ protected:
             ci.ad = bin_view_t("some additional data is required");
         }
 
-        const auto source = make_source(test::long_text(), feats);
+        const auto source = make_source(test::long_text(), feats.traits);
 
         std::vector<uint8_t> enc;
         auto ec = cipher::encrypt(obuffer_t{enc}, source, ci);
@@ -266,7 +266,7 @@ protected:
         prepare(ci);
         ci.ad = bin_view_t("some additional data is required");
 
-        const auto source = make_source(test::long_text(), feats);
+        const auto source = make_source(test::long_text(), feats.traits);
 
         std::vector<uint8_t> enc;
         std::vector<uint8_t> tag;
@@ -301,6 +301,58 @@ private:
         ci.key.size = feats.traits.key_bitlen >> 3; // to byte
     }
 };
+
+void
+test_variable_iv(cipher_t type) {
+    if (!supports(type))
+        return;
+    const auto tr = cipher::traits(type);
+    REQUIRE(tr.accept_variable_iv_size);
+    cipher::info_t ci;
+    ci.type     = type;
+    ci.key      = test::short_binary();
+    ci.iv       = test::short_text();
+    ci.key.size = tr.key_bitlen >> 3;
+    ci.iv.size  = tr.iv_size + 2; // extra 2bytes to the recommended size
+
+    const bin_view_t plain{test::long_text()};
+
+    std::string enc;
+    auto        ec = cipher::encrypt(obuffer_t{enc}, plain, ci);
+    REQUIRE_FALSE(ec);
+    REQUIRE(enc.size() == plain.size);
+
+    std::string dec;
+    ec = cipher::decrypt(obuffer_t{dec}, enc, ci);
+    REQUIRE_FALSE(ec);
+    REQUIRE(plain == dec);
+}
+
+void
+test_variable_key(cipher_t type) {
+    if (!supports(type))
+        return;
+    const auto tr = cipher::traits(type);
+    REQUIRE(tr.accept_variable_key_size);
+    cipher::info_t ci;
+    ci.type     = type;
+    ci.padding  = padding_of(tr.block_mode);
+    ci.key      = test::short_binary();
+    ci.iv       = test::short_text();
+    ci.key.size = (tr.key_bitlen >> 3) + 2; // extra 2bytes to the recommended size
+    ci.iv.size  = tr.iv_size;
+
+    const auto plain = make_source(test::long_text(), tr);
+
+    std::string enc;
+    auto        ec = cipher::encrypt(obuffer_t{enc}, plain, ci);
+    REQUIRE_FALSE(ec);
+
+    std::string dec;
+    ec = cipher::decrypt(obuffer_t{dec}, enc, ci);
+    REQUIRE_FALSE(ec);
+    REQUIRE(plain == dec);
+}
 
 //-----------------------------------------------------------------------------
 } // namespace anon
@@ -340,10 +392,24 @@ TEST_CASE("cipher properties", "[cipher]") {
                 const auto& tr = f.traits;
                 REQUIRE(tr.block_size == 0);
                 REQUIRE(tr.key_bitlen == 0);
-                REQUIRE(tr.iv_size == 0);
+                REQUIRE(tr.iv_size    == 0);
                 REQUIRE(tr.block_mode == cipher_bm::unknown);
             }
         }
     }
+}
+
+TEST_CASE("special cipher tests", "[cipher]") {
+    test_variable_iv(cipher_t::aes_128_gcm);
+    test_variable_iv(cipher_t::aria_128_gcm);
+    test_variable_iv(cipher_t::camellia_128_gcm);
+    // INFO: at the moment mbedtls can not support variable IV for ccm block modes!
+    // test_variable_iv(cipher_t::aes_128_ccm);
+    // test_variable_iv(cipher_t::aria_128_ccm);
+    // test_variable_iv(cipher_t::camellia_128_ccm);
+
+    test_variable_key(cipher_t::blowfish_cbc);
+    test_variable_key(cipher_t::blowfish_cfb64);
+    test_variable_key(cipher_t::blowfish_ctr);
 }
 
