@@ -30,8 +30,21 @@ has_padding(padding_t p) noexcept {
 
 bool
 is_valid(const info_t& ci, const cinfo_t* inf) noexcept {
-    return (ci.key.size << 3) == inf->key_bitlen // in bit
-           && ci.iv.size      == inf->iv_size;
+    // check key size
+    if (inf->flags & MBEDTLS_CIPHER_VARIABLE_KEY_LEN) {
+        if ((ci.key.size << 3) < inf->key_bitlen)
+            return false;
+    } else if ((ci.key.size << 3) != inf->key_bitlen) {
+        return false;
+    }
+    // check iv size
+    if (inf->flags & MBEDTLS_CIPHER_VARIABLE_IV_LEN) {
+        if (ci.iv.size < inf->iv_size)
+            return false;
+    } else if (ci.iv.size != inf->iv_size) {
+        return false;
+    }
+    return true;
 }
 
 bool
