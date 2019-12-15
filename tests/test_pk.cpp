@@ -320,7 +320,7 @@ TEST_CASE("ec key generation", "[pk]") {
     auto pri = pk::make_context();
     // bad inputs
     {
-    // rsa_alt is not an elliptic curve algorithm
+        // rsa_alt is not an elliptic curve algorithm
         auto ec  = pk::make_ec_key(*pri, pk_t::rsa_alt, curve_t::secp192r1);
         REQUIRE(ec == make_error_code(error_t::usage));
         // curve_t::curve25519 is limited to ecdh algorithm
@@ -329,6 +329,10 @@ TEST_CASE("ec key generation", "[pk]") {
         ec = pk::make_ec_key(*pri, pk_t::ecdsa, curve_t::curve25519);
         REQUIRE(ec == make_error_code(error_t::usage));
     }
+
+    constexpr auto hash_type = hash_t::sha256;
+    std::vector<uint8_t> hashed_msg;
+    make_hash(obuffer_t{hashed_msg}, test::long_text(), hash_type);
 
     struct test_case_t {
         curve_t curve;
@@ -349,10 +353,6 @@ TEST_CASE("ec key generation", "[pk]") {
         {curve_t::bp512r1,   pk_t::ec, 512},
     };
 
-    constexpr auto hash_type = hash_t::sha256;
-    std::vector<uint8_t> hashed_msg;
-    make_hash(obuffer_t{hashed_msg}, test::long_text(), hash_type);
-
     for (const auto& t : All) {
         auto ec = pk::make_ec_key(*pri, t.type, t.curve);
         REQUIRE_FALSE(ec);
@@ -372,7 +372,6 @@ TEST_CASE("ec key generation", "[pk]") {
         {
             std::string pem;
             ec = pk::export_pub_key(obuffer_t{pem}, *pri, pk::key_io_t::pem);
-            INFO("error(" << ec.value() << "): " << ec.message());
             REQUIRE_FALSE(ec);
             ec = pk::import_pub_key(*pub, pem);
             REQUIRE_FALSE(ec);
@@ -415,5 +414,39 @@ TEST_CASE("ec key generation", "[pk]") {
             ec = pk::verify(*pub, hashed_msg, hash_type, signature);
             REQUIRE_FALSE(ec);
         }
+    }
+
+    // curve25519 is a special case which supports ecdh
+    {
+        const auto curve = curve_t::curve25519;
+        auto ec = pk::make_ec_key(*pri, pk_t::ecdh, curve);
+        REQUIRE_FALSE(ec);
+        REQUIRE(pk::type_of(*pri)                  == pk_t::ecdh);
+        REQUIRE(pk::key_bitlen(*pri)               == 255);
+        REQUIRE(pk::max_crypt_size(*pri)           == 0); // can not encrypt
+        REQUIRE(pk::has_private_key(*pri)          == true);
+        REQUIRE(pk::can_do(*pri, pk_t::ec)         == true);
+        REQUIRE(pk::can_do(*pri, pk_t::ecdh)       == true);
+        REQUIRE(pk::can_do(*pri, pk_t::ecdsa)      == false);
+        REQUIRE(pk::can_do(*pri, pk_t::rsa)        == false);
+        REQUIRE(pk::can_do(*pri, pk_t::rsa_alt)    == false);
+        REQUIRE(pk::can_do(*pri, pk_t::rsassa_pss) == false);
+
+        auto pub = pk::make_context();
+        // test pem/der public-key export and import
+        {
+            std::string pem;
+            ec = pk::export_pub_key(obuffer_t{pem}, *pri, pk::key_io_t::pem);
+            REQUIRE(ec); // pem export is not supported for curve25519
+
+            std::string der;
+            ec = pk::export_pub_key(obuffer_t{der}, *pri, pk::key_io_t::der);
+            REQUIRE(ec); // der export is not supported either
+        }
+
+        // only key exchange is supported
+        auto c = pk::what_can_do(*pri);
+        REQUIRE_FALSE((c.sign || c.verify));
+        REQUIRE_FALSE((c.encrypt || c.decrypt));
     }
 }
