@@ -31,7 +31,6 @@ add_library(${PROJECT_NAME}
     ${MBEDTLS_SRCDIR}/pk_wrap.c
     ${MBEDTLS_SRCDIR}/pk.c
     ${MBEDTLS_SRCDIR}/pkcs5.c
-    ${MBEDTLS_SRCDIR}/oid.c
     ${MBEDTLS_SRCDIR}/platform_util.c
     ${MBEDTLS_SRCDIR}/platform.c
     errors.cpp
@@ -153,7 +152,6 @@ if(MBEDCRYPTO_PK_EC)
         ${MBEDTLS_SRCDIR}/dhm.c
         ${MBEDTLS_SRCDIR}/ecdh.c
         ${MBEDTLS_SRCDIR}/ecdsa.c
-        # ecp.cpp
         )
 endif()
 
