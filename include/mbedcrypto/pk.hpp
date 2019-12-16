@@ -92,10 +92,10 @@ is_ec(pk_t t) noexcept {
 /// generic context for rsa/ec algorithms
 struct context;
 
-using unique_ptr = std::unique_ptr<context, void(*)(context*)>;
+using unique_context = std::unique_ptr<context, void(*)(context*)>;
 
 /// makes an empty PK context and manages its life time.
-pk::unique_ptr make_context();
+unique_context make_context();
 
 /// resets and initializes to the new compatible type.
 /// you rarely need to call this function directly.

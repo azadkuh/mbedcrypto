@@ -71,10 +71,21 @@ shift_left(bin_edit_t& be, size_t len) noexcept {
 }
 
 //-----------------------------------------------------------------------------
+#if defined(MBEDTLS_ECP_C)
+//-----------------------------------------------------------------------------
+
+mbedtls_ecp_keypair*
+keypair_of(const context& d) noexcept {
+    return mbedtls_pk_ec(d.pk);
+}
+
+//-----------------------------------------------------------------------------
+#endif // MBEDTLS_ECP_C
+//-----------------------------------------------------------------------------
 } // namespace anon
 //-----------------------------------------------------------------------------
 
-pk::unique_ptr
+unique_context
 make_context() {
     auto* ptr = new context{};
     return {ptr, free_context};
@@ -343,7 +354,7 @@ make_ec_key(context& d, pk_t algo, curve_t curve) noexcept {
     if (ec)
         return ec;
     int ret = mbedtls_ecp_gen_key(
-        to_native(curve), mbedtls_pk_ec(d.pk), ctr_drbg::make, &d.rnd);
+        to_native(curve), keypair_of(d), ctr_drbg::make, &d.rnd);
     if (ret != 0)
         return mbedtls::make_error_code(ret);
     // set the key type
