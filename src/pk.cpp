@@ -8,13 +8,13 @@ namespace {
 //-----------------------------------------------------------------------------
 
 void
-free_context(context* p) noexcept {
+_free_context(context* p) noexcept {
     if (p)
         delete p;
 }
 
 bool
-is_supported(pk_t t) noexcept {
+_is_supported(pk_t t) noexcept {
     switch (t) {
     case pk_t::rsa:
 #if defined(MBEDCRYPTO_PK_EC)
@@ -28,17 +28,9 @@ is_supported(pk_t t) noexcept {
     }
 }
 
-template <typename Func, class... Args>
-std::error_code
-open_key_impl(context& d, Func fn, Args&&... args) noexcept {
-    d.reset();
-    int ret = fn(&d.pk, std::forward<Args>(args)...);
-    return (ret != 0) ? mbedtls::make_error_code(ret) : std::error_code{};
-}
-
 // found by a linear interpolation of different rsa/ec * pem/der key samples
 size_t
-min_pri_export_size(const context& d, key_io_t kio) noexcept {
+_pri_min_size(const context& d, key_io_t kio) noexcept {
     constexpr double m_rsa[] = {4.6, 6.2};
     constexpr double m_ec[]  = {3.0, 4.2};
     constexpr size_t c[]     = {32,  100};
@@ -50,7 +42,7 @@ min_pri_export_size(const context& d, key_io_t kio) noexcept {
 
 // found by a linear interpolation of different rsa/ec * pem/der key samples
 size_t
-min_pub_export_size(const context& d, key_io_t kio) noexcept {
+_pub_min_size(const context& d, key_io_t kio) noexcept {
     constexpr double m_rsa[] = {1.04, 1.4};
     constexpr double m_ec[]  = {2.0,  2.8};
     constexpr size_t c[]     = {32,   96};
@@ -62,7 +54,7 @@ min_pub_export_size(const context& d, key_io_t kio) noexcept {
 
 // TODO: requires performance optimization, use memcpy instead of byte copy
 void
-shift_left(bin_edit_t& be, size_t len) noexcept {
+_shift_left(bin_edit_t& be, size_t len) noexcept {
     auto* begin = be.data + len;
     be.size     = be.size - len;
     for (size_t i = 0; i < be.size; ++i) {
@@ -70,12 +62,169 @@ shift_left(bin_edit_t& be, size_t len) noexcept {
     }
 }
 
+std::error_code
+_sign(bin_edit_t& out, context& d, bin_view_t input, hash_t ht) noexcept {
+    const auto hsize    = hash_size(ht);
+    const auto min_size = 16 + max_crypt_size(d);
+    if (type_of(d) != pk_t::rsa && !can_do(d, pk_t::ecdsa)) {
+        return make_error_code(error_t::bad_input);
+    } else if (input.size != hsize) {
+        return make_error_code(error_t::bad_input);
+    } else if (is_empty(out)) {
+        out.size = min_size;
+    } else if (out.size < min_size) {
+        return make_error_code(error_t::small_output);
+    } else {
+        auto olen = out.size;
+        int  ret  = mbedtls_pk_sign(
+            &d.pk,
+            to_native(ht),
+            input.data,
+            input.size,
+            out.data,
+            &olen,
+            ctr_drbg::make,
+            &d.rnd);
+        if (ret != 0)
+            return mbedtls::make_error_code(ret);
+        out.size = olen;
+    }
+    return std::error_code{};
+}
+
+std::error_code
+_encrypt(bin_edit_t& out, context& d, bin_view_t input) noexcept {
+    const auto csize    = max_crypt_size(d);
+    const auto min_size = 16 + csize;
+    if (!is_rsa(d) || key_bitlen(d) == 0 || input.size > csize) {
+        return make_error_code(error_t::bad_input);
+    } else if (is_empty(out)) {
+        out.size = min_size;
+    } else if (out.size < min_size) {
+        return make_error_code(error_t::small_output);
+    } else {
+        size_t olen = out.size;
+        int    ret  = mbedtls_pk_encrypt(
+            &d.pk,
+            input.data,
+            input.size,
+            out.data,
+            &olen,
+            out.size,
+            ctr_drbg::make,
+            &d.rnd);
+        if (ret != 0)
+            return mbedtls::make_error_code(ret);
+        out.size = olen;
+    }
+    return std::error_code{};
+}
+
+std::error_code
+_decrypt(bin_edit_t& out, context& d, bin_view_t input) noexcept {
+    const auto min_size = 16 + max_crypt_size(d);
+    if (!is_rsa(d) || !d.has_pri_key || (input.size << 3) > key_bitlen(d)) {
+        return make_error_code(error_t::bad_input);
+    } else if (is_empty(out)) {
+        out.size = min_size;
+    } else if (out.size < min_size) {
+        return make_error_code(error_t::small_output);
+    } else {
+        size_t olen = out.size;
+        int    ret  = mbedtls_pk_decrypt(
+            &d.pk,
+            input.data,
+            input.size,
+            out.data,
+            &olen,
+            out.size,
+            ctr_drbg::make,
+            &d.rnd);
+        if (ret != 0)
+            return mbedtls::make_error_code(ret);
+        out.size = olen;
+    }
+    return std::error_code{};
+}
+
+std::error_code
+_export_pri_key(bin_edit_t& out, context& d, key_io_t kio) noexcept {
+    const auto min_size = _pri_min_size(d, kio);
+    if (is_empty(out)) {
+        out.size = min_size;
+    } else if (out.size < min_size) {
+        return make_error_code(error_t::small_output);
+    } else {
+        int ret = 0;
+        if (kio == key_io_t::pem) {
+            ret = mbedtls_pk_write_key_pem(&d.pk, out.data, out.size);
+            if (ret != 0)
+                return mbedtls::make_error_code(ret);
+            // the null terminator is also required
+            out.size = std::strlen(reinterpret_cast<const char*>(out.data)) + 1;
+        } else {
+            ret = mbedtls_pk_write_key_der(&d.pk, out.data, out.size);
+            if (ret < 0)
+                return mbedtls::make_error_code(ret);
+            _shift_left(out, static_cast<size_t>(out.size - ret));
+        }
+    }
+    return std::error_code{};
+}
+
+std::error_code
+_export_pub_key(bin_edit_t& out, context& d, key_io_t kio) noexcept {
+    const auto min_size = _pub_min_size(d, kio);
+    if (is_empty(out)) {
+        out.size = min_size;
+    } else if (out.size < min_size) {
+        return make_error_code(error_t::small_output);
+    } else {
+        int ret = 0;
+        if (kio == key_io_t::pem) {
+            ret = mbedtls_pk_write_pubkey_pem(&d.pk, out.data, out.size);
+            if (ret != 0)
+                return mbedtls::make_error_code(ret);
+            // the null terminator is also required
+            out.size = std::strlen(reinterpret_cast<const char*>(out.data)) + 1;
+        } else {
+            ret = mbedtls_pk_write_pubkey_der(&d.pk, out.data, out.size);
+            if (ret < 0)
+                return mbedtls::make_error_code(ret);
+            _shift_left(out, static_cast<size_t>(out.size - ret));
+        }
+    }
+    return std::error_code{};
+}
+
+template <typename Func, class... Args>
+std::error_code
+_open_key(context& d, Func fn, Args&&... args) noexcept {
+    d.reset();
+    int ret = fn(&d.pk, std::forward<Args>(args)...);
+    return (ret != 0) ? mbedtls::make_error_code(ret) : std::error_code{};
+}
+
+template <typename Func, class... Args>
+std::error_code
+_resize_impl(Func fn, obuffer_t&& out, Args&&... args) {
+    bin_edit_t      expected;
+    std::error_code ec = fn(expected, std::forward<Args>(args)...);
+    if (ec)
+        return ec;
+    out.resize(expected.size);
+    ec = fn(static_cast<bin_edit_t&>(out), std::forward<Args>(args)...);
+    if (!ec)
+        out.resize(out.size); // final tuning/trimming
+    return ec;
+}
+
 //-----------------------------------------------------------------------------
 #if defined(MBEDTLS_ECP_C)
 //-----------------------------------------------------------------------------
 
 mbedtls_ecp_keypair*
-keypair_of(const context& d) noexcept {
+_keypair_of(const context& d) noexcept {
     return mbedtls_pk_ec(d.pk);
 }
 
@@ -88,13 +237,13 @@ keypair_of(const context& d) noexcept {
 unique_context
 make_context() {
     auto* ptr = new context{};
-    return {ptr, free_context};
+    return {ptr, _free_context};
 }
 
 std::error_code
 setup(context& d, pk_t neu) noexcept {
     d.reset();
-    if (!is_supported(neu))
+    if (!_is_supported(neu))
         return make_error_code(error_t::not_supported);
     int ret = mbedtls_pk_setup(&d.pk, find_native_info(neu));
     return ret == 0 ? std::error_code{} : mbedtls::make_error_code(ret);
@@ -175,151 +324,6 @@ is_pri_pub_pair(const context& pri, const context& pub) noexcept {
 }
 
 std::error_code
-sign(bin_edit_t& out, context& d, bin_view_t input, hash_t ht) noexcept {
-    const auto hsize    = hash_size(ht);
-    const auto min_size = 16 + max_crypt_size(d);
-    if (type_of(d) != pk_t::rsa && !can_do(d, pk_t::ecdsa)) {
-        return make_error_code(error_t::bad_input);
-    } else if (input.size != hsize) {
-        return make_error_code(error_t::bad_input);
-    } else if (is_empty(out)) {
-        out.size = min_size;
-    } else if (out.size < min_size) {
-        return make_error_code(error_t::small_output);
-    } else {
-        auto olen = out.size;
-        int  ret  = mbedtls_pk_sign(
-            &d.pk,
-            to_native(ht),
-            input.data,
-            input.size,
-            out.data,
-            &olen,
-            ctr_drbg::make,
-            &d.rnd);
-        if (ret != 0)
-            return mbedtls::make_error_code(ret);
-        out.size = olen;
-    }
-    return std::error_code{};
-}
-
-std::error_code
-sign(obuffer_t&& out, context& d, bin_view_t input, hash_t ht) {
-    bin_edit_t expected;
-    auto       ec = sign(expected, d, input, ht);
-    if (ec)
-        return ec;
-    out.resize(expected.size);
-    ec = sign(static_cast<bin_edit_t&>(out), d, input, ht);
-    if (!ec)
-        out.resize(out.size);
-    return ec;
-}
-
-std::error_code
-verify(context& d, bin_view_t hash_msg, hash_t ht, bin_view_t sig) noexcept {
-    const auto hsize = hash_size(ht);
-    if (hash_msg.size != hsize || sig.size < hsize) {
-        return make_error_code(error_t::bad_input);
-    } else if (type_of(d) != pk_t::rsa && !can_do(d, pk_t::ecdsa)) {
-        return make_error_code(error_t::bad_input);
-    } else {
-        int ret = mbedtls_pk_verify(
-            &d.pk,
-            to_native(ht),
-            hash_msg.data,
-            hash_msg.size,
-            sig.data,
-            sig.size);
-        if (ret != 0)
-            return mbedtls::make_error_code(ret);
-    }
-    return std::error_code{};
-}
-
-std::error_code
-encrypt(bin_edit_t& out, context& d, bin_view_t input) noexcept {
-    const auto csize    = max_crypt_size(d);
-    const auto min_size = 16 + csize;
-    if (!is_rsa(d) || key_bitlen(d) == 0 || input.size > csize) {
-        return make_error_code(error_t::bad_input);
-    } else if (is_empty(out)) {
-        out.size = min_size;
-    } else if (out.size < min_size) {
-        return make_error_code(error_t::small_output);
-    } else {
-        size_t olen = out.size;
-        int    ret  = mbedtls_pk_encrypt(
-            &d.pk,
-            input.data,
-            input.size,
-            out.data,
-            &olen,
-            out.size,
-            ctr_drbg::make,
-            &d.rnd);
-        if (ret != 0)
-            return mbedtls::make_error_code(ret);
-        out.size = olen;
-    }
-    return std::error_code{};
-}
-
-std::error_code
-encrypt(obuffer_t&& out, context& d, bin_view_t input) {
-    bin_edit_t expected;
-    auto       ec = encrypt(expected, d, input);
-    if (ec)
-        return ec;
-    out.resize(expected.size);
-    ec = encrypt(static_cast<bin_edit_t&>(out), d, input);
-    if (!ec)
-        out.resize(out.size);
-    return ec;
-}
-
-std::error_code
-decrypt(bin_edit_t& out, context& d, bin_view_t input) noexcept {
-    const auto min_size = 16 + max_crypt_size(d);
-    if (!is_rsa(d) || !d.has_pri_key || (input.size << 3) > key_bitlen(d)) {
-        return make_error_code(error_t::bad_input);
-    } else if (is_empty(out)) {
-        out.size = min_size;
-    } else if (out.size < min_size) {
-        return make_error_code(error_t::small_output);
-    } else {
-        size_t olen = out.size;
-        int    ret  = mbedtls_pk_decrypt(
-            &d.pk,
-            input.data,
-            input.size,
-            out.data,
-            &olen,
-            out.size,
-            ctr_drbg::make,
-            &d.rnd);
-        if (ret != 0)
-            return mbedtls::make_error_code(ret);
-        out.size = olen;
-    }
-    return std::error_code{};
-}
-
-std::error_code
-decrypt(obuffer_t&& out, context& d, bin_view_t input) {
-    bin_edit_t expected;
-    auto       ec = decrypt(expected, d, input);
-    if (ec)
-        return ec;
-    out.resize(expected.size);
-    ec = decrypt(static_cast<bin_edit_t&>(out), d, input);
-    if (!ec)
-        out.resize(out.size);
-    return ec;
-}
-
-std::error_code
 make_rsa_key(context& d, size_t kbits, size_t expo) noexcept {
 #if defined(MBEDTLS_GENPRIME)
     // resets previous states
@@ -354,7 +358,7 @@ make_ec_key(context& d, pk_t algo, curve_t curve) noexcept {
     if (ec)
         return ec;
     int ret = mbedtls_ecp_gen_key(
-        to_native(curve), keypair_of(d), ctr_drbg::make, &d.rnd);
+        to_native(curve), _keypair_of(d), ctr_drbg::make, &d.rnd);
     if (ret != 0)
         return mbedtls::make_error_code(ret);
     // set the key type
@@ -366,8 +370,59 @@ make_ec_key(context& d, pk_t algo, curve_t curve) noexcept {
 }
 
 std::error_code
+verify(context& d, bin_view_t hash_msg, hash_t ht, bin_view_t sig) noexcept {
+    const auto hsize = hash_size(ht);
+    if (hash_msg.size != hsize || sig.size < hsize) {
+        return make_error_code(error_t::bad_input);
+    } else if (type_of(d) != pk_t::rsa && !can_do(d, pk_t::ecdsa)) {
+        return make_error_code(error_t::bad_input);
+    } else {
+        int ret = mbedtls_pk_verify(
+            &d.pk,
+            to_native(ht),
+            hash_msg.data,
+            hash_msg.size,
+            sig.data,
+            sig.size);
+        if (ret != 0)
+            return mbedtls::make_error_code(ret);
+    }
+    return std::error_code{};
+}
+
+std::error_code
+sign(bin_edit_t& out, context& d, bin_view_t input, hash_t ht) noexcept {
+    return _sign(out, d, input, ht);
+}
+
+std::error_code
+sign(obuffer_t&& out, context& d, bin_view_t input, hash_t ht) {
+    return _resize_impl(_sign, std::forward<obuffer_t>(out), d, input, ht);
+}
+
+std::error_code
+encrypt(bin_edit_t& out, context& d, bin_view_t input) noexcept {
+    return _encrypt(out, d, input);
+}
+
+std::error_code
+encrypt(obuffer_t&& out, context& d, bin_view_t input) {
+    return _resize_impl(_encrypt, std::forward<obuffer_t>(out), d, input);
+}
+
+std::error_code
+decrypt(bin_edit_t& out, context& d, bin_view_t input) noexcept {
+    return _decrypt(out, d, input);
+}
+
+std::error_code
+decrypt(obuffer_t&& out, context& d, bin_view_t input) {
+    return _resize_impl(_decrypt, std::forward<obuffer_t>(out), d, input);
+}
+
+std::error_code
 import_pri_key(context& d, bin_view_t pri, bin_view_t pass) noexcept {
-    auto ec = open_key_impl(
+    auto ec = _open_key(
         d, mbedtls_pk_parse_key, pri.data, pri.size, pass.data, pass.size);
     if (!ec)
         d.has_pri_key = true;
@@ -376,12 +431,12 @@ import_pri_key(context& d, bin_view_t pri, bin_view_t pass) noexcept {
 
 std::error_code
 import_pub_key(context& d, bin_view_t pub) noexcept {
-    return open_key_impl(d, mbedtls_pk_parse_public_key, pub.data, pub.size);
+    return _open_key(d, mbedtls_pk_parse_public_key, pub.data, pub.size);
 }
 
 std::error_code
 open_pri_key(context& d, const char* fpath, const char* pass) noexcept {
-    auto ec = open_key_impl(d, mbedtls_pk_parse_keyfile, fpath, pass);
+    auto ec = _open_key(d, mbedtls_pk_parse_keyfile, fpath, pass);
     if (!ec)
         d.has_pri_key = true;
     return ec;
@@ -389,83 +444,27 @@ open_pri_key(context& d, const char* fpath, const char* pass) noexcept {
 
 std::error_code
 open_pub_key(context& d, const char* fpath) noexcept {
-    return open_key_impl(d, mbedtls_pk_parse_public_keyfile, fpath);
+    return _open_key(d, mbedtls_pk_parse_public_keyfile, fpath);
 }
 
 std::error_code
 export_pri_key(bin_edit_t& out, context& d, key_io_t kio) noexcept {
-    const auto min_size = min_pri_export_size(d, kio);
-    if (is_empty(out)) {
-        out.size = min_size;
-    } else if (out.size < min_size) {
-        return make_error_code(error_t::small_output);
-    } else {
-        int ret = 0;
-        if (kio == key_io_t::pem) {
-            ret = mbedtls_pk_write_key_pem(&d.pk, out.data, out.size);
-            if (ret != 0)
-                return mbedtls::make_error_code(ret);
-            // the null terminator is also required
-            out.size = std::strlen(reinterpret_cast<const char*>(out.data)) + 1;
-        } else {
-            ret = mbedtls_pk_write_key_der(&d.pk, out.data, out.size);
-            if (ret < 0)
-                return mbedtls::make_error_code(ret);
-            shift_left(out, static_cast<size_t>(out.size - ret));
-        }
-    }
-    return std::error_code{};
+    return _export_pri_key(out, d, kio);
 }
 
 std::error_code
 export_pri_key(obuffer_t&& out, context& d, key_io_t kio) {
-    bin_edit_t expected;
-    auto       ec = export_pri_key(expected, d, kio);
-    if (ec)
-        return ec;
-    out.resize(expected.size);
-    ec = export_pri_key(static_cast<bin_edit_t&>(out), d, kio);
-    if (!ec)
-        out.resize(out.size);
-    return ec;
+    return _resize_impl(_export_pri_key, std::forward<obuffer_t>(out), d, kio);
 }
 
 std::error_code
 export_pub_key(bin_edit_t& out, context& d, key_io_t kio) noexcept {
-    const auto min_size = min_pub_export_size(d, kio);
-    if (is_empty(out)) {
-        out.size = min_size;
-    } else if (out.size < min_size) {
-        return make_error_code(error_t::small_output);
-    } else {
-        int ret = 0;
-        if (kio == key_io_t::pem) {
-            ret = mbedtls_pk_write_pubkey_pem(&d.pk, out.data, out.size);
-            if (ret != 0)
-                return mbedtls::make_error_code(ret);
-            // the null terminator is also required
-            out.size = std::strlen(reinterpret_cast<const char*>(out.data)) + 1;
-        } else {
-            ret = mbedtls_pk_write_pubkey_der(&d.pk, out.data, out.size);
-            if (ret < 0)
-                return mbedtls::make_error_code(ret);
-            shift_left(out, static_cast<size_t>(out.size - ret));
-        }
-    }
-    return std::error_code{};
+    return _export_pub_key(out, d, kio);
 }
 
 std::error_code
 export_pub_key(obuffer_t&& out, context& d, key_io_t kio) {
-    bin_edit_t expected;
-    auto       ec = export_pub_key(expected, d, kio);
-    if (ec)
-        return ec;
-    out.resize(expected.size);
-    ec = export_pub_key(static_cast<bin_edit_t&>(out), d, kio);
-    if (!ec)
-        out.resize(out.size);
-    return ec;
+    return _resize_impl(_export_pub_key, std::forward<obuffer_t>(out), d, kio);
 }
 
 //-----------------------------------------------------------------------------
