@@ -389,7 +389,7 @@ TEST_CASE("cipher properties", "[cipher]") {
             if (supports(f.type)) {
                 tester{f}.run();
             } else {
-                const auto& tr = f.traits;
+                const auto& tr = cipher::traits(f.type);
                 REQUIRE(tr.block_size == 0);
                 REQUIRE(tr.key_bitlen == 0);
                 REQUIRE(tr.iv_size    == 0);
