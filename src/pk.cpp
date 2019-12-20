@@ -1,6 +1,7 @@
 #include "./private/pk_context.hpp"
 #include "mbedcrypto/hash.hpp"
 
+#include <mbedtls/ecdh.h>
 //-----------------------------------------------------------------------------
 namespace mbedcrypto {
 namespace pk {
@@ -226,6 +227,92 @@ _resize_impl(Func fn, obuffer_t&& out, Args&&... args) {
 mbedtls_ecp_keypair*
 _keypair_of(const context& d) noexcept {
     return mbedtls_pk_ec(d.pk);
+}
+
+struct ecdh_context {
+    mbedtls_ecdh_context ctx;
+    ecdh_context() noexcept {
+        mbedtls_ecdh_init(&ctx);
+    }
+    ~ecdh_context() {
+        mbedtls_ecdh_free(&ctx);
+    }
+};
+
+std::error_code
+_export_ec_point(bin_edit_t& out, context& d, ec_point_t fmt) noexcept {
+    const int zip = fmt.compressed ? MBEDTLS_ECP_PF_COMPRESSED
+                                   : MBEDTLS_ECP_PF_UNCOMPRESSED;
+    const auto min_len = (key_size(d) + 2) * (fmt.compressed ? 1 : 2);
+    if (min_len < 26) { // absolute minimum
+        return make_error_code(error_t::bad_input);
+    } else if (is_empty(out)) {
+        out.size = min_len;
+    } else if (out.size < min_len) {
+        return make_error_code(error_t::small_output);
+    } else {
+        const auto*  ecpair = _keypair_of(d);
+        ecdh_context ecdh;
+        int ret = mbedtls_ecdh_get_params(&ecdh.ctx, ecpair, MBEDTLS_ECDH_OURS);
+        if (ret != 0)
+            return mbedtls::make_error_code(ret);
+        size_t olen = 0;
+        ret         = (fmt.pack == ec_point_t::tls)
+                  ? mbedtls_ecp_tls_write_point(
+                        &ecdh.ctx.grp,
+                        &ecdh.ctx.Q,
+                        zip,
+                        &olen,
+                        out.data,
+                        out.size)
+                  : mbedtls_ecp_point_write_binary(
+                        &ecdh.ctx.grp,
+                        &ecdh.ctx.Q,
+                        zip,
+                        &olen,
+                        out.data,
+                        out.size);
+        if (ret != 0)
+            return mbedtls::make_error_code(ret);
+        out.size = olen;
+    }
+    return std::error_code{};
+}
+
+std::error_code
+_make_shared_secret(
+    bin_edit_t& out, context& d, bin_view_t opub, ec_point_t fmt) noexcept {
+    if (fmt.compressed)
+        return make_error_code(error_t::bad_input);
+    const auto min_len = key_size(d) + 1;
+    if (min_len < 25) { // absolute minimum
+        return make_error_code(error_t::bad_input);
+    } else if (is_empty(out)) {
+        out.size = min_len;
+    } else if (out.size < min_len) {
+        return make_error_code(error_t::small_output);
+    } else {
+        const auto*  ecpair = _keypair_of(d);
+        ecdh_context ecdh;
+        int ret = mbedtls_ecdh_get_params(&ecdh.ctx, ecpair, MBEDTLS_ECDH_OURS);
+        if (ret != 0)
+            return mbedtls::make_error_code(ret);
+        const auto* begin = opub.data;
+        ret               = (fmt.pack == ec_point_t::tls)
+                  ? mbedtls_ecp_tls_read_point(
+                        &ecdh.ctx.grp, &ecdh.ctx.Qp, &begin, opub.size)
+                  : mbedtls_ecp_point_read_binary(
+                        &ecdh.ctx.grp, &ecdh.ctx.Qp, begin, opub.size);
+        if (ret != 0)
+            return mbedtls::make_error_code(ret);
+        size_t olen = 0;
+        ret         = mbedtls_ecdh_calc_secret(
+            &ecdh.ctx, &olen, out.data, out.size, ctr_drbg::make, &d.rnd);
+        if (ret != 0)
+            return mbedtls::make_error_code(ret);
+        out.size = olen;
+    }
+    return std::error_code{};
 }
 
 //-----------------------------------------------------------------------------
@@ -465,6 +552,45 @@ export_pub_key(bin_edit_t& out, context& d, key_io_t kio) noexcept {
 std::error_code
 export_pub_key(obuffer_t&& out, context& d, key_io_t kio) {
     return _resize_impl(_export_pub_key, std::forward<obuffer_t>(out), d, kio);
+}
+
+std::error_code
+export_pub_key(bin_edit_t& out, context& d, ec_point_t fmt) noexcept {
+#if defined(MBEDTLS_ECP_C)
+    return _export_ec_point(out, d, fmt);
+#else
+    return make_error_code(error_t::not_supported);
+#endif
+}
+
+std::error_code
+export_pub_key(obuffer_t&& out, context& d, ec_point_t fmt) {
+#if defined(MBEDTLS_ECP_C)
+    return _resize_impl(_export_ec_point, std::forward<obuffer_t>(out), d, fmt);
+#else
+    return make_error_code(error_t::not_supported);
+#endif
+}
+
+std::error_code
+make_shared_secret(
+    bin_edit_t& out, context& d, bin_view_t opub, ec_point_t fmt) noexcept {
+#if defined(MBEDTLS_ECP_C)
+    return _make_shared_secret(out, d, opub, fmt);
+#else
+    return make_error_code(error_t::not_supported);
+#endif
+}
+
+std::error_code
+make_shared_secret(
+    obuffer_t&& out, context& d, bin_view_t opub, ec_point_t fmt) {
+#if defined(MBEDTLS_ECP_C)
+    return _resize_impl(
+        _make_shared_secret, std::forward<obuffer_t>(out), d, opub, fmt);
+#else
+    return make_error_code(error_t::not_supported);
+#endif
 }
 
 //-----------------------------------------------------------------------------

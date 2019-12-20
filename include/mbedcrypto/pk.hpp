@@ -237,6 +237,39 @@ export_pub_key(bin_edit_t& out, context&, key_io_t) noexcept;
 std::error_code export_pub_key(obuffer_t&& out, context&, key_io_t);
 
 //-----------------------------------------------------------------------------
+// ecdh and secure key exchange
+
+/// elliptic curve point format
+struct ec_point_t {
+    enum pack_t {
+        tls,    ///< rfc-4492: ECC Cipher Suites for TLS
+        binary,
+    };
+    pack_t pack       = pack_t::tls;
+    bool   compressed = false; ///< @sa rfc-4492
+};
+
+/// exports the public key as an ec point
+std::error_code
+export_pub_key(bin_edit_t& out, context&, ec_point_t) noexcept;
+
+/// overload with container adapter.
+std::error_code
+export_pub_key(obuffer_t&& out, context&, ec_point_t);
+
+/** calculates the shared secret by the peer's public key.
+ * the shared secret is actually a big integer (@sa mbedcrypto::mpi)
+ * @warning: the peer_pub should be in non-compressed format.
+ */
+std::error_code
+make_shared_secret(
+    bin_edit_t& out, context&, bin_view_t peer_pub, ec_point_t) noexcept;
+
+/// overload with container adapter.
+std::error_code
+make_shared_secret(obuffer_t&& out, context&, bin_view_t peer_pub, ec_point_t);
+
+//-----------------------------------------------------------------------------
 } // namespace pk
 } // namespace mbedcrypto
 //-----------------------------------------------------------------------------
