@@ -454,46 +454,70 @@ TEST_CASE("ec key generation", "[pk]") {
 TEST_CASE("ecdh key exchange", "[pk]") {
     if (!supports(features::pk_ec))
         return;
-    const auto curve = curve_t::curve25519;
-    const pk::ec_point_t fmt{};
 
-    // server side
-    auto srv = pk::make_context();
-    std::vector<uint8_t> srv_pub;
+    // using ecdh
     {
-        auto ec  = pk::make_ec_key(*srv, pk_t::ecdh, curve);
-        REQUIRE_FALSE(ec);
-        ec = export_pub_key(obuffer_t{srv_pub}, *srv, fmt);
-        REQUIRE_FALSE(ec);
+        const auto curve = curve_t::curve25519;
+        const pk::ec_point_t fmt{};
+
+        // server side
+        auto srv = pk::make_context();
+        std::vector<uint8_t> srv_pub;
+        {
+            auto ec  = pk::make_ec_key(*srv, pk_t::ecdh, curve);
+            REQUIRE_FALSE(ec);
+            ec = export_pub_key(obuffer_t{srv_pub}, *srv, fmt);
+            REQUIRE_FALSE(ec);
+        }
+
+        // client side
+        auto cli = pk::make_context();
+        std::vector<uint8_t> cli_pub;
+        {
+            auto ec = pk::make_ec_key(*cli, pk_t::ecdh, curve);
+            REQUIRE_FALSE(ec);
+            ec = export_pub_key(obuffer_t{cli_pub}, *cli, fmt);
+            REQUIRE_FALSE(ec);
+        }
+
+        // transfering public keys
+
+        // server side
+        std::vector<uint8_t> srv_ssk;
+        {
+            auto ec = pk::make_shared_secret(obuffer_t{srv_ssk}, *srv, cli_pub, fmt);
+            test::dump(ec);
+            REQUIRE_FALSE(ec);
+        }
+
+        // client size
+        std::vector<uint8_t> cli_ssk;
+        {
+            auto ec = pk::make_shared_secret(obuffer_t{cli_ssk}, *cli, srv_pub, fmt);
+            REQUIRE_FALSE(ec);
+        }
+
+        // both endup in same shared secret key
+        REQUIRE(cli_ssk == srv_ssk);
     }
 
-    // client side
-    auto cli = pk::make_context();
-    std::vector<uint8_t> cli_pub;
+    // bad input
     {
-        auto ec = pk::make_ec_key(*cli, pk_t::ecdh, curve);
+        const auto curve = curve_t::bp256r1;
+        auto pri = pk::make_context();
+        pk::ec_point_t fmt{};
+
+        // make an ecdsa to wrong-input the ecdh tools
+        auto ec = pk::make_ec_key(*pri, pk_t::ecdsa, curve);
         REQUIRE_FALSE(ec);
-        ec = export_pub_key(obuffer_t{cli_pub}, *cli, fmt);
-        REQUIRE_FALSE(ec);
+        REQUIRE_FALSE(pk::can_do(*pri, pk_t::ecdh)); // ecdsa can not do ecdh
+
+        std::vector<uint8_t> pub;
+        ec = pk::export_pub_key(obuffer_t{pub}, *pri, fmt);
+        REQUIRE(ec == make_error_code(error_t::not_supported)); // ecdsa can not do ecdh
+
+        std::vector<uint8_t> secret;
+        ec = pk::make_shared_secret(obuffer_t{secret}, *pri, pub, fmt);
+        REQUIRE(ec == make_error_code(error_t::not_supported)); // ecdsa can not do ecdh
     }
-
-    // transfering public keys
-
-    // server side
-    std::vector<uint8_t> srv_ssk;
-    {
-        auto ec = pk::make_shared_secret(obuffer_t{srv_ssk}, *srv, cli_pub, fmt);
-        test::dump(ec);
-        REQUIRE_FALSE(ec);
-    }
-
-    // client size
-    std::vector<uint8_t> cli_ssk;
-    {
-        auto ec = pk::make_shared_secret(obuffer_t{cli_ssk}, *cli, srv_pub, fmt);
-        REQUIRE_FALSE(ec);
-    }
-
-    // both endup in same shared secret key
-    REQUIRE(cli_ssk == srv_ssk);
 }
