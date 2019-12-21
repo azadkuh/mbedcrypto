@@ -240,7 +240,9 @@ struct ecdh_context {
 };
 
 std::error_code
-_export_ec_point(bin_edit_t& out, context& d, ec_point_t fmt) noexcept {
+_export_ec_pub_point(bin_edit_t& out, context& d, ec_point_t fmt) noexcept {
+    if (!can_do(d, pk_t::ecdh))
+        return make_error_code(error_t::not_supported);
     const int zip = fmt.compressed ? MBEDTLS_ECP_PF_COMPRESSED
                                    : MBEDTLS_ECP_PF_UNCOMPRESSED;
     const auto min_len = (key_size(d) + 2) * (fmt.compressed ? 1 : 2);
@@ -282,8 +284,8 @@ _export_ec_point(bin_edit_t& out, context& d, ec_point_t fmt) noexcept {
 std::error_code
 _make_shared_secret(
     bin_edit_t& out, context& d, bin_view_t opub, ec_point_t fmt) noexcept {
-    if (fmt.compressed)
-        return make_error_code(error_t::bad_input);
+    if (!can_do(d, pk_t::ecdh) || fmt.compressed)
+        return make_error_code(error_t::not_supported);
     const auto min_len = key_size(d) + 1;
     if (min_len < 25) { // absolute minimum
         return make_error_code(error_t::bad_input);
@@ -557,7 +559,7 @@ export_pub_key(obuffer_t&& out, context& d, key_io_t kio) {
 std::error_code
 export_pub_key(bin_edit_t& out, context& d, ec_point_t fmt) noexcept {
 #if defined(MBEDTLS_ECP_C)
-    return _export_ec_point(out, d, fmt);
+    return _export_ec_pub_point(out, d, fmt);
 #else
     return make_error_code(error_t::not_supported);
 #endif
@@ -566,7 +568,7 @@ export_pub_key(bin_edit_t& out, context& d, ec_point_t fmt) noexcept {
 std::error_code
 export_pub_key(obuffer_t&& out, context& d, ec_point_t fmt) {
 #if defined(MBEDTLS_ECP_C)
-    return _resize_impl(_export_ec_point, std::forward<obuffer_t>(out), d, fmt);
+    return _resize_impl(_export_ec_pub_point, std::forward<obuffer_t>(out), d, fmt);
 #else
     return make_error_code(error_t::not_supported);
 #endif
