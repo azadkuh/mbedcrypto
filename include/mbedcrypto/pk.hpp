@@ -188,7 +188,7 @@ std::error_code decrypt(obuffer_t&& out, context&, bin_view_t input);
 std::error_code
 make_rsa_key(context&, size_t key_bitlen, size_t exponent = 65537) noexcept;
 
-/** creates an EC (private) key by an ec algorithm.
+/** creates an EC (private) key by an EC algorithm.
  * @sa supports_ec_keygen() and is_ec()
  */
 std::error_code make_ec_key(context&, pk_t algorithm, curve_t) noexcept;
@@ -238,18 +238,33 @@ std::error_code export_pub_key(obuffer_t&& out, context&, key_io_t);
 
 //-----------------------------------------------------------------------------
 // ecdh and secure key exchange
+//
+// usage #1: by using the same curve & point format on both client/server sides:
+//                                        curve_t    curve = ...;
+//                                        ec_point_t fmt{};
+// # server side #                                  |  # client side #
+// auto srv = make_context();                       |  auto cli = make_context();
+// auto ec = make_ec_key(*srv, pk_t::ecdh, curve);  |  auto ec = make_ec_key(*cli, pk_t::ecdh, curve);
+// std::vector<uint8_t> srv_pub;                    |  std::vector<uint8_t> cli_pub;
+// ec = export_pub_key(                             |  ec = export_pub_key(
+//      obuffer_t{srv_pub}, *srv, fmt);             |       obuffer_t{cli_pub}, *cli, fmt);
+// # send srv_pub to client                 ---> #  |  # <--- send cli_pub to server #
+// std::vector<uint8_t> key;                        |  std::vector<uint8_t> key;
+// ec = make_shared_secret(                         |  ec = make_shared_secret(
+//      obuffer_t{key}, *srv, cli_pub, fmt);        |       obuffer_t{key}, *cli, srv_pub, fmt);
+// # now both the client and the server have the same key.
 
 /// elliptic curve point format
 struct ec_point_t {
     enum pack_t {
         tls,    ///< rfc-4492: ECC Cipher Suites for TLS
-        binary,
+        binary, ///< compatible with mbedcrypto::mpi funcs
     };
     pack_t pack       = pack_t::tls;
-    bool   compressed = false; ///< @sa rfc-4492
+    bool   compressed = false; ///< deprecated by rfc-8422 and newer
 };
 
-/// exports the public key as an ec point
+/// exports the public key as an EC point
 std::error_code
 export_pub_key(bin_edit_t& out, context&, ec_point_t) noexcept;
 
@@ -259,7 +274,8 @@ export_pub_key(obuffer_t&& out, context&, ec_point_t);
 
 /** calculates the shared secret by the peer's public key.
  * the shared secret is actually a big integer (@sa mbedcrypto::mpi)
- * @warning: the peer_pub should be in non-compressed format.
+ * @warning: the peer_pub should be in non-compressed format as it is
+ * deprecated by newer TLS.
  */
 std::error_code
 make_shared_secret(
