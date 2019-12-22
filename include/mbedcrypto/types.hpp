@@ -187,13 +187,16 @@ enum class pk_t {
 };
 
 /** all supported EC curves.
- * Only curves over prime fields are supported.
+ * Only curves over prime fields are supported:
+ * - short Weierstrass: y^2 = x^3 + A x   + B mod P @sa rfc-4492/sec1
+ * - Montgomery:        y^2 = x^3 + A x^2 + x mod P
  *
  * @warning This library does not support validation of arbitrary domain
  *  parameters. Therefore, only well-known domain parameters from trusted
  *  sources should be used.
  */
 enum class curve_t {
+    // short Weierstrass:
     secp192r1,  ///< 192-bits NIST curve
     secp224r1,  ///< 224-bits NIST curve
     secp256r1,  ///< 256-bits NIST curve
@@ -205,7 +208,9 @@ enum class curve_t {
     bp256r1,    ///< 256-bits Brainpool curve
     bp384r1,    ///< 384-bits Brainpool curve
     bp512r1,    ///< 512-bits Brainpool curve
+    // Montgomery:
     curve25519, ///< 255-bits limited support (only for ecdh)
+    curve448,   ///< 448-bits limited support (only for ecdh)
     unknown,    ///< unknown or invalid
 };
 

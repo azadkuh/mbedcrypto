@@ -171,6 +171,7 @@ const details::enum_name<curve_t> gCurves[] = {
     {curve_t::bp384r1,    "bp384r1"},
     {curve_t::bp512r1,    "bp512r1"},
     {curve_t::curve25519, "curve25519"},
+    {curve_t::curve448,   "curve448"},
     {curve_t::unknown,    "unknown"},
 };
 
@@ -312,6 +313,7 @@ const details::enum_pair<curve_t, mbedtls_ecp_group_id> gCurvePairs[] = {
     {curve_t::bp384r1,    MBEDTLS_ECP_DP_BP384R1},
     {curve_t::bp512r1,    MBEDTLS_ECP_DP_BP512R1},
     {curve_t::curve25519, MBEDTLS_ECP_DP_CURVE25519},
+    {curve_t::curve448,   MBEDTLS_ECP_DP_CURVE448},
     {curve_t::unknown,    MBEDTLS_ECP_DP_NONE},
 };
 
@@ -581,6 +583,10 @@ supports(curve_t e) noexcept {
 #endif
 #if defined(MBEDTLS_ECP_DP_CURVE25519_ENABLED)
     else if (e == curve_t::curve25519)
+        return true;
+#endif
+#if defined(MBEDTLS_ECP_DP_CURVE448_ENABLED)
+    else if (e == curve_t::curve448)
         return true;
 #endif
     return false;
