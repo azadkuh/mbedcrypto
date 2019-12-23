@@ -323,6 +323,17 @@ _make_shared_secret(
 } // namespace anon
 //-----------------------------------------------------------------------------
 
+curve_info_t
+curve_info(curve_t c) noexcept {
+    curve_info_t ci;
+    const auto*  ninfo = mbedtls_ecp_curve_info_from_grp_id(to_native(c));
+    if (ninfo) {
+        ci.tls_id = ninfo->tls_id;
+        ci.bitlen = ninfo->bit_size;
+    }
+    return ci;
+}
+
 unique_context
 make_context() {
     auto* ptr = new context{};

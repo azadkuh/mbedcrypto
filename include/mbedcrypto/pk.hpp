@@ -40,6 +40,12 @@ struct capability {
     bool verify  = false; ///< can do the verification?
 };
 
+/// curve data (only short-Weierstrass curves are supported)
+struct curve_info_t {
+    uint16_t tls_id = 0;
+    size_t   bitlen = 0;
+};
+
 //-----------------------------------------------------------------------------
 
 constexpr inline bool
@@ -48,6 +54,11 @@ operator==(const capability& a, const capability& b) {
         && a.decrypt == b.decrypt
         && a.sign    == b.sign
         && a.verify  == b.verify;
+}
+
+constexpr inline bool
+is_valid(const curve_info_t ci) noexcept {
+    return ci.tls_id > 0 && ci.bitlen > 0;
 }
 
 /// @sa MBEDCRYPTO_PK_KEYGEN
@@ -85,6 +96,9 @@ is_ec(pk_t t) noexcept {
         return false;
     }
 }
+
+/// returns invalid (empty) info if curve is not supported (Montgomery curves)
+curve_info_t curve_info(curve_t) noexcept;
 
 //-----------------------------------------------------------------------------
 // public-key api
