@@ -367,6 +367,13 @@ TEST_CASE("ec key generation", "[pk]") {
         REQUIRE(pk::can_do(*pri, pk_t::rsa_alt)    == false);
         REQUIRE(pk::can_do(*pri, pk_t::rsassa_pss) == false);
 
+        {
+            const auto info = pk::curve_info(t.curve);
+            REQUIRE(is_valid(info));
+            REQUIRE(info.tls_id > 0);
+            REQUIRE(info.bitlen == t.kb);
+        }
+
         auto pub = pk::make_context();
         // test pem/der public-key export and import
         {
@@ -432,6 +439,12 @@ TEST_CASE("ec key generation", "[pk]") {
         REQUIRE(pk::can_do(*pri, pk_t::rsa_alt)    == false);
         REQUIRE(pk::can_do(*pri, pk_t::rsassa_pss) == false);
 
+        {
+            const auto info = pk::curve_info(curve);
+            REQUIRE_FALSE(is_valid(info));
+            REQUIRE((info.bitlen == 0 && info.tls_id == 0));
+        }
+
         auto pub = pk::make_context();
         // test pem/der public-key export and import
         {
@@ -465,6 +478,12 @@ TEST_CASE("ec key generation", "[pk]") {
         REQUIRE(pk::can_do(*pri, pk_t::rsa)        == false);
         REQUIRE(pk::can_do(*pri, pk_t::rsa_alt)    == false);
         REQUIRE(pk::can_do(*pri, pk_t::rsassa_pss) == false);
+
+        {
+            const auto info = pk::curve_info(curve);
+            REQUIRE_FALSE(is_valid(info));
+            REQUIRE((info.bitlen == 0 && info.tls_id == 0));
+        }
 
         auto pub = pk::make_context();
         // test pem/der public-key export and import
