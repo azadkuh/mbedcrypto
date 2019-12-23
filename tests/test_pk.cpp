@@ -449,6 +449,40 @@ TEST_CASE("ec key generation", "[pk]") {
         REQUIRE_FALSE((c.sign || c.verify));
         REQUIRE_FALSE((c.encrypt || c.decrypt));
     }
+
+    // curve448 is a special case which supports ecdh
+    {
+        const auto curve = curve_t::curve448;
+        auto ec = pk::make_ec_key(*pri, pk_t::ecdh, curve);
+        REQUIRE_FALSE(ec);
+        REQUIRE(pk::type_of(*pri)                  == pk_t::ecdh);
+        REQUIRE(pk::key_bitlen(*pri)               == 448);
+        REQUIRE(pk::max_crypt_size(*pri)           == 0); // can not encrypt
+        REQUIRE(pk::has_private_key(*pri)          == true);
+        REQUIRE(pk::can_do(*pri, pk_t::ec)         == true);
+        REQUIRE(pk::can_do(*pri, pk_t::ecdh)       == true);
+        REQUIRE(pk::can_do(*pri, pk_t::ecdsa)      == false);
+        REQUIRE(pk::can_do(*pri, pk_t::rsa)        == false);
+        REQUIRE(pk::can_do(*pri, pk_t::rsa_alt)    == false);
+        REQUIRE(pk::can_do(*pri, pk_t::rsassa_pss) == false);
+
+        auto pub = pk::make_context();
+        // test pem/der public-key export and import
+        {
+            std::string pem;
+            ec = pk::export_pub_key(obuffer_t{pem}, *pri, pk::key_io_t::pem);
+            REQUIRE(ec); // pem export is not supported for curve448
+
+            std::string der;
+            ec = pk::export_pub_key(obuffer_t{der}, *pri, pk::key_io_t::der);
+            REQUIRE(ec); // der export is not supported either
+        }
+
+        // only key exchange is supported
+        auto c = pk::what_can_do(*pri);
+        REQUIRE_FALSE((c.sign || c.verify));
+        REQUIRE_FALSE((c.encrypt || c.decrypt));
+    }
 }
 
 TEST_CASE("ecdh key exchange", "[pk]") {

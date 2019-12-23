@@ -51,7 +51,7 @@ TEST_CASE("mbedcrypto size of types", "[types]") {
     REQUIRE(10 == all_block_modes().size());
     REQUIRE(73 == all_ciphers().size());
     REQUIRE(6  == all_pks().size());
-    REQUIRE(12 == all_curves().size());
+    REQUIRE(13 == all_curves().size());
 }
 
 TEST_CASE("list supported algorithms", "[types]") {
@@ -305,6 +305,7 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
             curve_t::bp384r1,
             curve_t::bp512r1,
             curve_t::curve25519,
+            curve_t::curve448,
             curve_t::unknown,
         };
 
