@@ -229,15 +229,19 @@ _keypair_of(const context& d) noexcept {
     return mbedtls_pk_ec(d.pk);
 }
 
-struct ecdh_context {
+struct ecdh_t {
     mbedtls_ecdh_context ctx;
-    ecdh_context() noexcept {
+    ecdh_t() noexcept {
         mbedtls_ecdh_init(&ctx);
     }
-    ~ecdh_context() {
+    ~ecdh_t() {
         mbedtls_ecdh_free(&ctx);
     }
-};
+    int load(const context& d) noexcept {
+        const auto* keypair = mbedtls_pk_ec(d.pk);
+        return mbedtls_ecdh_get_params(&ctx, keypair, MBEDTLS_ECDH_OURS);
+    }
+}; // struct ecdh_t
 
 std::error_code
 _export_ec_pub_point(bin_edit_t& out, context& d, ec_point_t fmt) noexcept {
@@ -253,27 +257,25 @@ _export_ec_pub_point(bin_edit_t& out, context& d, ec_point_t fmt) noexcept {
     } else if (out.size < min_len) {
         return make_error_code(error_t::small_output);
     } else {
-        const auto*  ecpair = _keypair_of(d);
-        ecdh_context ecdh;
-        int ret = mbedtls_ecdh_get_params(&ecdh.ctx, ecpair, MBEDTLS_ECDH_OURS);
+        ecdh_t ecdh;
+        int    ret = ecdh.load(d);
         if (ret != 0)
             return mbedtls::make_error_code(ret);
         size_t olen = 0;
-        ret         = (fmt.pack == ec_point_t::tls)
-                  ? mbedtls_ecp_tls_write_point(
-                        &ecdh.ctx.grp,
-                        &ecdh.ctx.Q,
-                        zip,
-                        &olen,
-                        out.data,
-                        out.size)
-                  : mbedtls_ecp_point_write_binary(
-                        &ecdh.ctx.grp,
-                        &ecdh.ctx.Q,
-                        zip,
-                        &olen,
-                        out.data,
-                        out.size);
+        ret = (fmt.pack == ec_point_t::tls) ? mbedtls_ecp_tls_write_point(
+                                                  &ecdh.ctx.grp,
+                                                  &ecdh.ctx.Q,
+                                                  zip,
+                                                  &olen,
+                                                  out.data,
+                                                  out.size)
+                                            : mbedtls_ecp_point_write_binary(
+                                                  &ecdh.ctx.grp,
+                                                  &ecdh.ctx.Q,
+                                                  zip,
+                                                  &olen,
+                                                  out.data,
+                                                  out.size);
         if (ret != 0)
             return mbedtls::make_error_code(ret);
         out.size = olen;
@@ -294,17 +296,15 @@ _make_shared_secret(
     } else if (out.size < min_len) {
         return make_error_code(error_t::small_output);
     } else {
-        const auto*  ecpair = _keypair_of(d);
-        ecdh_context ecdh;
-        int ret = mbedtls_ecdh_get_params(&ecdh.ctx, ecpair, MBEDTLS_ECDH_OURS);
+        ecdh_t ecdh;
+        int    ret = ecdh.load(d);
         if (ret != 0)
             return mbedtls::make_error_code(ret);
-        const auto* begin = opub.data;
-        ret               = (fmt.pack == ec_point_t::tls)
+        ret = (fmt.pack == ec_point_t::tls)
                   ? mbedtls_ecp_tls_read_point(
-                        &ecdh.ctx.grp, &ecdh.ctx.Qp, &begin, opub.size)
+                        &ecdh.ctx.grp, &ecdh.ctx.Qp, &opub.data, opub.size)
                   : mbedtls_ecp_point_read_binary(
-                        &ecdh.ctx.grp, &ecdh.ctx.Qp, begin, opub.size);
+                        &ecdh.ctx.grp, &ecdh.ctx.Qp, opub.data, opub.size);
         if (ret != 0)
             return mbedtls::make_error_code(ret);
         size_t olen = 0;
