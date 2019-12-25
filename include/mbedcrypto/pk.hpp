@@ -320,11 +320,16 @@ make_shared_secret(obuffer_t&& out, context&, bin_view_t peer_pub, ec_point_t);
 //      obuffer_t{key}, *srv, ckex);   |
 // # now both the client and the server have the same key.
 
+/** checks if curve is supported by TLS ServerKeyExchange.
+ * only a limited number of curves are supported by TLS (depend on TLS
+ * versions), @sa rfc-4492, rfc-8422, rfc-8446
+ */
+bool support_tls_kex(curve_t) noexcept;
+
 /** makes server's context by curve and exports the TLS ServerKeyExchange.
  * the skex (ServerKeyExchange) contains the curve-id and the server's public
  * key in TLS format.
- * only a limited number of curves are supported by TLS (depend on TLS
- * versions), @sa rfc-4492, rfc-8422, rfc-8446
+ * @sa support_tls_kex()
  */
 std::error_code
 make_tls_server_kex(bin_edit_t& skex, context&, curve_t curve) noexcept;

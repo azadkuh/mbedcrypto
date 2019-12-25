@@ -708,6 +708,17 @@ make_shared_secret(
 #endif
 }
 
+bool
+support_tls_kex(curve_t c) noexcept {
+#if defined(MBEDTLS_ECP_C)
+    const auto  gid   = to_native(c);
+    const auto* cinfo = mbedtls_ecp_curve_info_from_grp_id(gid);
+    return cinfo != nullptr;
+#else
+    return false;
+#endif
+}
+
 std::error_code
 make_tls_server_kex(bin_edit_t& skex, context& d, curve_t curve) noexcept {
 #if defined(MBEDTLS_ECP_C)
