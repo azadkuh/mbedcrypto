@@ -229,6 +229,26 @@ _keypair_of(const context& d) noexcept {
     return mbedtls_pk_ec(d.pk);
 }
 
+int
+operator<<(mbedtls_ecp_point& lhs, const mbedtls_ecp_point& rhs) noexcept {
+    return mbedtls_ecp_copy(&lhs, &rhs);
+}
+
+int
+operator<<(mbedtls_mpi& lhs, const mbedtls_mpi& rhs) noexcept {
+    return mbedtls_mpi_copy(&lhs, &rhs);
+}
+
+int
+operator<<(mbedtls_ecp_keypair& kp, const mbedtls_ecdh_context& ecdh) {
+    int ret = 0;
+    if ((ret = mbedtls_ecp_group_copy(&kp.grp, &ecdh.grp)) != 0)
+        return ret;
+    if ((ret = kp.d << ecdh.d) != 0)
+        return ret;
+    return kp.Q << ecdh.Q;
+}
+
 struct ecdh_t {
     mbedtls_ecdh_context ctx;
     ecdh_t() noexcept {
@@ -314,6 +334,101 @@ _make_shared_secret(
             return mbedtls::make_error_code(ret);
         out.size = olen;
     }
+    return std::error_code{};
+}
+
+std::error_code
+_make_server_kex(bin_edit_t& skex, context& d, curve_t curve) noexcept {
+    const auto cinfo = pk::curve_info(curve);
+    if (!is_valid(cinfo))
+        return make_error_code(error_t::not_supported);
+    constexpr size_t GrpSize  = 3;
+    const size_t     min_size = GrpSize + (cinfo.bitlen >> 2) + 2;
+    //               min_size = GrpSize + KeyDumpSize (= (bytelen * 2) + 2)
+    //               also:   bitlen/8 * 2 = bitlen / 4
+    if (is_empty(skex)) {
+        skex.size = min_size;
+        return std::error_code{};
+    } else if (skex.size < min_size) {
+        return make_error_code(error_t::small_output);
+    }
+    ecdh_t ecdh;
+    int    ret = 0;
+    if ((ret = mbedtls_ecdh_setup(&ecdh.ctx, to_native(curve))) != 0)
+        return mbedtls::make_error_code(ret);
+    size_t olen = 0;
+    ret         = mbedtls_ecdh_make_params(
+        &ecdh.ctx, &olen, skex.data, skex.size, ctr_drbg::make, &d.rnd);
+    if (ret != 0)
+        return mbedtls::make_error_code(ret);
+    skex.size = olen; // report back the actual size
+    // preserve ecdh data into context
+    auto ec = pk::setup(d, pk_t::ecdh);
+    if (ec)
+        return ec;
+    auto* keypair = _keypair_of(d);
+    if ((ret = *keypair << ecdh.ctx) != 0)
+        return mbedtls::make_error_code(ret);
+    d.has_pri_key = true;
+    return std::error_code{};
+}
+
+curve_t
+_read_curve_of_skex(bin_view_t skex) noexcept {
+    mbedtls_ecp_group_id gid   = MBEDTLS_ECP_DP_NONE;
+    const auto*          begin = skex.begin();
+    int ret = mbedtls_ecp_tls_read_group_id(&gid, &begin, skex.size);
+    return (ret == 0) ? from_native(gid) : curve_t::unknown;
+}
+
+std::error_code
+_make_client_kex(
+    bin_edit_t& ckex,
+    bin_edit_t& secret,
+    context&    d,
+    bin_view_t  skex) noexcept {
+    const auto curve = _read_curve_of_skex(skex);
+    if (curve == curve_t::unknown)
+        return make_error_code(error_t::bad_input);
+    const auto cinfo          = pk::curve_info(curve);
+    const auto ckex_min_len   = (cinfo.bitlen >> 2) + 2;
+    const auto secret_min_len = (cinfo.bitlen >> 3) + 1;
+    if (is_empty(secret) || is_empty(ckex)) {
+        secret.size = secret_min_len;
+        ckex.size   = ckex_min_len;
+        return std::error_code{};
+    } else if (secret.size < secret_min_len || ckex.size < ckex_min_len) {
+        return make_error_code(error_t::small_output);
+    }
+    ecdh_t ecdh;
+    int    ret  = 0;
+    size_t olen = 0;
+    // load and setup by server's curve and point
+    const auto* sbeg = skex.begin();
+    const auto* send = skex.end();
+    if ((ret = mbedtls_ecdh_read_params(&ecdh.ctx, &sbeg, send)) != 0)
+        return mbedtls::make_error_code(ret);
+    // generate ec key pair
+    ret = mbedtls_ecdh_make_public(
+        &ecdh.ctx, &olen, ckex.data, ckex.size, ctr_drbg::make, &d.rnd);
+    if (ret != 0)
+        return mbedtls::make_error_code(ret);
+    ckex.size = olen;
+    // preserve ecdh data into context
+    auto ec = pk::setup(d, pk_t::ecdh);
+    if (ec)
+        return ec;
+    auto* keypair = _keypair_of(d);
+    if ((ret = *keypair << ecdh.ctx) != 0)
+        return mbedtls::make_error_code(ret);
+    d.has_pri_key = true;
+    // generate shared secret
+    olen = 0;
+    ret  = mbedtls_ecdh_calc_secret(
+        &ecdh.ctx, &olen, secret.data, secret.size, ctr_drbg::make, &d.rnd);
+    if (ret != 0)
+        return mbedtls::make_error_code(ret);
+    secret.size = olen;
     return std::error_code{};
 }
 
@@ -604,6 +719,63 @@ make_shared_secret(
 #if defined(MBEDTLS_ECP_C)
     return _resize_impl(
         _make_shared_secret, std::forward<obuffer_t>(out), d, opub, fmt);
+#else
+    return make_error_code(error_t::not_supported);
+#endif
+}
+
+std::error_code
+make_tls_server_kex(bin_edit_t& skex, context& d, curve_t curve) noexcept {
+#if defined(MBEDTLS_ECP_C)
+    return _make_server_kex(skex, d, curve);
+#else
+    return make_error_code(error_t::not_supported);
+#endif
+}
+
+std::error_code
+make_tls_server_kex(obuffer_t&& skex, context& d, curve_t curve) {
+#if defined(MBEDTLS_ECP_C)
+    return _resize_impl(
+        _make_server_kex, std::forward<obuffer_t>(skex), d, curve);
+#else
+    return make_error_code(error_t::not_supported);
+#endif
+}
+
+std::error_code
+make_client_tls_kex(
+    bin_edit_t& ckex,
+    bin_edit_t& secret,
+    context&    d,
+    bin_view_t  skex) noexcept {
+#if defined(MBEDTLS_ECP_C)
+    return _make_client_kex(ckex, secret, d, skex);
+#else
+    return make_error_code(error_t::not_supported);
+#endif
+}
+
+std::error_code
+make_tls_client_kex(
+    obuffer_t&& ckex, obuffer_t&& secret, context& d, bin_view_t skex) {
+#if defined(MBEDTLS_ECP_C)
+    bin_edit_t exp_ckex, exp_secret;
+    auto       ec = _make_client_kex(exp_ckex, exp_secret, d, skex);
+    if (ec)
+        return ec;
+    ckex.resize(exp_ckex.size);
+    secret.resize(exp_secret.size);
+    ec = _make_client_kex(
+        static_cast<bin_edit_t&>(ckex),
+        static_cast<bin_edit_t&>(secret),
+        d,
+        skex);
+    if (!ec) {
+        ckex.resize(ckex.size);
+        secret.resize(secret.size);
+    }
+    return ec;
 #else
     return make_error_code(error_t::not_supported);
 #endif
