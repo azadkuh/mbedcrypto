@@ -229,26 +229,6 @@ _keypair_of(const context& d) noexcept {
     return mbedtls_pk_ec(d.pk);
 }
 
-int
-operator<<(mbedtls_ecp_point& lhs, const mbedtls_ecp_point& rhs) noexcept {
-    return mbedtls_ecp_copy(&lhs, &rhs);
-}
-
-int
-operator<<(mbedtls_mpi& lhs, const mbedtls_mpi& rhs) noexcept {
-    return mbedtls_mpi_copy(&lhs, &rhs);
-}
-
-int
-operator<<(mbedtls_ecp_keypair& kp, const mbedtls_ecdh_context& ecdh) {
-    int ret = 0;
-    if ((ret = mbedtls_ecp_group_copy(&kp.grp, &ecdh.grp)) != 0)
-        return ret;
-    if ((ret = kp.d << ecdh.d) != 0)
-        return ret;
-    return kp.Q << ecdh.Q;
-}
-
 struct ecdh_t {
     mbedtls_ecdh_context ctx;
     ecdh_t() noexcept {
@@ -338,6 +318,23 @@ _make_shared_secret(
 }
 
 std::error_code
+operator<<(context& d, const ecdh_t& ecdh) noexcept {
+    auto ec = pk::setup(d, pk_t::ecdh);
+    if (ec)
+        return ec;
+    auto* kp  = _keypair_of(d);
+    int   ret = 0;
+    if ((ret = mbedtls_ecp_group_copy(&kp->grp, &ecdh.ctx.grp)) != 0)
+        return mbedtls::make_error_code(ret);
+    if ((ret = mbedtls_mpi_copy(&kp->d, &ecdh.ctx.d)) != 0)
+        return mbedtls::make_error_code(ret);
+    if ((ret = mbedtls_ecp_copy(&kp->Q, &ecdh.ctx.Q)) != 0)
+        return mbedtls::make_error_code(ret);
+    d.has_pri_key = true;
+    return std::error_code{};
+}
+
+std::error_code
 _make_server_kex(bin_edit_t& skex, context& d, curve_t curve) noexcept {
     const auto cinfo = pk::curve_info(curve);
     if (!is_valid(cinfo))
@@ -363,22 +360,17 @@ _make_server_kex(bin_edit_t& skex, context& d, curve_t curve) noexcept {
         return mbedtls::make_error_code(ret);
     skex.size = olen; // report back the actual size
     // preserve ecdh data into context
-    auto ec = pk::setup(d, pk_t::ecdh);
-    if (ec)
-        return ec;
-    auto* keypair = _keypair_of(d);
-    if ((ret = *keypair << ecdh.ctx) != 0)
-        return mbedtls::make_error_code(ret);
-    d.has_pri_key = true;
-    return std::error_code{};
+    return d << ecdh;
 }
 
-curve_t
-_read_curve_of_skex(bin_view_t skex) noexcept {
+const mbedtls_ecp_curve_info*
+_curve_info(bin_view_t skex) noexcept {
     mbedtls_ecp_group_id gid   = MBEDTLS_ECP_DP_NONE;
     const auto*          begin = skex.begin();
     int ret = mbedtls_ecp_tls_read_group_id(&gid, &begin, skex.size);
-    return (ret == 0) ? from_native(gid) : curve_t::unknown;
+    if (ret != 0)
+        return nullptr;
+    return mbedtls_ecp_curve_info_from_grp_id(gid);
 }
 
 std::error_code
@@ -387,12 +379,11 @@ _make_client_kex(
     bin_edit_t& secret,
     context&    d,
     bin_view_t  skex) noexcept {
-    const auto curve = _read_curve_of_skex(skex);
-    if (curve == curve_t::unknown)
+    const auto* cinfo = _curve_info(skex);
+    if (cinfo == nullptr)
         return make_error_code(error_t::bad_input);
-    const auto cinfo          = pk::curve_info(curve);
-    const auto ckex_min_len   = (cinfo.bitlen >> 2) + 2;
-    const auto secret_min_len = (cinfo.bitlen >> 3) + 1;
+    const size_t ckex_min_len   = (cinfo->bit_size >> 2) + 2;
+    const size_t secret_min_len = (cinfo->bit_size >> 3) + 1;
     if (is_empty(secret) || is_empty(ckex)) {
         secret.size = secret_min_len;
         ckex.size   = ckex_min_len;
@@ -414,14 +405,6 @@ _make_client_kex(
     if (ret != 0)
         return mbedtls::make_error_code(ret);
     ckex.size = olen;
-    // preserve ecdh data into context
-    auto ec = pk::setup(d, pk_t::ecdh);
-    if (ec)
-        return ec;
-    auto* keypair = _keypair_of(d);
-    if ((ret = *keypair << ecdh.ctx) != 0)
-        return mbedtls::make_error_code(ret);
-    d.has_pri_key = true;
     // generate shared secret
     olen = 0;
     ret  = mbedtls_ecdh_calc_secret(
@@ -429,7 +412,8 @@ _make_client_kex(
     if (ret != 0)
         return mbedtls::make_error_code(ret);
     secret.size = olen;
-    return std::error_code{};
+    // preserve ecdh data into context
+    return d << ecdh;
 }
 
 //-----------------------------------------------------------------------------
