@@ -339,7 +339,7 @@ TEST_CASE("ec key generation", "[pk]") {
         pk_t    type;
         size_t  kb; ///< key bits
     };
-    const test_case_t All[] = {
+    const test_case_t ShortWeierstrass[] = {
         {curve_t::secp192r1, pk_t::ec, 192},
         {curve_t::secp224r1, pk_t::ec, 224},
         {curve_t::secp256r1, pk_t::ec, 256},
@@ -353,7 +353,7 @@ TEST_CASE("ec key generation", "[pk]") {
         {curve_t::bp512r1,   pk_t::ec, 512},
     };
 
-    for (const auto& t : All) {
+    for (const auto& t : ShortWeierstrass) {
         auto ec = pk::make_ec_key(*pri, t.type, t.curve);
         REQUIRE_FALSE(ec);
         REQUIRE(pk::type_of(*pri)                  == t.type);
@@ -423,7 +423,7 @@ TEST_CASE("ec key generation", "[pk]") {
         }
     }
 
-    // curve25519 is a special case which supports ecdh
+    // curve25519 (Montgomery) only supports ecdh
     {
         const auto curve = curve_t::curve25519;
         auto ec = pk::make_ec_key(*pri, pk_t::ecdh, curve);
@@ -450,7 +450,7 @@ TEST_CASE("ec key generation", "[pk]") {
         {
             std::string pem;
             ec = pk::export_pub_key(obuffer_t{pem}, *pri, pk::key_io_t::pem);
-            REQUIRE(ec); // pem export is not supported for curve25519
+            REQUIRE(ec); // pem export is not supported for ecdh
 
             std::string der;
             ec = pk::export_pub_key(obuffer_t{der}, *pri, pk::key_io_t::der);
@@ -463,7 +463,7 @@ TEST_CASE("ec key generation", "[pk]") {
         REQUIRE_FALSE((c.encrypt || c.decrypt));
     }
 
-    // curve448 is a special case which supports ecdh
+    // curve448 (Montgomery) only supports ecdh
     {
         const auto curve = curve_t::curve448;
         auto ec = pk::make_ec_key(*pri, pk_t::ecdh, curve);
@@ -490,7 +490,7 @@ TEST_CASE("ec key generation", "[pk]") {
         {
             std::string pem;
             ec = pk::export_pub_key(obuffer_t{pem}, *pri, pk::key_io_t::pem);
-            REQUIRE(ec); // pem export is not supported for curve448
+            REQUIRE(ec); // pem export is not supported for ecdh
 
             std::string der;
             ec = pk::export_pub_key(obuffer_t{der}, *pri, pk::key_io_t::der);

@@ -217,6 +217,7 @@ bool is_pri_pub_pair(const context& pri, const context& pub) noexcept;
 
 //-----------------------------------------------------------------------------
 // key i/o
+// @warning: ecdh (ephemeral) keys are not supported by these i/o functions.
 
 /// (re)initializes the context by private key data.
 std::error_code import_pri_key(
