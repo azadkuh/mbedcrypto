@@ -504,7 +504,7 @@ TEST_CASE("ec key generation", "[pk]") {
     }
 }
 
-TEST_CASE("ecdh key exchange", "[pk]") {
+TEST_CASE("ecdh key exchange", "[pk][ecdh]") {
     if (!supports(features::pk_ec))
         return;
 
@@ -554,9 +554,46 @@ TEST_CASE("ecdh key exchange", "[pk]") {
         REQUIRE(cli_ssk == srv_ssk);
     }
 
+    // TLS ServerKeyExchange format
+    {
+        // not supported
+        REQUIRE_FALSE(pk::support_tls_kex(curve_t::curve448));
+        REQUIRE_FALSE(pk::support_tls_kex(curve_t::curve25519));
+
+        const auto curve = curve_t::secp192r1;
+        REQUIRE(pk::support_tls_kex(curve));
+
+        auto srv = pk::make_context();
+        std::vector<uint8_t> skex, ssecret;
+        {
+            auto ec = pk::make_tls_server_kex(obuffer_t{skex}, *srv, curve);
+            REQUIRE_FALSE(ec);
+            REQUIRE(pk::has_private_key(*srv));
+            REQUIRE(pk::can_do(*srv, pk_t::ecdh));
+        }
+
+        auto cli = pk::make_context();
+        std::vector<uint8_t> ckex, csecret;
+        {
+            auto ec = pk::make_tls_client_kex(obuffer_t{ckex}, obuffer_t{csecret}, *cli, skex);
+            REQUIRE_FALSE(ec);
+            REQUIRE(pk::has_private_key(*cli));
+            REQUIRE(pk::can_do(*cli, pk_t::ecdh));
+        }
+
+        {
+            auto ec = pk::make_tls_server_secret(obuffer_t{ssecret}, *srv, ckex);
+            test::dump(ec);
+            REQUIRE_FALSE(ec);
+        }
+
+        // both side must end up with same keys
+        REQUIRE(ssecret == csecret);
+    }
+
     // bad input
     {
-        const auto curve = curve_t::bp256r1;
+        const auto curve = curve_t::secp192r1;
         auto pri = pk::make_context();
         pk::ec_point_t fmt{};
 
