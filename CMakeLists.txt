@@ -22,7 +22,7 @@ option(MBEDCRYPTO_BM_CFB "enable cfb (cipher feedback mode)"                    
 option(MBEDCRYPTO_BM_OFB "enable ofb (output feedback mode)"                               OFF)
 option(MBEDCRYPTO_BM_CTR "enable ctr (cipher counter mode)"                                OFF)
 option(MBEDCRYPTO_BM_XTS "enable xts (cipher text stealing mode)"                          OFF)
-option(MBEDCRYPTO_BM_GCM "enable gcm (Galois cipher mode, for aead cryptography)"          OFF)
+option(MBEDCRYPTO_BM_GCM "enable gcm (Galois cipher mode, for aead cryptography)"          ON)
 option(MBEDCRYPTO_BM_CCM "enable ccm (counter cbc-mac cipher mode, for aead cryptography)" OFF)
 
 ## optional cipher algorithms:
