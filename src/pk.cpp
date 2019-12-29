@@ -63,13 +63,20 @@ _shift_left(bin_edit_t& be, size_t len) noexcept {
     }
 }
 
+size_t
+_sign_size(const context& d) noexcept {
+    if (type_of(d) == pk_t::rsa)
+        return 16 + max_crypt_size(d);
+    else if (can_do(d, pk_t::ecdsa))
+        return 9 + (key_bitlen(d) >> 2); // 9 + key_size_in_bytes * 2
+    return 0;
+}
+
 std::error_code
 _sign(bin_edit_t& out, context& d, bin_view_t input, hash_t ht) noexcept {
     const auto hsize    = hash_size(ht);
-    const auto min_size = 16 + max_crypt_size(d);
-    if (type_of(d) != pk_t::rsa && !can_do(d, pk_t::ecdsa)) {
-        return make_error_code(error_t::bad_input);
-    } else if (input.size != hsize) {
+    const auto min_size = _sign_size(d);
+    if (input.size != hsize || min_size == 0) {
         return make_error_code(error_t::bad_input);
     } else if (is_empty(out)) {
         out.size = min_size;
@@ -574,7 +581,7 @@ make_ec_key(context& d, pk_t algo, curve_t curve) noexcept {
 std::error_code
 verify(context& d, bin_view_t hash_msg, hash_t ht, bin_view_t sig) noexcept {
     const auto hsize = hash_size(ht);
-    if (hash_msg.size != hsize || sig.size < hsize) {
+    if (hash_msg.size != hsize) {
         return make_error_code(error_t::bad_input);
     } else if (type_of(d) != pk_t::rsa && !can_do(d, pk_t::ecdsa)) {
         return make_error_code(error_t::bad_input);

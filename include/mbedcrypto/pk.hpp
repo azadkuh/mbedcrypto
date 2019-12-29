@@ -158,10 +158,18 @@ inline bool is_ec(const context& d)  noexcept { return is_ec(type_of(d));  }
 //-----------------------------------------------------------------------------
 // cryptographic facilities
 
-/// signs a hashed message by private key of context.
-/// the output may be padded (PKCS#1 v1.5 for rsa keys).
-/// @warning: the size of hashed_msg must be equal to the hash size.
-/// supports both pk_t::rsa and pk_t::ec/ecdsa
+/** signs a hashed message by private key of context.
+ * @warning: the size of hashed_msg must be equal to the hash_t size.
+ *
+ * - supports both pk_t::rsa and pk_t::ec/ecdsa.
+ * - out should be large enough to hold the signature:
+ *   * rsa:   16 + max_crypt_size()
+ *   * ecdsa:  9 + (key_size() * 2)
+ * - the final size of the out depends on algorithms, key size or padding
+ *   (PKCS#1 v1.5 for rsa keys).
+ * - if the hash_t size is larger than the key size (ecdsa), then the trimmed
+ *   hash value will be used as standard.
+ */
 std::error_code
 sign(bin_edit_t& out, context&, bin_view_t hashed_msg, hash_t) noexcept;
 
