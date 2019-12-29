@@ -330,7 +330,7 @@ TEST_CASE("ec key generation", "[pk]") {
         REQUIRE(ec == make_error_code(error_t::usage));
     }
 
-    constexpr auto hash_type = hash_t::sha256;
+    constexpr auto hash_type = hash_t::sha512;
     std::vector<uint8_t> hashed_msg;
     make_hash(obuffer_t{hashed_msg}, test::long_text(), hash_type);
 
@@ -410,7 +410,7 @@ TEST_CASE("ec key generation", "[pk]") {
             REQUIRE(pk::is_pri_pub_pair(*other, *pub));
         }
         auto c = pk::what_can_do(*pri);
-        REQUIRE((c.sign && c.verify)); // both sign and verifes
+        REQUIRE((c.sign && c.verify)); // both sign and verifies
         REQUIRE_FALSE((c.encrypt || c.decrypt)); // can not do direct encryption/decryption
         // test sign/verify
         {
