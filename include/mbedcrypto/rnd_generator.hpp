@@ -95,9 +95,10 @@ public: // properties
     /// set reseeding interval. default: 10000 calls
     void reseed_interval(size_t) noexcept;
 
-    /** if set to true, entropy is used by each call!
+    /** if set to true, entropy is gathered before each call.
      * default: false
-     * @warning: quite expensive but more secure.
+     * @warning: only use this if you have ample supply of good entropy, or the
+     * random byte generation would be slow and expensive.
      */
     void prediction_resistance(bool) noexcept;
 
