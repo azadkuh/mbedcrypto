@@ -90,7 +90,7 @@ struct mpi_impl {
         return std::error_code{};
     }
 
-    std::error_code to_string(obuffer_t&& out, int radix) const {
+    std::error_code to_string(auto_size_t&& out, int radix) const {
         bin_edit_t expected;
         auto       ec = to_string(expected, radix);
         if (ec)
@@ -111,7 +111,7 @@ struct mpi_impl {
         return ret == 0 ? std::error_code{} : mbedtls::make_error_code(ret);
     }
 
-    std::error_code to_binary(obuffer_t&& out) const {
+    std::error_code to_binary(auto_size_t&& out) const {
         out.resize(size());
         return to_binary(static_cast<bin_edit_t&>(out));
     }

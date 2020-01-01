@@ -36,8 +36,8 @@ mpi::to_string(bin_edit_t& out, int radix) const noexcept {
 }
 
 std::error_code
-mpi::to_string(obuffer_t&& out, int radix) const {
-    return pimpl->to_string(std::forward<obuffer_t>(out), radix);
+mpi::to_string(auto_size_t&& out, int radix) const {
+    return pimpl->to_string(std::forward<auto_size_t>(out), radix);
 }
 
 std::error_code
@@ -51,8 +51,8 @@ mpi::to_binary(bin_edit_t& out) const noexcept {
 }
 
 std::error_code
-mpi::to_binary(obuffer_t&& out) const {
-    return pimpl->to_binary(std::forward<obuffer_t>(out));
+mpi::to_binary(auto_size_t&& out) const {
+    return pimpl->to_binary(std::forward<auto_size_t>(out));
 }
 
 std::error_code

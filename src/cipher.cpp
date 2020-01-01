@@ -124,7 +124,7 @@ struct engine {
         return std::error_code{};
     }
 
-    std::error_code update(obuffer_t&& out, bin_view_t in) {
+    std::error_code update(auto_size_t&& out, bin_view_t in) {
         bin_edit_t expected;
         auto       ec = update(expected, in);
         if (ec)
@@ -150,7 +150,7 @@ struct engine {
         return std::error_code{};
     }
 
-    std::error_code finish(obuffer_t&& out) {
+    std::error_code finish(auto_size_t&& out) {
         bin_edit_t expected;
         auto       ec = finish(expected);
         if (ec)
@@ -217,7 +217,7 @@ struct engine {
     }
 
     std::error_code
-    crypt(obuffer_t&& out, bin_view_t in, const info_t& ci, copmode_t m) {
+    crypt(auto_size_t&& out, bin_view_t in, const info_t& ci, copmode_t m) {
         bin_edit_t expected;
         auto       ec = crypt(expected, in, ci, m);
         if (ec)
@@ -310,7 +310,7 @@ struct engine {
     }
 
     std::error_code auth_encrypt(
-        obuffer_t&& out, obuffer_t&& tag, bin_view_t in, const info_t& ci) {
+        auto_size_t&& out, auto_size_t&& tag, bin_view_t in, const info_t& ci) {
         bin_edit_t oex, tex;
         auto       ec = auth_encrypt(oex, tex, in, ci);
         if (ec)
@@ -332,7 +332,7 @@ struct engine {
     }
 
     std::error_code auth_decrypt(
-        obuffer_t&& out, bin_view_t tag, bin_view_t in, const info_t& ci) {
+        auto_size_t&& out, bin_view_t tag, bin_view_t in, const info_t& ci) {
         bin_edit_t expected;
         auto       ec = auth_decrypt(expected, tag, in, ci);
         if (ec)
@@ -398,9 +398,9 @@ encrypt(bin_edit_t& output, bin_view_t input, const info_t& ci) noexcept {
 }
 
 std::error_code
-encrypt(obuffer_t&& output, bin_view_t input, const info_t& ci) {
+encrypt(auto_size_t&& output, bin_view_t input, const info_t& ci) {
     return engine{}.crypt(
-        std::forward<obuffer_t>(output), input, ci, MBEDTLS_ENCRYPT);
+        std::forward<auto_size_t>(output), input, ci, MBEDTLS_ENCRYPT);
 }
 
 std::error_code
@@ -409,9 +409,9 @@ decrypt(bin_edit_t& output, bin_view_t input, const info_t& ci) noexcept {
 }
 
 std::error_code
-decrypt(obuffer_t&& output, bin_view_t input, const info_t& ci) {
+decrypt(auto_size_t&& output, bin_view_t input, const info_t& ci) {
     return engine{}.crypt(
-        std::forward<obuffer_t>(output), input, ci, MBEDTLS_DECRYPT);
+        std::forward<auto_size_t>(output), input, ci, MBEDTLS_DECRYPT);
 }
 
 std::error_code
@@ -429,13 +429,13 @@ auth_encrypt(
 
 std::error_code
 auth_encrypt(
-    obuffer_t&&   out,
-    obuffer_t&&   tag,
+    auto_size_t&& out,
+    auto_size_t&& tag,
     bin_view_t    in,
     const info_t& ci) noexcept {
 #if defined(MBEDTLS_CIPHER_MODE_AEAD)
     return engine{}.auth_encrypt(
-        std::forward<obuffer_t>(out), std::forward<obuffer_t>(tag), in, ci);
+        std::forward<auto_size_t>(out), std::forward<auto_size_t>(tag), in, ci);
 #else
     return make_error_code(error_t::not_supported);
 #endif
@@ -457,12 +457,12 @@ auth_decrypt(
 /// overload with contaienr adapter.
 std::error_code
 auth_decrypt(
-    obuffer_t&&   out,
+    auto_size_t&& out,
     bin_view_t    tag,
     bin_view_t    in,
     const info_t& ci) noexcept {
 #if defined(MBEDTLS_CIPHER_MODE_AEAD)
-    return engine{}.auth_decrypt(std::forward<obuffer_t>(out), tag, in, ci);
+    return engine{}.auth_decrypt(std::forward<auto_size_t>(out), tag, in, ci);
 #else
     return make_error_code(error_t::not_supported);
 #endif
@@ -496,8 +496,8 @@ stream::update(bin_edit_t& out, bin_view_t in) noexcept {
 }
 
 std::error_code
-stream::update(obuffer_t&& out, bin_view_t in) {
-    return pimpl->update(std::forward<obuffer_t>(out), in);
+stream::update(auto_size_t&& out, bin_view_t in) {
+    return pimpl->update(std::forward<auto_size_t>(out), in);
 }
 
 std::error_code
@@ -506,8 +506,8 @@ stream::finish(bin_edit_t& out) noexcept {
 }
 
 std::error_code
-stream::finish(obuffer_t&& out) {
-    return pimpl->finish(std::forward<obuffer_t>(out));
+stream::finish(auto_size_t&& out) {
+    return pimpl->finish(std::forward<auto_size_t>(out));
 }
 
 //-----------------------------------------------------------------------------

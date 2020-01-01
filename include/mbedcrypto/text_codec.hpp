@@ -26,7 +26,7 @@ namespace mbedcrypto {
  */
 std::error_code to_hex(bin_edit_t& output, bin_view_t input) noexcept;
 /// overload with contaienr apdapter
-std::error_code to_hex(obuffer_t&& output, bin_view_t input);
+std::error_code to_hex(auto_size_t&& output, bin_view_t input);
 
 /** decodes from a hex string (accepts lower/upper case).
  * if output.data == nullptr, then fills the required output size into
@@ -38,7 +38,7 @@ std::error_code to_hex(obuffer_t&& output, bin_view_t input);
  */
 std::error_code from_hex(bin_edit_t& output, bin_view_t input) noexcept;
 /// overload with contaienr apdapter
-std::error_code from_hex(obuffer_t&& output, bin_view_t input);
+std::error_code from_hex(auto_size_t&& output, bin_view_t input);
 //-----------------------------------------------------------------------------
 
 /** makes a base64 string from any input.
@@ -53,7 +53,7 @@ std::error_code from_hex(obuffer_t&& output, bin_view_t input);
  */
 std::error_code to_base64(bin_edit_t& output, bin_view_t input) noexcept;
 /// overload with contaienr apdapter
-std::error_code to_base64(obuffer_t&& output, bin_view_t input);
+std::error_code to_base64(auto_size_t&& output, bin_view_t input);
 
 /** decodes from a base64 string.
  * if output.data == nullptr, then fills the required output size into
@@ -64,7 +64,7 @@ std::error_code to_base64(obuffer_t&& output, bin_view_t input);
  */
 std::error_code from_base64(bin_edit_t& output, bin_view_t input) noexcept;
 /// overload with contaienr apdapter
-std::error_code from_base64(obuffer_t&& output, bin_view_t input);
+std::error_code from_base64(auto_size_t&& output, bin_view_t input);
 
 //-----------------------------------------------------------------------------
 // hex helper overloads
@@ -73,7 +73,7 @@ template <typename Container>
 inline std::pair<Container, std::error_code>
 to_hex(bin_view_t input) {
     Container output;
-    auto      ec = to_hex(obuffer_t{output}, input);
+    auto      ec = to_hex(auto_size_t{output}, input);
     return {output, ec};
 }
 
@@ -81,7 +81,7 @@ template <typename Container>
 inline std::pair<Container, std::error_code>
 from_hex(bin_view_t input) {
     Container output;
-    auto      ec = from_hex(obuffer_t{output}, input);
+    auto      ec = from_hex(auto_size_t{output}, input);
     return {output, ec};
 }
 
@@ -92,7 +92,7 @@ template <typename Container>
 inline std::pair<Container, std::error_code>
 to_base64(bin_view_t input) {
     Container output;
-    auto      ec = to_base64(obuffer_t{output}, input);
+    auto      ec = to_base64(auto_size_t{output}, input);
     return {output, ec};
 }
 
@@ -100,7 +100,7 @@ template <typename Container>
 inline std::pair<Container, std::error_code>
 from_base64(bin_view_t input) {
     Container output;
-    auto      ec = from_base64(obuffer_t{output}, input);
+    auto      ec = from_base64(auto_size_t{output}, input);
     return {output, ec};
 }
 

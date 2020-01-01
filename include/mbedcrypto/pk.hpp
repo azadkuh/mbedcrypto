@@ -175,7 +175,7 @@ sign(bin_edit_t& out, context&, bin_view_t hashed_msg, hash_t) noexcept;
 
 /// overload
 std::error_code
-sign(obuffer_t&& out, context&, bin_view_t hashed_msg, hash_t);
+sign(auto_size_t&& out, context&, bin_view_t hashed_msg, hash_t);
 
 /// verifies a signature and a hashed-message by public key of context.
 /// returns error if the signature fails
@@ -190,7 +190,7 @@ verify(context&, bin_view_t hashed_msg, hash_t, bin_view_t signature) noexcept;
 std::error_code encrypt(bin_edit_t& out, context&, bin_view_t input) noexcept;
 
 /// overload
-std::error_code encrypt(obuffer_t&& out, context&, bin_view_t input);
+std::error_code encrypt(auto_size_t&& out, context&, bin_view_t input);
 
 /// encrypts input by private rsa key (adds padding if relevant).
 /// @sa encrypt()
@@ -198,7 +198,7 @@ std::error_code encrypt(obuffer_t&& out, context&, bin_view_t input);
 std::error_code decrypt(bin_edit_t& out, context&, bin_view_t input) noexcept;
 
 /// overload
-std::error_code decrypt(obuffer_t&& out, context&, bin_view_t input);
+std::error_code decrypt(auto_size_t&& out, context&, bin_view_t input);
 
 //-----------------------------------------------------------------------------
 // key tools
@@ -250,14 +250,14 @@ std::error_code
 export_pri_key(bin_edit_t& out, context&, key_io_t) noexcept;
 
 /// overload with container adapter.
-std::error_code export_pri_key(obuffer_t&& out, context&, key_io_t);
+std::error_code export_pri_key(auto_size_t&& out, context&, key_io_t);
 
 /// exports public key
 std::error_code
 export_pub_key(bin_edit_t& out, context&, key_io_t) noexcept;
 
 /// overload with container adapter.
-std::error_code export_pub_key(obuffer_t&& out, context&, key_io_t);
+std::error_code export_pub_key(auto_size_t&& out, context&, key_io_t);
 
 //-----------------------------------------------------------------------------
 // ecdh and secure key exchange
@@ -270,11 +270,11 @@ std::error_code export_pub_key(obuffer_t&& out, context&, key_io_t);
 // auto ec = make_ec_key(*srv, pk_t::ecdh, curve);  |  auto ec = make_ec_key(*cli, pk_t::ecdh, curve);
 // std::vector<uint8_t> srv_pub, key;               |  std::vector<uint8_t> cli_pub, key;
 // ec = export_pub_key(                             |  ec = export_pub_key(
-//      obuffer_t{srv_pub}, *srv, fmt);             |       obuffer_t{cli_pub}, *cli, fmt);
+//      auto_size_t{srv_pub}, *srv, fmt);           |       auto_size_t{cli_pub}, *cli, fmt);
 // # send srv_pub to client                 ---> #  |  # <--- send cli_pub to server #
 // # receive cli_pub from client                    |  # receive srv_pub from server
 // ec = make_shared_secret(                         |  ec = make_shared_secret(
-//      obuffer_t{key}, *srv, cli_pub, fmt);        |       obuffer_t{key}, *cli, srv_pub, fmt);
+//      auto_size_t{key}, *srv, cli_pub, fmt);      |       auto_size_t{key}, *cli, srv_pub, fmt);
 // # now both the client and the server have the same key.
 
 /// elliptic curve point format
@@ -293,7 +293,7 @@ export_pub_key(bin_edit_t& out, context&, ec_point_t) noexcept;
 
 /// overload with container adapter.
 std::error_code
-export_pub_key(obuffer_t&& out, context&, ec_point_t);
+export_pub_key(auto_size_t&& out, context&, ec_point_t);
 
 /** calculates the shared secret by the peer's public key.
  * the shared secret is actually a big integer (@sa mbedcrypto::mpi)
@@ -306,27 +306,27 @@ make_shared_secret(
 
 /// overload with container adapter.
 std::error_code
-make_shared_secret(obuffer_t&& out, context&, bin_view_t peer_pub, ec_point_t);
+make_shared_secret(auto_size_t&& out, context&, bin_view_t peer_pub, ec_point_t);
 
 //-----------------------------------------------------------------------------
 //
 // usage #2: by using TLS ServerKeyExchange & ClientKeyExchange format.
 // in this scenario only server decides the curve type.
 //
-// # server side #                     |  # client side #
-// auto srv = make_context();          |  auto cli = make_context();
-// std::vector<uint8_t> skex, key;     |  std::vector<uint8_t> ckex, key;
-// curve_t curve = ...;                |
-// ec = make_tls_server_kex(           |
-//      obuffer_t{skex}, *srv, curve); |
-// # send skex to client        --> #  |
-//                                     |  # receive skex from server
-//                                     |  ec = make_tls_client_kex(
-//                                     |       obuffer_t{ckex}, obuffer_t{key}, *cli, skex);
-//                                     |  # <-- send ckex to server
-// # receive ckex from client #        |
-// ec = make_tls_server_secret(        |
-//      obuffer_t{key}, *srv, ckex);   |
+// # server side #                       |  # client side #
+// auto srv = make_context();            |  auto cli = make_context();
+// std::vector<uint8_t> skex, key;       |  std::vector<uint8_t> ckex, key;
+// curve_t curve = ...;                  |
+// ec = make_tls_server_kex(             |
+//      auto_size_t{skex}, *srv, curve); |
+// #          send skex to client --> #  |
+//                                       |  # receive skex from server
+//                                       |  ec = make_tls_client_kex(
+//                                       |       auto_size_t{ckex}, auto_size_t{key}, *cli, skex);
+//                                       |  # <-- send ckex to server
+// # receive ckex from client #          |
+// ec = make_tls_server_secret(          |
+//      auto_size_t{key}, *srv, ckex);   |
 // # now both the client and the server have the same key.
 
 /** checks if curve is supported by TLS ServerKeyExchange.
@@ -345,7 +345,7 @@ make_tls_server_kex(bin_edit_t& skex, context&, curve_t curve) noexcept;
 
 /// overload with container adapter.
 std::error_code
-make_tls_server_kex(obuffer_t&& skex, context&, curve_t curve);
+make_tls_server_kex(auto_size_t&& skex, context&, curve_t curve);
 
 /** makes client's context by curve-id of skex, then exports the client's
  * public key as ckex (ClientKeyExchange) and finally calculates the shared
@@ -358,7 +358,7 @@ make_tls_client_kex(
 /// overload with container adapter.
 std::error_code
 make_tls_client_kex(
-    obuffer_t&& ckex, obuffer_t&& secret, context&, bin_view_t skex);
+    auto_size_t&& ckex, auto_size_t&& secret, context&, bin_view_t skex);
 
 /// calculates the shared secret by client's public key (ckex)
 inline std::error_code
@@ -369,9 +369,9 @@ make_tls_server_secret(
 
 /// overload with container adapter.
 inline std::error_code
-make_tls_server_secret(obuffer_t&& secret, context& d, bin_view_t ckex) {
+make_tls_server_secret(auto_size_t&& secret, context& d, bin_view_t ckex) {
     return make_shared_secret(
-        std::forward<obuffer_t>(secret), d, ckex, {ec_point_t::tls, false});
+        std::forward<auto_size_t>(secret), d, ckex, {ec_point_t::tls, false});
 }
 
 //-----------------------------------------------------------------------------

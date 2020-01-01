@@ -43,14 +43,14 @@ struct mpi
 
     /// dumps the MPI as a null-terminated string
     std::error_code to_string(bin_edit_t& out, int radix) const noexcept;
-    std::error_code to_string(obuffer_t&& out, int radix) const;
+    std::error_code to_string(auto_size_t&& out, int radix) const;
 
     /// reads from a null-terminated string
     std::error_code from_string(const char* cstr, int radix) noexcept;
 
     /// dumps the MPI to a portable binary buffer.
     std::error_code to_binary(bin_edit_t& out) const noexcept;
-    std::error_code to_binary(obuffer_t&& out) const;
+    std::error_code to_binary(auto_size_t&& out) const;
 
     /// reads from a binary buffer
     std::error_code from_binary(bin_view_t bin) noexcept;

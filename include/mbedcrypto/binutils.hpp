@@ -20,7 +20,7 @@ namespace mbedcrypto {
 //-----------------------------------------------------------------------------
 struct bin_view_t;
 struct bin_edit_t;
-struct obuffer_t;
+struct auto_size_t;
 //-----------------------------------------------------------------------------
 
 /** a view (immutable) interface for binary (or text) data.
@@ -124,7 +124,7 @@ public: // iterators
 
 //-----------------------------------------------------------------------------
 
-/** resizes a container, @sa obuffer_t::resize().
+/** resizes a container, @sa auto_size_t::resize().
  * please write an overload for containers with different signature than:
  * Container::resize(size_t)
  * @sa resize(QByteArray&, size_t);
@@ -156,32 +156,32 @@ resize(QByteArray& ba, size_t new_size) {
  * usage:
  * @code
  * // given following function:
- * // std::error_code fn(obuffer_t&& out, bin_view_t in, ...);
+ * // std::error_code fn(auto_size_t&& out, bin_view_t in, ...);
  *
  * std::vector<uint8_t> output;
  * // or std::string    output;
  * // or QByteArray     output;
- * auto ec = fn(obuffer_t{output}, in, ...);
+ * auto ec = fn(auto_size_t{output}, in, ...);
  *
  * // now output is automatically resized to optimum required size and also is
  * // filled with the proper data.
  * @endcode
  */
-struct obuffer_t final : bin_edit_t
+struct auto_size_t final : bin_edit_t
 {
     template <
         typename Container,
         typename = decltype(mbedcrypto::resize(std::declval<Container&>(), 42)),
         typename = std::enable_if_t<std::is_constructible<bin_edit_t, Container&>::value>
     >
-    explicit obuffer_t(Container& ref) // no heap allocation
+    explicit auto_size_t(Container& ref) // no heap allocation
         : pimpl_{/*placement*/ new (stack_) model_t<Container>{*this, ref}} {}
 
-    obuffer_t() noexcept            = delete;
-    obuffer_t(const obuffer_t&)     = delete;
-    obuffer_t(obuffer_t&&) noexcept = delete;
+    auto_size_t() noexcept              = delete;
+    auto_size_t(const auto_size_t&)     = delete;
+    auto_size_t(auto_size_t&&) noexcept = delete;
 
-    ~obuffer_t() { pimpl_->~concept_t(); }
+    ~auto_size_t() { pimpl_->~concept_t(); }
 
     void resize(size_t new_size) { pimpl_->resize(*this, new_size); }
 
@@ -192,7 +192,8 @@ protected:
         virtual void resize(bin_edit_t&, size_t) = 0;
     };
 
-    template <typename Container> struct model_t final : concept_t {
+    template <typename Container>
+    struct model_t final : concept_t {
         Container& container;
         explicit model_t(bin_edit_t& self, Container& c) : container{c} {
             assign(self);
@@ -210,7 +211,7 @@ protected:
     static constexpr size_t Size_     = 2 * sizeof(void*);
     alignas(void*) char stack_[Size_] = {};
     concept_t* pimpl_                 = nullptr;
-}; // struct obuffer_t
+}; // struct auto_size_t
 
 //-----------------------------------------------------------------------------
 

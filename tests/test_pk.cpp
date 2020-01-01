@@ -131,14 +131,14 @@ TEST_CASE("rsa-key generation api", "[pk]") {
     auto pub = pk::make_context();
     {
         std::string pem;
-        ec = pk::export_pub_key(obuffer_t{pem}, *pri, pk::key_io_t::pem);
+        ec = pk::export_pub_key(auto_size_t{pem}, *pri, pk::key_io_t::pem);
         REQUIRE_FALSE(ec);
         REQUIRE_FALSE(pem.empty());
         ec = pk::import_pub_key(*pub, pem);
         REQUIRE_FALSE(ec);
 
         std::string der;
-        ec = pk::export_pub_key(obuffer_t{der}, *pri, pk::key_io_t::der);
+        ec = pk::export_pub_key(auto_size_t{der}, *pri, pk::key_io_t::der);
         REQUIRE_FALSE(ec);
         REQUIRE_FALSE(der.empty());
         ec = pk::import_pub_key(*pub, der);
@@ -169,7 +169,7 @@ TEST_CASE("rsa-key generation api", "[pk]") {
     auto other = pk::make_context();
     {
         std::string pem;
-        ec = pk::export_pri_key(obuffer_t{pem}, *pri, pk::key_io_t::pem);
+        ec = pk::export_pri_key(auto_size_t{pem}, *pri, pk::key_io_t::pem);
         REQUIRE_FALSE(ec);
         REQUIRE_FALSE(pem.empty());
         ec = pk::import_pri_key(*other, pem);
@@ -177,7 +177,7 @@ TEST_CASE("rsa-key generation api", "[pk]") {
         REQUIRE(pk::is_pri_pub_pair(*other, *pub));
 
         std::string der;
-        ec = pk::export_pri_key(obuffer_t{der}, *pri, pk::key_io_t::der);
+        ec = pk::export_pri_key(auto_size_t{der}, *pri, pk::key_io_t::der);
         REQUIRE_FALSE(ec);
         REQUIRE_FALSE(der.empty());
         ec = pk::import_pri_key(*other, der);
@@ -227,12 +227,12 @@ TEST_CASE("sign/verify by rsa key", "[pk]") {
     // make hash
     constexpr auto hash_type = hash_t::sha1;
     std::vector<uint8_t> hashed_message;
-    ec = make_hash(obuffer_t{hashed_message}, test::long_text(), hash_type);
+    ec = make_hash(auto_size_t{hashed_message}, test::long_text(), hash_type);
     REQUIRE_FALSE(ec);
 
     // make signature by private key
     std::vector<uint8_t> signature;
-    ec = pk::sign(obuffer_t{signature}, *pri, hashed_message, hash_type);
+    ec = pk::sign(auto_size_t{signature}, *pri, hashed_message, hash_type);
     REQUIRE_FALSE(ec);
     REQUIRE(test::long_text_signature() == signature);
 
@@ -247,15 +247,15 @@ TEST_CASE("sign/verify by rsa key", "[pk]") {
     {
         auto empty = pk::make_context();
         std::string sig1;
-        ec = pk::sign(obuffer_t{sig1}, *empty, hashed_message, hash_type);
+        ec = pk::sign(auto_size_t{sig1}, *empty, hashed_message, hash_type);
         REQUIRE(ec == make_error_code(error_t::bad_input)); // context is empty (uninitialized)
         ec = pk::verify(*empty, hashed_message, hash_type, signature);
         REQUIRE(ec == make_error_code(error_t::bad_input)); // context is empty (uninitialized)
 
-        ec = pk::sign(obuffer_t{sig1}, *pub, hashed_message, hash_type);
+        ec = pk::sign(auto_size_t{sig1}, *pub, hashed_message, hash_type);
         REQUIRE(ec); // can not sign with public key
 
-        ec = pk::sign(obuffer_t{sig1}, *pri, test::long_text(), hash_type);
+        ec = pk::sign(auto_size_t{sig1}, *pri, test::long_text(), hash_type);
         REQUIRE(ec == make_error_code(error_t::bad_input)); // invalid message size
 
         sig1.resize(10); // small output
@@ -280,25 +280,25 @@ TEST_CASE("encrypt/decrypt by rsa key", "[pk]") {
     REQUIRE(source.size() < pk::max_crypt_size(*pub));
 
     std::vector<uint8_t> enc;
-    ec = pk::encrypt(obuffer_t{enc}, *pub, source);
+    ec = pk::encrypt(auto_size_t{enc}, *pub, source);
     REQUIRE_FALSE(ec);
 
     std::vector<uint8_t> dec;
-    ec = pk::decrypt(obuffer_t{dec}, *pri, enc);
+    ec = pk::decrypt(auto_size_t{dec}, *pri, enc);
     REQUIRE_FALSE(ec);
     REQUIRE(bin_view_t{source} == bin_view_t{dec});
 
     enc.clear();
-    ec = pk::encrypt(obuffer_t{enc}, *pri, source); // pri-key includes a pub key
+    ec = pk::encrypt(auto_size_t{enc}, *pri, source); // pri-key includes a pub key
     REQUIRE_FALSE(ec);
 
     // test bad things
     {
         auto empty = pk::make_context();
         std::string enc1, dec1;
-        ec = pk::encrypt(obuffer_t{enc1}, *empty, source);
+        ec = pk::encrypt(auto_size_t{enc1}, *empty, source);
         REQUIRE(ec == make_error_code(error_t::bad_input));
-        ec = pk::decrypt(obuffer_t{dec1}, *empty, enc);
+        ec = pk::decrypt(auto_size_t{dec1}, *empty, enc);
         REQUIRE(ec == make_error_code(error_t::bad_input));
 
         enc1.resize(4); // small size
@@ -306,10 +306,10 @@ TEST_CASE("encrypt/decrypt by rsa key", "[pk]") {
         ec = pk::encrypt(box, *pub, source);
         REQUIRE(ec == make_error_code(error_t::small_output));
 
-        ec = pk::encrypt(obuffer_t{enc1}, *pub, test::long_text());
+        ec = pk::encrypt(auto_size_t{enc1}, *pub, test::long_text());
         REQUIRE(ec == make_error_code(error_t::bad_input)); // input is larger than max_crypt_size()
 
-        ec = pk::decrypt(obuffer_t{dec1}, *pub, enc);
+        ec = pk::decrypt(auto_size_t{dec1}, *pub, enc);
         REQUIRE(ec == make_error_code(error_t::bad_input)); // can't decrypt by public key
     }
 }
@@ -332,7 +332,7 @@ TEST_CASE("ec key generation", "[pk]") {
 
     constexpr auto hash_type = hash_t::sha512;
     std::vector<uint8_t> hashed_msg;
-    make_hash(obuffer_t{hashed_msg}, test::long_text(), hash_type);
+    make_hash(auto_size_t{hashed_msg}, test::long_text(), hash_type);
 
     struct test_case_t {
         curve_t curve;
@@ -378,14 +378,14 @@ TEST_CASE("ec key generation", "[pk]") {
         // test pem/der public-key export and import
         {
             std::string pem;
-            ec = pk::export_pub_key(obuffer_t{pem}, *pri, pk::key_io_t::pem);
+            ec = pk::export_pub_key(auto_size_t{pem}, *pri, pk::key_io_t::pem);
             REQUIRE_FALSE(ec);
             ec = pk::import_pub_key(*pub, pem);
             REQUIRE_FALSE(ec);
             REQUIRE(pk::is_pri_pub_pair(*pri, *pub));
 
             std::string der;
-            ec = pk::export_pub_key(obuffer_t{der}, *pri, pk::key_io_t::der);
+            ec = pk::export_pub_key(auto_size_t{der}, *pri, pk::key_io_t::der);
             REQUIRE_FALSE(ec);
             ec = pk::import_pub_key(*pub, der);
             REQUIRE_FALSE(ec);
@@ -396,14 +396,14 @@ TEST_CASE("ec key generation", "[pk]") {
         // test pem/der private-key export and import
         {
             std::string pem;
-            ec = pk::export_pri_key(obuffer_t{pem}, *pri, pk::key_io_t::pem);
+            ec = pk::export_pri_key(auto_size_t{pem}, *pri, pk::key_io_t::pem);
             REQUIRE_FALSE(ec);
             ec = pk::import_pri_key(*other, pem);
             REQUIRE_FALSE(ec);
             REQUIRE(pk::is_pri_pub_pair(*other, *pub));
 
             std::string der;
-            ec = pk::export_pri_key(obuffer_t{der}, *pri, pk::key_io_t::der);
+            ec = pk::export_pri_key(auto_size_t{der}, *pri, pk::key_io_t::der);
             REQUIRE_FALSE(ec);
             ec = pk::import_pri_key(*other, der);
             REQUIRE_FALSE(ec);
@@ -415,7 +415,7 @@ TEST_CASE("ec key generation", "[pk]") {
         // test sign/verify
         {
             std::vector<uint8_t> signature;
-            ec = pk::sign(obuffer_t{signature}, *pri, hashed_msg, hash_type);
+            ec = pk::sign(auto_size_t{signature}, *pri, hashed_msg, hash_type);
             REQUIRE_FALSE(ec);
 
             ec = pk::verify(*pub, hashed_msg, hash_type, signature);
@@ -449,11 +449,11 @@ TEST_CASE("ec key generation", "[pk]") {
         // test pem/der public-key export and import
         {
             std::string pem;
-            ec = pk::export_pub_key(obuffer_t{pem}, *pri, pk::key_io_t::pem);
+            ec = pk::export_pub_key(auto_size_t{pem}, *pri, pk::key_io_t::pem);
             REQUIRE(ec); // pem export is not supported for ecdh
 
             std::string der;
-            ec = pk::export_pub_key(obuffer_t{der}, *pri, pk::key_io_t::der);
+            ec = pk::export_pub_key(auto_size_t{der}, *pri, pk::key_io_t::der);
             REQUIRE(ec); // der export is not supported either
         }
 
@@ -489,11 +489,11 @@ TEST_CASE("ec key generation", "[pk]") {
         // test pem/der public-key export and import
         {
             std::string pem;
-            ec = pk::export_pub_key(obuffer_t{pem}, *pri, pk::key_io_t::pem);
+            ec = pk::export_pub_key(auto_size_t{pem}, *pri, pk::key_io_t::pem);
             REQUIRE(ec); // pem export is not supported for ecdh
 
             std::string der;
-            ec = pk::export_pub_key(obuffer_t{der}, *pri, pk::key_io_t::der);
+            ec = pk::export_pub_key(auto_size_t{der}, *pri, pk::key_io_t::der);
             REQUIRE(ec); // der export is not supported either
         }
 
@@ -519,7 +519,7 @@ TEST_CASE("ecdh key exchange", "[pk][ecdh]") {
         {
             auto ec  = pk::make_ec_key(*srv, pk_t::ecdh, curve);
             REQUIRE_FALSE(ec);
-            ec = export_pub_key(obuffer_t{srv_pub}, *srv, fmt);
+            ec = export_pub_key(auto_size_t{srv_pub}, *srv, fmt);
             REQUIRE_FALSE(ec);
         }
 
@@ -529,7 +529,7 @@ TEST_CASE("ecdh key exchange", "[pk][ecdh]") {
         {
             auto ec = pk::make_ec_key(*cli, pk_t::ecdh, curve);
             REQUIRE_FALSE(ec);
-            ec = export_pub_key(obuffer_t{cli_pub}, *cli, fmt);
+            ec = export_pub_key(auto_size_t{cli_pub}, *cli, fmt);
             REQUIRE_FALSE(ec);
         }
 
@@ -538,7 +538,7 @@ TEST_CASE("ecdh key exchange", "[pk][ecdh]") {
         // server side
         std::vector<uint8_t> srv_ssk;
         {
-            auto ec = pk::make_shared_secret(obuffer_t{srv_ssk}, *srv, cli_pub, fmt);
+            auto ec = pk::make_shared_secret(auto_size_t{srv_ssk}, *srv, cli_pub, fmt);
             test::dump(ec);
             REQUIRE_FALSE(ec);
         }
@@ -546,7 +546,7 @@ TEST_CASE("ecdh key exchange", "[pk][ecdh]") {
         // client size
         std::vector<uint8_t> cli_ssk;
         {
-            auto ec = pk::make_shared_secret(obuffer_t{cli_ssk}, *cli, srv_pub, fmt);
+            auto ec = pk::make_shared_secret(auto_size_t{cli_ssk}, *cli, srv_pub, fmt);
             REQUIRE_FALSE(ec);
         }
 
@@ -566,7 +566,7 @@ TEST_CASE("ecdh key exchange", "[pk][ecdh]") {
         auto srv = pk::make_context();
         std::vector<uint8_t> skex, ssecret;
         {
-            auto ec = pk::make_tls_server_kex(obuffer_t{skex}, *srv, curve);
+            auto ec = pk::make_tls_server_kex(auto_size_t{skex}, *srv, curve);
             REQUIRE_FALSE(ec);
             REQUIRE(pk::has_private_key(*srv));
             REQUIRE(pk::can_do(*srv, pk_t::ecdh));
@@ -575,14 +575,14 @@ TEST_CASE("ecdh key exchange", "[pk][ecdh]") {
         auto cli = pk::make_context();
         std::vector<uint8_t> ckex, csecret;
         {
-            auto ec = pk::make_tls_client_kex(obuffer_t{ckex}, obuffer_t{csecret}, *cli, skex);
+            auto ec = pk::make_tls_client_kex(auto_size_t{ckex}, auto_size_t{csecret}, *cli, skex);
             REQUIRE_FALSE(ec);
             REQUIRE(pk::has_private_key(*cli));
             REQUIRE(pk::can_do(*cli, pk_t::ecdh));
         }
 
         {
-            auto ec = pk::make_tls_server_secret(obuffer_t{ssecret}, *srv, ckex);
+            auto ec = pk::make_tls_server_secret(auto_size_t{ssecret}, *srv, ckex);
             test::dump(ec);
             REQUIRE_FALSE(ec);
         }
@@ -603,11 +603,11 @@ TEST_CASE("ecdh key exchange", "[pk][ecdh]") {
         REQUIRE_FALSE(pk::can_do(*pri, pk_t::ecdh)); // ecdsa can not do ecdh
 
         std::vector<uint8_t> pub;
-        ec = pk::export_pub_key(obuffer_t{pub}, *pri, fmt);
+        ec = pk::export_pub_key(auto_size_t{pub}, *pri, fmt);
         REQUIRE(ec == make_error_code(error_t::not_supported)); // ecdsa can not do ecdh
 
         std::vector<uint8_t> secret;
-        ec = pk::make_shared_secret(obuffer_t{secret}, *pri, pub, fmt);
+        ec = pk::make_shared_secret(auto_size_t{secret}, *pri, pub, fmt);
         REQUIRE(ec == make_error_code(error_t::not_supported)); // ecdsa can not do ecdh
     }
 }

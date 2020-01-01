@@ -215,7 +215,7 @@ _open_key(context& d, Func fn, Args&&... args) noexcept {
 
 template <typename Func, class... Args>
 std::error_code
-_resize_impl(Func fn, obuffer_t&& out, Args&&... args) {
+_resize_impl(Func fn, auto_size_t&& out, Args&&... args) {
     bin_edit_t      expected;
     std::error_code ec = fn(expected, std::forward<Args>(args)...);
     if (ec)
@@ -605,8 +605,8 @@ sign(bin_edit_t& out, context& d, bin_view_t input, hash_t ht) noexcept {
 }
 
 std::error_code
-sign(obuffer_t&& out, context& d, bin_view_t input, hash_t ht) {
-    return _resize_impl(_sign, std::forward<obuffer_t>(out), d, input, ht);
+sign(auto_size_t&& out, context& d, bin_view_t input, hash_t ht) {
+    return _resize_impl(_sign, std::forward<auto_size_t>(out), d, input, ht);
 }
 
 std::error_code
@@ -615,8 +615,8 @@ encrypt(bin_edit_t& out, context& d, bin_view_t input) noexcept {
 }
 
 std::error_code
-encrypt(obuffer_t&& out, context& d, bin_view_t input) {
-    return _resize_impl(_encrypt, std::forward<obuffer_t>(out), d, input);
+encrypt(auto_size_t&& out, context& d, bin_view_t input) {
+    return _resize_impl(_encrypt, std::forward<auto_size_t>(out), d, input);
 }
 
 std::error_code
@@ -625,8 +625,8 @@ decrypt(bin_edit_t& out, context& d, bin_view_t input) noexcept {
 }
 
 std::error_code
-decrypt(obuffer_t&& out, context& d, bin_view_t input) {
-    return _resize_impl(_decrypt, std::forward<obuffer_t>(out), d, input);
+decrypt(auto_size_t&& out, context& d, bin_view_t input) {
+    return _resize_impl(_decrypt, std::forward<auto_size_t>(out), d, input);
 }
 
 std::error_code
@@ -662,8 +662,8 @@ export_pri_key(bin_edit_t& out, context& d, key_io_t kio) noexcept {
 }
 
 std::error_code
-export_pri_key(obuffer_t&& out, context& d, key_io_t kio) {
-    return _resize_impl(_export_pri_key, std::forward<obuffer_t>(out), d, kio);
+export_pri_key(auto_size_t&& out, context& d, key_io_t kio) {
+    return _resize_impl(_export_pri_key, std::forward<auto_size_t>(out), d, kio);
 }
 
 std::error_code
@@ -672,8 +672,8 @@ export_pub_key(bin_edit_t& out, context& d, key_io_t kio) noexcept {
 }
 
 std::error_code
-export_pub_key(obuffer_t&& out, context& d, key_io_t kio) {
-    return _resize_impl(_export_pub_key, std::forward<obuffer_t>(out), d, kio);
+export_pub_key(auto_size_t&& out, context& d, key_io_t kio) {
+    return _resize_impl(_export_pub_key, std::forward<auto_size_t>(out), d, kio);
 }
 
 std::error_code
@@ -686,9 +686,9 @@ export_pub_key(bin_edit_t& out, context& d, ec_point_t fmt) noexcept {
 }
 
 std::error_code
-export_pub_key(obuffer_t&& out, context& d, ec_point_t fmt) {
+export_pub_key(auto_size_t&& out, context& d, ec_point_t fmt) {
 #if defined(MBEDTLS_ECP_C)
-    return _resize_impl(_export_ec_pub_point, std::forward<obuffer_t>(out), d, fmt);
+    return _resize_impl(_export_ec_pub_point, std::forward<auto_size_t>(out), d, fmt);
 #else
     return make_error_code(error_t::not_supported);
 #endif
@@ -706,10 +706,10 @@ make_shared_secret(
 
 std::error_code
 make_shared_secret(
-    obuffer_t&& out, context& d, bin_view_t opub, ec_point_t fmt) {
+    auto_size_t&& out, context& d, bin_view_t opub, ec_point_t fmt) {
 #if defined(MBEDTLS_ECP_C)
     return _resize_impl(
-        _make_shared_secret, std::forward<obuffer_t>(out), d, opub, fmt);
+        _make_shared_secret, std::forward<auto_size_t>(out), d, opub, fmt);
 #else
     return make_error_code(error_t::not_supported);
 #endif
@@ -736,10 +736,10 @@ make_tls_server_kex(bin_edit_t& skex, context& d, curve_t curve) noexcept {
 }
 
 std::error_code
-make_tls_server_kex(obuffer_t&& skex, context& d, curve_t curve) {
+make_tls_server_kex(auto_size_t&& skex, context& d, curve_t curve) {
 #if defined(MBEDTLS_ECP_C)
     return _resize_impl(
-        _make_server_kex, std::forward<obuffer_t>(skex), d, curve);
+        _make_server_kex, std::forward<auto_size_t>(skex), d, curve);
 #else
     return make_error_code(error_t::not_supported);
 #endif
@@ -760,7 +760,7 @@ make_client_tls_kex(
 
 std::error_code
 make_tls_client_kex(
-    obuffer_t&& ckex, obuffer_t&& secret, context& d, bin_view_t skex) {
+    auto_size_t&& ckex, auto_size_t&& secret, context& d, bin_view_t skex) {
 #if defined(MBEDTLS_ECP_C)
     bin_edit_t exp_ckex, exp_secret;
     auto       ec = _make_client_kex(exp_ckex, exp_secret, d, skex);

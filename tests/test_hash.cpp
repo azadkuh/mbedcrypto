@@ -60,7 +60,7 @@ protected:
                 md.update(bin_view_t{bin, size});
             });
             std::string output;
-            ec = md.finish(obuffer_t{output});
+            ec = md.finish(auto_size_t{output});
             REQUIRE_FALSE(ec);
             REQUIRE(output.size() == hsize);
             REQUIRE(output == digest.first);
@@ -84,7 +84,7 @@ protected:
                 mac.update(bin_view_t{bin, size});
             });
             std::string output;
-            ec = mac.finish(obuffer_t{output});
+            ec = mac.finish(auto_size_t{output});
             REQUIRE_FALSE(ec);
             REQUIRE(output.size() == hsize);
             REQUIRE(output == digest.first);
@@ -178,7 +178,7 @@ TEST_CASE("hash tests", "[hash]") {
 
 TEST_CASE("pbkdf2-hmac tests", "[hash]") {
     std::vector<uint8_t> salt;
-    auto ec = from_hex(obuffer_t{salt}, "aaef2d3f4d77ac66e9c5a6c3d8f921d1");
+    auto ec = from_hex(auto_size_t{salt}, "aaef2d3f4d77ac66e9c5a6c3d8f921d1");
     REQUIRE_FALSE(ec);
 
     uint8_t buff[32] = {0};
@@ -187,14 +187,14 @@ TEST_CASE("pbkdf2-hmac tests", "[hash]") {
     REQUIRE_FALSE(ec);
 
     std::string hexed;
-    ec = to_hex(obuffer_t{hexed}, out);
+    ec = to_hex(auto_size_t{hexed}, out);
     REQUIRE_FALSE(ec);
     REQUIRE(hexed == "52c5efa16e7022859051b1dec28bc65d9696a3005d0f97e506c42843bc3bdbc0");
 
     // by empty salt: not recommended
     ec = make_hmac_pbkdf2(out, hash_t::sha512, "a bad pass", bin_view_t{}, 32);
     REQUIRE_FALSE(ec);
-    ec = to_hex(obuffer_t{hexed}, out);
+    ec = to_hex(auto_size_t{hexed}, out);
     REQUIRE_FALSE(ec);
     REQUIRE(hexed == "e04edf3b8fd8efd5eea249c57fead6a939ee55c858e87f45f5a1aaec7b7a1c8e");
 

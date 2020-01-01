@@ -31,7 +31,7 @@ std::error_code
 make_hash(bin_edit_t& output, bin_view_t input, hash_t algorithm) noexcept;
 /// overload with container adapter
 std::error_code
-make_hash(obuffer_t&& output, bin_view_t input, hash_t algorithm);
+make_hash(auto_size_t&& output, bin_view_t input, hash_t algorithm);
 
 /// makes the HMAC of an input/key pair.
 std::error_code
@@ -43,10 +43,7 @@ make_hmac(
 /// overload with container adapter
 std::error_code
 make_hmac(
-    obuffer_t&& output,
-    bin_view_t  input,
-    bin_view_t  key,
-    hash_t      algorithm);
+    auto_size_t&& output, bin_view_t input, bin_view_t key, hash_t algorithm);
 
 /// makes the hash value for a file.
 /// the output and output_size should be large enough @sa hash_size()
@@ -55,7 +52,7 @@ make_file_hash(
     bin_edit_t& output, const char* filename, hash_t algorithm) noexcept;
 /// overload with container adapter
 std::error_code
-make_file_hash(obuffer_t& output, const char* filename, hash_t algorithm);
+make_file_hash(auto_size_t& output, const char* filename, hash_t algorithm);
 
 /** makes a secure key by a password-based key-derivation function (PKCS#5 PBKDF2)
  * the size of the output key is defined by output.size.
@@ -110,7 +107,7 @@ struct hash
      */
     std::error_code finish(bin_edit_t& output) noexcept;
     /// overload with container adapter
-    std::error_code finish(obuffer_t&& output);
+    std::error_code finish(auto_size_t&& output);
 
     // move only
     hash();
@@ -142,7 +139,7 @@ struct hmac
      */
     std::error_code finish(bin_edit_t& output) noexcept;
     /// overload with container adapter
-    std::error_code finish(obuffer_t&& output);
+    std::error_code finish(auto_size_t&& output);
 
     // move only
     hmac();
@@ -162,7 +159,7 @@ template <class Container>
 inline std::pair<Container, std::error_code>
 make_hash(bin_view_t input, hash_t algo) {
     Container digest;
-    auto      ec = make_hash(obuffer_t{digest}, input, algo);
+    auto      ec = make_hash(auto_size_t{digest}, input, algo);
     return {digest, ec};
 }
 
@@ -191,7 +188,7 @@ template <class Container>
 inline std::pair<Container, std::error_code>
 make_hmac(bin_view_t input, bin_view_t key, hash_t algo) {
     Container digest;
-    auto      ec = make_hmac(obuffer_t{digest}, input, key, algo);
+    auto      ec = make_hmac(auto_size_t{digest}, input, key, algo);
     return {digest, ec};
 }
 

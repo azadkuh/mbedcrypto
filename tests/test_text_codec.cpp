@@ -97,12 +97,12 @@ TEST_CASE("hex tests", "[hex]") {
     SECTION("proper conversion") {
         std::string output;
         SECTION("to_hex") {
-            auto ec = to_hex(obuffer_t{output}, test::short_binary());
+            auto ec = to_hex(auto_size_t{output}, test::short_binary());
             REQUIRE_FALSE(ec); // no error
             REQUIRE(output == HexShortBin);
         }
         SECTION("from_hex") {
-            auto ec = from_hex(obuffer_t{output}, HexShortBin);
+            auto ec = from_hex(auto_size_t{output}, HexShortBin);
             REQUIRE_FALSE(ec);
             REQUIRE(output.size() == test::short_binary().size);
             REQUIRE(output == test::short_binary());
@@ -163,7 +163,7 @@ TEST_CASE("base64 tests", "[base64]") {
         }
         SECTION("container") {
             std::vector<uint8_t> vec;
-            auto ec = from_base64(obuffer_t{vec}, SillyInput);
+            auto ec = from_base64(auto_size_t{vec}, SillyInput);
             REQUIRE(ec == make_error_code(error_t::bad_input));
             REQUIRE(vec.empty());
         }
@@ -177,7 +177,7 @@ TEST_CASE("base64 tests", "[base64]") {
     SECTION("encoding/decoding") {
         SECTION("to_base64") {
             std::vector<char> vec;
-            auto ec = to_base64(obuffer_t{vec}, test::long_text());
+            auto ec = to_base64(auto_size_t{vec}, test::long_text());
             REQUIRE_FALSE(ec);
             const auto osize = std::strlen(Base64LongText);
             REQUIRE(vec.size() == osize);

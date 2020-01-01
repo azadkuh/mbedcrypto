@@ -86,7 +86,7 @@ make_hash(bin_edit_t& output, bin_view_t input, hash_t algo) noexcept {
 }
 
 std::error_code
-make_hash(obuffer_t&& output, bin_view_t input, hash_t algo) {
+make_hash(auto_size_t&& output, bin_view_t input, hash_t algo) {
     bin_edit_t exptected;
     auto       ec = make_hash(exptected, input, algo);
     if (ec)
@@ -119,7 +119,7 @@ make_hmac(
 }
 
 std::error_code
-make_hmac(obuffer_t&& output, bin_view_t input, bin_view_t key, hash_t algo) {
+make_hmac(auto_size_t&& output, bin_view_t input, bin_view_t key, hash_t algo) {
     bin_edit_t exptected;
     auto       ec = make_hmac(exptected, input, key, algo);
     if (ec)
@@ -180,7 +180,7 @@ make_file_hash(bin_edit_t& output, const char* fname, hash_t algo) noexcept {
 }
 
 std::error_code
-make_file_hash(obuffer_t&& output, const char* fname, hash_t algo) noexcept {
+make_file_hash(auto_size_t&& output, const char* fname, hash_t algo) noexcept {
 #if !defined(MBEDTLS_FS_IO)
     return make_error_code(error_t::not_supported);
 #else
@@ -232,7 +232,7 @@ hash::finish(bin_edit_t& output) noexcept {
 }
 
 std::error_code
-hash::finish(obuffer_t&& output) {
+hash::finish(auto_size_t&& output) {
     output.resize(pimpl->size());
     return finish(static_cast<bin_edit_t&>(output));
 }
@@ -282,7 +282,7 @@ hmac::finish(bin_edit_t& output) noexcept {
 }
 
 std::error_code
-hmac::finish(obuffer_t&& output) {
+hmac::finish(auto_size_t&& output) {
     output.resize(pimpl->size());
     return finish(static_cast<bin_edit_t&>(output));
 }

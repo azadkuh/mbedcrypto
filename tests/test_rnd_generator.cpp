@@ -20,7 +20,7 @@ TEST_CASE("random generator tests", "[random]") {
     }
     {
         std::string out;
-        auto        ec = rnd.make(obuffer_t{out}, 16);
+        auto        ec = rnd.make(auto_size_t{out}, 16);
         REQUIRE_FALSE(ec);
         REQUIRE(out.size() == 16);
     }

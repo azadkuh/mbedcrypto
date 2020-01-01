@@ -48,7 +48,7 @@ to_hex(bin_edit_t& output, bin_view_t input) noexcept {
 }
 
 std::error_code
-to_hex(obuffer_t&& output, bin_view_t input) {
+to_hex(auto_size_t&& output, bin_view_t input) {
     bin_edit_t expected;
     auto       ec = to_hex(expected, input);
     if (ec)
@@ -96,7 +96,7 @@ from_hex(bin_edit_t& output, bin_view_t input) noexcept {
 }
 
 std::error_code
-from_hex(obuffer_t&& output, bin_view_t input) {
+from_hex(auto_size_t&& output, bin_view_t input) {
     bin_edit_t expected;
     auto ec = from_hex(expected, input);
     if (ec)
@@ -125,7 +125,7 @@ to_base64(bin_edit_t& output, bin_view_t input) noexcept {
 }
 
 std::error_code
-to_base64(obuffer_t&& output, bin_view_t input) {
+to_base64(auto_size_t&& output, bin_view_t input) {
     bin_edit_t expected;
     auto ec = to_base64(expected, input);
     if (ec)
@@ -155,7 +155,7 @@ from_base64(bin_edit_t& output, bin_view_t input) noexcept {
 }
 
 std::error_code
-from_base64(obuffer_t&& output, bin_view_t input) {
+from_base64(auto_size_t&& output, bin_view_t input) {
     bin_edit_t expected;
     auto ec = from_base64(expected, input);
     if (ec)

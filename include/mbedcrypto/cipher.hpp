@@ -95,7 +95,7 @@ encrypt(bin_edit_t& output, bin_view_t input, const info_t& ci) noexcept;
 
 /// overload with container adapter.
 std::error_code
-encrypt(obuffer_t&& output, bin_view_t input, const info_t& ci);
+encrypt(auto_size_t&& output, bin_view_t input, const info_t& ci);
 
 /// decrypts input and writes into output, @sa encrypt()
 std::error_code
@@ -103,7 +103,7 @@ decrypt(bin_edit_t& output, bin_view_t input, const info_t& ci) noexcept;
 
 /// overload with container adapter.
 std::error_code
-decrypt(obuffer_t&& output, bin_view_t input, const info_t& ci);
+decrypt(auto_size_t&& output, bin_view_t input, const info_t& ci);
 
 //-----------------------------------------------------------------------------
 
@@ -121,8 +121,8 @@ auth_encrypt(
 /// overload with container adapter.
 std::error_code
 auth_encrypt(
-    obuffer_t&&   output,
-    obuffer_t&&   tag,
+    auto_size_t&& output,
+    auto_size_t&& tag,
     bin_view_t    input,
     const info_t& ci) noexcept;
 
@@ -139,7 +139,7 @@ auth_decrypt(
 /// overload with container adapter.
 std::error_code
 auth_decrypt(
-    obuffer_t&&   output,
+    auto_size_t&& output,
     bin_view_t    tag,
     bin_view_t    input,
     const info_t& ci) noexcept;
@@ -158,12 +158,12 @@ auth_decrypt(
  * for (...) {
  *     const auto input = read_some_input_from_somewhere();
  *     std::vector<uint8_t> output;
- *     s.update(obuffer_t{output}, input);
+ *     s.update(auto_size_t{output}, input);
  *     use_encrypted_segment(output);
  * }
  *
  * std::vector<uint8_t> last_segment;
- * s.finish(obuffer_t{last_segment});
+ * s.finish(auto_size_t{last_segment});
  * use_encrypted_segment(last_segment);
  * @endcode
  */
@@ -186,12 +186,12 @@ public:
      */
     std::error_code update(bin_edit_t& output, bin_view_t chunk) noexcept;
     /// overload with container adapter.
-    std::error_code update(obuffer_t&& output, bin_view_t chukn);
+    std::error_code update(auto_size_t&& output, bin_view_t chukn);
 
     /// returns the final segment of output (w/ padding if supported)
     std::error_code finish(bin_edit_t& final_output) noexcept;
     /// overload with container adapter.
-    std::error_code finish(obuffer_t&& final_output);
+    std::error_code finish(auto_size_t&& final_output);
 
 protected:
     struct impl;

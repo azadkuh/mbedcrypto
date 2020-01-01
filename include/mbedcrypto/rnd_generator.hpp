@@ -34,7 +34,7 @@ namespace mbedcrypto {
 std::error_code make_random_bytes(bin_edit_t& output) noexcept;
 
 inline auto
-make_random_bytes(obuffer_t&& output, size_t length) {
+make_random_bytes(auto_size_t&& output, size_t length) {
     output.resize(length);
     return make_random_bytes(static_cast<bin_edit_t&>(output));
 }
@@ -43,7 +43,7 @@ template <typename Container>
 inline std::pair<Container, std::error_code>
 make_random_bytes(size_t length) {
     Container out;
-    auto      ec = make_random_bytes(obuffer_t{out}, length);
+    auto      ec = make_random_bytes(auto_size_t{out}, length);
     return {out, ec};
 }
 
@@ -71,7 +71,7 @@ public:
     /// makes and writes output.size of random bytes into ouput.data
     std::error_code make(bin_edit_t& output) noexcept;
 
-    inline auto make(obuffer_t&& output, size_t length) {
+    inline auto make(auto_size_t&& output, size_t length) {
         output.resize(length);
         return make(static_cast<bin_edit_t&>(output));
     }

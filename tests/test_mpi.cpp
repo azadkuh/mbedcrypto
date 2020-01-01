@@ -53,7 +53,7 @@ TEST_CASE("mpi tests", "[mpi]") {
         }
         SECTION("string dump") {
             std::string out;
-            auto ec = big.to_string(obuffer_t{out}, 10);
+            auto ec = big.to_string(auto_size_t{out}, 10);
             REQUIRE_FALSE(ec);
             REQUIRE_FALSE(out.empty());
 
@@ -71,7 +71,7 @@ TEST_CASE("mpi tests", "[mpi]") {
         }
         SECTION("binary dump") {
             std::vector<uint8_t> out;
-            auto ec = big.to_binary(obuffer_t{out});
+            auto ec = big.to_binary(auto_size_t{out});
             REQUIRE_FALSE(ec);
             REQUIRE(out.size() == 51); // big is a 51 bytes integer
 

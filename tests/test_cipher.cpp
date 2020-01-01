@@ -219,14 +219,14 @@ protected:
         const auto source = make_source(test::long_text(), feats.traits);
 
         std::vector<uint8_t> enc;
-        auto ec = cipher::encrypt(obuffer_t{enc}, source, ci);
+        auto ec = cipher::encrypt(auto_size_t{enc}, source, ci);
         if (ec)
             std::printf("\ncrypt error(%0x): %s\n", -ec.value(), ec.message().data());
         REQUIRE_FALSE(ec);
         REQUIRE(enc.size() >= source.size);
 
         std::string dec;
-        ec = cipher::decrypt(obuffer_t{dec}, enc, ci);
+        ec = cipher::decrypt(auto_size_t{dec}, enc, ci);
         REQUIRE_FALSE(ec);
 
 #if VERBOSE_CIPHER > 0
@@ -270,7 +270,7 @@ protected:
 
         std::vector<uint8_t> enc;
         std::vector<uint8_t> tag;
-        auto ec = cipher::auth_encrypt(obuffer_t{enc}, obuffer_t{tag}, source, ci);
+        auto ec = cipher::auth_encrypt(auto_size_t{enc}, auto_size_t{tag}, source, ci);
         if (ec)
             std::printf("\nauth-crypt error(%0x): %s\n", -ec.value(), ec.message().data());
         REQUIRE_FALSE(ec);
@@ -278,7 +278,7 @@ protected:
         REQUIRE(tag.size() >= 16);
 
         std::string dec;
-        ec = cipher::auth_decrypt(obuffer_t{dec}, tag, enc, ci);
+        ec = cipher::auth_decrypt(auto_size_t{dec}, tag, enc, ci);
         REQUIRE_FALSE(ec);
         REQUIRE(dec.size() == source.size);
 
@@ -318,12 +318,12 @@ test_variable_iv(cipher_t type) {
     const bin_view_t plain{test::long_text()};
 
     std::string enc;
-    auto        ec = cipher::encrypt(obuffer_t{enc}, plain, ci);
+    auto        ec = cipher::encrypt(auto_size_t{enc}, plain, ci);
     REQUIRE_FALSE(ec);
     REQUIRE(enc.size() == plain.size);
 
     std::string dec;
-    ec = cipher::decrypt(obuffer_t{dec}, enc, ci);
+    ec = cipher::decrypt(auto_size_t{dec}, enc, ci);
     REQUIRE_FALSE(ec);
     REQUIRE(plain == dec);
 }
@@ -345,11 +345,11 @@ test_variable_key(cipher_t type) {
     const auto plain = make_source(test::long_text(), tr);
 
     std::string enc;
-    auto        ec = cipher::encrypt(obuffer_t{enc}, plain, ci);
+    auto        ec = cipher::encrypt(auto_size_t{enc}, plain, ci);
     REQUIRE_FALSE(ec);
 
     std::string dec;
-    ec = cipher::decrypt(obuffer_t{dec}, enc, ci);
+    ec = cipher::decrypt(auto_size_t{dec}, enc, ci);
     REQUIRE_FALSE(ec);
     REQUIRE(plain == dec);
 }

@@ -69,29 +69,29 @@ static_assert(!std::is_nothrow_constructible<bin_view_t, std::list<uint8_t>>::va
 /// }}} bin_view_checks
 
 //-----------------------------------------------------------------------------
-// obuffer_t checks {{{
+// auto_size_t checks {{{
 // is not copy constructible nor movable
-static_assert(!std::is_copy_constructible<obuffer_t>::value, "");
-static_assert(!std::is_move_constructible<obuffer_t>::value, "");
-static_assert(!std::is_copy_assignable<obuffer_t>::value,    "");
-static_assert(!std::is_move_assignable<obuffer_t>::value,    "");
+static_assert(!std::is_copy_constructible<auto_size_t>::value, "");
+static_assert(!std::is_move_constructible<auto_size_t>::value, "");
+static_assert(!std::is_copy_assignable<auto_size_t>::value,    "");
+static_assert(!std::is_move_assignable<auto_size_t>::value,    "");
 // valid containers
-static_assert(std::is_constructible<obuffer_t, std::string&>::value,          "");
-static_assert(std::is_constructible<obuffer_t, std::vector<uint8_t>&>::value, "");
-static_assert(std::is_constructible<obuffer_t, std::vector<char>&>::value,    "");
+static_assert(std::is_constructible<auto_size_t, std::string&>::value,          "");
+static_assert(std::is_constructible<auto_size_t, std::vector<uint8_t>&>::value, "");
+static_assert(std::is_constructible<auto_size_t, std::vector<char>&>::value,    "");
 // bad containers
-static_assert(!std::is_nothrow_constructible<obuffer_t, std::string&>::value,   "ctor may throw");
-static_assert(!std::is_constructible<obuffer_t, std::string>::value,            "only accepts reference");
-static_assert(!std::is_constructible<obuffer_t, std::string&&>::value,          "only accepts reference");
-static_assert(!std::is_constructible<obuffer_t, const std::string&>::value,     "reference must be mutable");
-static_assert(!std::is_constructible<obuffer_t, std::array<char, 8>&>::value,   "not resizable");
-static_assert(!std::is_constructible<obuffer_t, std::wstring&>::value,          "not a single-byte container");
-static_assert(!std::is_constructible<obuffer_t, std::vector<int>&>::value,      "not a single-byte container");
-static_assert(!std::is_constructible<obuffer_t, std::list<uint8_t>&>::value,    "has not operator[]()");
+static_assert(!std::is_nothrow_constructible<auto_size_t, std::string&>::value,   "ctor may throw");
+static_assert(!std::is_constructible<auto_size_t, std::string>::value,            "only accepts reference");
+static_assert(!std::is_constructible<auto_size_t, std::string&&>::value,          "only accepts reference");
+static_assert(!std::is_constructible<auto_size_t, const std::string&>::value,     "reference must be mutable");
+static_assert(!std::is_constructible<auto_size_t, std::array<char, 8>&>::value,   "not resizable");
+static_assert(!std::is_constructible<auto_size_t, std::wstring&>::value,          "not a single-byte container");
+static_assert(!std::is_constructible<auto_size_t, std::vector<int>&>::value,      "not a single-byte container");
+static_assert(!std::is_constructible<auto_size_t, std::list<uint8_t>&>::value,    "has not operator[]()");
 // default constructors
-static_assert(!std::is_constructible<obuffer_t>::value,                "not default constructible");
-static_assert(!std::is_constructible<obuffer_t, char*, size_t>::value, "only accepts a container");
-// }}} obuffer_t checks
+static_assert(!std::is_constructible<auto_size_t>::value,                "not default constructible");
+static_assert(!std::is_constructible<auto_size_t, char*, size_t>::value, "only accepts a container");
+// }}} auto_size_t checks
 
 //-----------------------------------------------------------------------------
 } // namespace anon
@@ -139,7 +139,7 @@ TEST_CASE("binary edit", "[binutils]") {
     SECTION("string") {
         constexpr char Name[] = "mbedcrypto";
         std::string s;
-        obuffer_t ob{s};
+        auto_size_t ob{s};
         ob.resize(std::strlen(Name));
         std::memcpy(ob.data, Name, ob.size);
         REQUIRE(s == Name);
@@ -147,7 +147,7 @@ TEST_CASE("binary edit", "[binutils]") {
     }
     SECTION("binary") {
         std::vector<uint8_t> v;
-        obuffer_t ob{v};
+        auto_size_t ob{v};
         ob.resize(8);
         for (size_t i = 0; i < 8; ++i)
             ob.data[i] = i;
