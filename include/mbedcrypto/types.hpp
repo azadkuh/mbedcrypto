@@ -37,21 +37,20 @@ enum class hash_t {
     unknown,   ///< invalid or unknown
 };
 
-/// all possible paddings, pkcs7 is included in default build.
 /// helps cipher_bm::cbc to accept any input size.
 enum class padding_t {
     none,          ///< never pad (full blocks only)
-    pkcs7,         ///< PKCS7 padding (default)
+    pkcs7,         ///< PKCS7 padding
     one_and_zeros, ///< ISO/IEC 7816-4 padding
     zeros_and_len, ///< ANSI X.923 padding
     zeros,         ///< zero padding (not reversible!)
     unknown,       ///< invalid or unknown
 };
 
-/** ciphering block mode.
+/** block modes of ciphering.
  * @sa https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation.
  *
- * hits:
+ * hints:
  * | block_mode | uses iv | aead | input size             |
  * | :---       | :---    | :--- | :---                   |
  * | ecb        |         |      | N * block_size()       |
@@ -174,8 +173,10 @@ enum class cipher_t {
     unknown, ///< invalid or unknown
 };
 
-/// all possible public key algorithms (PKI types), RSA is included in default
-/// build.
+/** all possible public key algorithms (PKI types):
+ * - rsa: is always included in all builds.
+ * - ec/ecdh/ecdsa: enabled by MBEDCRYPTO_PK_EC build options
+ */
 enum class pk_t {
     rsa,        ///< RSA (default)
     rsa_alt,    ///< RSA alternative
@@ -186,8 +187,8 @@ enum class pk_t {
     unknown,    ///< unknown or invalid
 };
 
-/** all supported EC curves.
- * Only curves over prime fields are supported:
+/** all supported elliptic curves.
+ * only curves over prime fields are supported:
  * - short Weierstrass: y^2 = x^3 + A x   + B mod P @sa rfc-4492/sec1
  * - Montgomery:        y^2 = x^3 + A x^2 + x mod P
  *
@@ -202,9 +203,9 @@ enum class curve_t {
     secp256r1,  ///< 256-bits NIST curve
     secp384r1,  ///< 384-bits NIST curve
     secp521r1,  ///< 521-bits NIST curve
-    secp192k1,  ///< 192-bits "Koblitz" curve
-    secp224k1,  ///< 224-bits "Koblitz" curve
-    secp256k1,  ///< 256-bits "Koblitz" curve
+    secp192k1,  ///< 192-bits Koblitz curve
+    secp224k1,  ///< 224-bits Koblitz curve
+    secp256k1,  ///< 256-bits Koblitz curve
     bp256r1,    ///< 256-bits Brainpool curve
     bp384r1,    ///< 384-bits Brainpool curve
     bp512r1,    ///< 512-bits Brainpool curve
@@ -229,6 +230,7 @@ enum class features {
 //-----------------------------------------------------------------------------
 // clang-format off
 
+// all returned names are in lower case.
 const char* to_string(hash_t) noexcept;
 const char* to_string(padding_t) noexcept;
 const char* to_string(cipher_bm) noexcept;
@@ -236,7 +238,7 @@ const char* to_string(cipher_t) noexcept;
 const char* to_string(pk_t) noexcept;
 const char* to_string(curve_t) noexcept;
 
-// these funcs support both lower and upper case names.
+// these funcs support both lower and upper case names as input.
 void from_string(const char*, hash_t&) noexcept;
 void from_string(const char*, padding_t&) noexcept;
 void from_string(const char*, cipher_bm&) noexcept;
@@ -262,7 +264,6 @@ bool supports(pk_t) noexcept;
 bool supports(curve_t) noexcept;
 bool supports(features) noexcept;
 
-// overloads: check by name
 inline bool supports_hash(const char* name) noexcept {
     return supports(from_string<hash_t>(name));
 }
@@ -311,8 +312,7 @@ std::vector<curve_t>   supported_curves();
  *  The purpose of the instruction set is to improve the speed of
  *  applications performing encryption and decryption using AES.
  *
- * @warning mbedcrypto (mbedcrypto) automatically switches to AESNI
- *  automatically for supported systems.
+ * @warning mbedcrypto automatically switches to AESNI on supported platforms.
  * @sa http://en.wikipedia.org/wiki/AES_instruction_set
  */
 inline bool
@@ -323,6 +323,7 @@ supports_aes_ni() noexcept {
 /** authenticated encryption by additional data.
  * returns true if any of MBEDCRYPTO_BM_GCM or MBEDCRYPTO_BM_CCM has been
  * activated.  @sa features::aead
+ * @sa https://en.wikipedia.org/wiki/Authenticated_encryption
  */
 inline bool
 supports_aead() noexcept {
