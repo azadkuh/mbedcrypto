@@ -1,7 +1,6 @@
 #include <catch2/catch.hpp>
 
 #include "../src/private/conversions.hpp"
-#include "../src/private/pk_context.hpp"
 
 #include <initializer_list>
 #include <cstdio>
@@ -319,7 +318,7 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
 
     SECTION("pk features") {
         auto check = supports(features::pk_keygen);
-        REQUIRE(check == pk::supports_rsa_keygen());
+        REQUIRE(check == supports_rsa_keygen());
 #if defined(MBEDTLS_GENPRIME)
         REQUIRE(check);
 #else
@@ -334,7 +333,7 @@ TEST_CASE("mbedcrypto types checkings", "[types]") {
 #endif
 
         check = supports(features::pk_ec) && supports(features::pk_keygen);
-        REQUIRE(check == pk::supports_ec_keygen());
+        REQUIRE(check == supports_ec_keygen());
 #if defined(MBEDTLS_ECP_C) && defined(MBEDTLS_GENPRIME)
         REQUIRE(check);
 #else

@@ -63,18 +63,6 @@ is_valid(const curve_info_t ci) noexcept {
     return ci.tls_id > 0 && ci.bitlen > 0;
 }
 
-/// @sa MBEDCRYPTO_PK_KEYGEN
-inline bool
-supports_rsa_keygen() noexcept {
-    return supports(features::pk_keygen);
-}
-
-/// @sa MBEDCRYPTO_PK_KEYGEN and MBEDCRYPTO_PK_EC
-inline bool
-supports_ec_keygen() noexcept {
-    return supports(features::pk_keygen) && supports(features::pk_ec);
-}
-
 inline bool
 is_rsa(pk_t t) noexcept {
     switch (t) {

@@ -330,6 +330,18 @@ supports_aead() noexcept {
     return supports(features::aead);
 }
 
+/// @sa MBEDCRYPTO_PK_KEYGEN
+inline bool
+supports_rsa_keygen() noexcept {
+    return supports(features::pk_keygen);
+}
+
+/// @sa MBEDCRYPTO_PK_KEYGEN and MBEDCRYPTO_PK_EC
+inline bool
+supports_ec_keygen() noexcept {
+    return supports(features::pk_keygen) && supports(features::pk_ec);
+}
+
 // clang-format on
 //-----------------------------------------------------------------------------
 } // namespace mbedcrypto

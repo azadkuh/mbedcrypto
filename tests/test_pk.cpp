@@ -102,7 +102,7 @@ TEST_CASE("rsa-key generation api", "[pk]") {
     constexpr size_t keysize = 128;
     auto pri = pk::make_context();
     auto ec  = make_rsa_key(*pri, keybits);
-    if (!pk::supports_rsa_keygen()) {
+    if (!supports_rsa_keygen()) {
         REQUIRE(ec == make_error_code(error_t::not_supported));
         return;
     }
@@ -315,7 +315,7 @@ TEST_CASE("encrypt/decrypt by rsa key", "[pk]") {
 }
 
 TEST_CASE("ec key generation", "[pk]") {
-    if (!pk::supports_ec_keygen())
+    if (!supports_ec_keygen())
         return;
     auto pri = pk::make_context();
     // bad inputs
