@@ -40,10 +40,12 @@ struct capability {
     bool verify  = false; ///< can do the verification?
 };
 
-/// curve data (only short-Weierstrass curves are supported)
+/// elliptic curve information
+/// a valid curve_info_t has non-zero id and bitlen
+/// @warning: only short-Weierstrass curves are supported
 struct curve_info_t {
-    uint16_t tls_id = 0;
-    size_t   bitlen = 0;
+    uint16_t tls_id = 0; ///< as defined by rfc-4492
+    size_t   bitlen = 0; ///< key bitlen
 };
 
 //-----------------------------------------------------------------------------
@@ -97,7 +99,9 @@ is_ec(pk_t t) noexcept {
     }
 }
 
-/// returns invalid (empty) info if curve is not supported (Montgomery curves)
+/// returns invalid info if:
+/// - EC is not enabled (@sa MBEDCRYPTO_PK_EC)
+/// - curve is Montgomery or not supported (@sa curve_info_t)
 curve_info_t curve_info(curve_t) noexcept;
 
 //-----------------------------------------------------------------------------

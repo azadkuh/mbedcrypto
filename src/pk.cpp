@@ -429,17 +429,6 @@ _make_client_kex(
 } // namespace anon
 //-----------------------------------------------------------------------------
 
-curve_info_t
-curve_info(curve_t c) noexcept {
-    curve_info_t ci;
-    const auto*  ninfo = mbedtls_ecp_curve_info_from_grp_id(to_native(c));
-    if (ninfo) {
-        ci.tls_id = ninfo->tls_id;
-        ci.bitlen = ninfo->bit_size;
-    }
-    return ci;
-}
-
 unique_context
 make_context() {
     auto* ptr = new context{};
@@ -674,6 +663,19 @@ export_pub_key(bin_edit_t& out, context& d, key_io_t kio) noexcept {
 std::error_code
 export_pub_key(auto_size_t&& out, context& d, key_io_t kio) {
     return _resize_impl(_export_pub_key, std::forward<auto_size_t>(out), d, kio);
+}
+
+curve_info_t
+curve_info(curve_t c) noexcept {
+    curve_info_t ci;
+#if defined(MBEDTLS_ECP_C)
+    const auto*  ninfo = mbedtls_ecp_curve_info_from_grp_id(to_native(c));
+    if (ninfo) {
+        ci.tls_id = ninfo->tls_id;
+        ci.bitlen = ninfo->bit_size;
+    }
+#endif // MBEDTLS_ECP_C
+    return ci;
 }
 
 std::error_code
