@@ -26,6 +26,7 @@
 #include "mbedcrypto/binutils.hpp"
 #include "mbedcrypto/errors.hpp"
 
+#include <memory>
 //-----------------------------------------------------------------------------
 namespace mbedcrypto {
 //-----------------------------------------------------------------------------

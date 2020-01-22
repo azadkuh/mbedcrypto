@@ -20,6 +20,7 @@
 #include "mbedcrypto/errors.hpp"
 #include "mbedcrypto/types.hpp"
 
+#include <memory>
 //-----------------------------------------------------------------------------
 namespace mbedcrypto {
 namespace pk {

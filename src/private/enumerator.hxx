@@ -18,7 +18,7 @@ inline char
 to_lower_ascii(char ch) noexcept {
     constexpr char Shift = 'a' - 'A';
     return (ch >= 'A' && ch <= 'Z') ? ch + Shift : ch;
-};
+}
 
 inline bool
 icompare(const char* a, size_t alen, const char* b, size_t blen) noexcept {
