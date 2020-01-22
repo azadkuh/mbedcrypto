@@ -14,12 +14,7 @@ add_executable(${PROJECT_NAME}
     ./test_pk.cpp
     )
 
-target_include_directories(${PROJECT_NAME} PRIVATE
-    ${CMAKE_BINARY_DIR}
-    ${CMAKE_SOURCE_DIR}
-    ${DIR_DEPS}/
-    ${DIR_DEPS}/mbedtls/include
-    )
 target_link_libraries(${PROJECT_NAME} PRIVATE mbedcrypto)
+target_include_directories(${PROJECT_NAME} PRIVATE ${DIR_DEPS}/)
 
 add_test(NAME mbedcrypto COMMAND ${PROJECT_NAME})

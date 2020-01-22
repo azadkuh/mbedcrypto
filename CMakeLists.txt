@@ -1,47 +1,45 @@
 cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 project(mbedcrypto
-    VERSION 1.0.0
+    VERSION 2.0.0
     LANGUAGES C CXX
     )
 
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/setup_build.cmake")
+include("${CMAKE_SOURCE_DIR}/cmake/setup_platforms.cmake")
 
 #-----------------------------------------------------------------------------
-# options
+# build options
+option(MBEDCRYPTO_STATIC_CRT "build by static c/c++ runtime" ON)
+
 # cryptograohic features
 
 ## optional hash algorithms:
 ## note: md5, sha1/sha224/sha256/sha384/sha512 are mandatory (not optional)
-option(MBEDCRYPTO_HASH_MD2       "enable md2 hash (insecure and deprecated)" OFF)
-option(MBEDCRYPTO_HASH_MD4       "enable md4 hash"                           OFF)
-option(MBEDCRYPTO_HASH_RIPEMD160 "enable ripemd160 hash"                     OFF)
+option(MBEDCRYPTO_HASH_MD2       "md2 hash (not recommended)" OFF)
+option(MBEDCRYPTO_HASH_MD4       "md4 hash (not recommended)" OFF)
+option(MBEDCRYPTO_HASH_RIPEMD160 "ripemd160 hash"             OFF)
 
 ## optional cipher block modes:
 ## note: ecb and cbc are mandatory (not optional)
-option(MBEDCRYPTO_BM_CFB "enable cfb (cipher feedback mode)"                               OFF)
-option(MBEDCRYPTO_BM_OFB "enable ofb (output feedback mode)"                               OFF)
-option(MBEDCRYPTO_BM_CTR "enable ctr (cipher counter mode)"                                OFF)
-option(MBEDCRYPTO_BM_XTS "enable xts (cipher text stealing mode)"                          OFF)
-option(MBEDCRYPTO_BM_GCM "enable gcm (Galois cipher mode, for aead cryptography)"          ON)
-option(MBEDCRYPTO_BM_CCM "enable ccm (counter cbc-mac cipher mode, for aead cryptography)" OFF)
+option(MBEDCRYPTO_BM_CFB "cipher feedback mode"                   OFF)
+option(MBEDCRYPTO_BM_OFB "output feedback mode"                   OFF)
+option(MBEDCRYPTO_BM_CTR "cipher counter mode"                    OFF)
+option(MBEDCRYPTO_BM_XTS "cipher text stealing mode"              OFF)
+option(MBEDCRYPTO_BM_CCM "counter cbc-mac cipher mode (@sa AEAD)" OFF)
+option(MBEDCRYPTO_BM_GCM "Galois cipher mode (@sa AEAD)"          ON)
 
 ## optional cipher algorithms:
 ## note: AES is the de facto mandatory algorithm (not optional)
-option(MBEDCRYPTO_CIPHER_ARIA     "enable aria cipher"                      OFF)
-option(MBEDCRYPTO_CIPHER_BLOWFISH "enable blowfish cipher"                  OFF)
-option(MBEDCRYPTO_CIPHER_CAMELLIA "enable camellia cipher"                  OFF)
-option(MBEDCRYPTO_CIPHER_CHACHA20 "enable chacha20 & chacha20_poly ciphers" OFF)
-option(MBEDCRYPTO_CIPHER_DES      "enable des and triple-des cipher"        OFF)
-option(MBEDCRYPTO_CIPHER_ARC4     "enable arc4 cipher (insecure)"           OFF)
+option(MBEDCRYPTO_CIPHER_ARIA     "aria cipher"                       OFF)
+option(MBEDCRYPTO_CIPHER_BLOWFISH "blowfish cipher"                   OFF)
+option(MBEDCRYPTO_CIPHER_CAMELLIA "camellia cipher"                   OFF)
+option(MBEDCRYPTO_CIPHER_CHACHA20 "chacha20 & chacha20_poly ciphers"  OFF)
+option(MBEDCRYPTO_CIPHER_DES      "DES/3DES cipher (not recommended)" OFF)
+option(MBEDCRYPTO_CIPHER_ARC4     "arc4 cipher (insecure)"            OFF)
 
 ## optional pk algorithm
 ## note: rsa is mandatory (not optional)
-option(MBEDCRYPTO_PK_KEYGEN "enable private/public key generator" ON)
-option(MBEDCRYPTO_PK_EC     "enable elliptic-curve algorithms"    OFF)
-
-# other build options
-option(MBEDCRYPTO_STATIC_CRT "build by static c/c++ runtime"       ON)
-
+option(MBEDCRYPTO_PK_KEYGEN "private/public key generator" ON)
+option(MBEDCRYPTO_PK_EC     "elliptic-curve algorithms"    OFF)
 
 #------------------------------------------------------------------------------
 # sub-projects
