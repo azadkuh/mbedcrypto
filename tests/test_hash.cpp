@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------------
 namespace {
 using namespace mbedcrypto;
+using mcerr_t = mbedcrypto::error_t;
 
 struct tester
 {
@@ -26,18 +27,18 @@ struct tester
         REQUIRE(hash_size(algo) == 0);
 
         auto digest = make_hash<std::string>(src, algo);
-        REQUIRE(digest.second == make_error_code(error_t::not_supported));
+        REQUIRE(digest.second == make_error_code(mcerr_t::not_supported));
         REQUIRE(digest.first.empty());
 
         auto ec = md.start(algo);
-        REQUIRE(ec == make_error_code(error_t::not_supported));
+        REQUIRE(ec == make_error_code(mcerr_t::not_supported));
 
         digest = make_hmac<std::string>(src, key, algo);
-        REQUIRE(digest.second == make_error_code(error_t::not_supported));
+        REQUIRE(digest.second == make_error_code(mcerr_t::not_supported));
         REQUIRE(digest.first.empty());
 
         ec = mac.start(key, algo);
-        REQUIRE(ec == make_error_code(error_t::not_supported));
+        REQUIRE(ec == make_error_code(mcerr_t::not_supported));
     }
 
 protected:
@@ -202,16 +203,16 @@ TEST_CASE("pbkdf2-hmac tests", "[hash]") {
     {
         bin_edit_t empty;
         ec = make_hmac_pbkdf2(empty, hash_t::sha256, "some pass", bin_view_t{}, 32);
-        REQUIRE(ec == make_error_code(error_t::bad_input)); // empty output
+        REQUIRE(ec == make_error_code(mcerr_t::bad_input)); // empty output
 
         ec = make_hmac_pbkdf2(out, hash_t::unknown, "some pass", bin_view_t{}, 32);
-        REQUIRE(ec == make_error_code(error_t::bad_input)); // bad hash
+        REQUIRE(ec == make_error_code(mcerr_t::bad_input)); // bad hash
 
         ec = make_hmac_pbkdf2(out, hash_t::sha256, bin_view_t{}, bin_view_t{}, 32);
-        REQUIRE(ec == make_error_code(error_t::bad_input)); // empty password
+        REQUIRE(ec == make_error_code(mcerr_t::bad_input)); // empty password
 
         ec = make_hmac_pbkdf2(out, hash_t::sha256, "some pass", bin_view_t{}, 0);
-        REQUIRE(ec == make_error_code(error_t::bad_input)); // bad iterations
+        REQUIRE(ec == make_error_code(mcerr_t::bad_input)); // bad iterations
     }
 }
 

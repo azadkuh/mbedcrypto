@@ -25,27 +25,28 @@ TEST_CASE("mbedtls errors", "[errors]") {
 
 TEST_CASE("mbedcrypto errors", "[errors]") {
     using namespace mbedcrypto;
+    using mcerr_t = mbedcrypto::error_t;
 
     struct every_thing_t {
-        error_t     err;
+        mcerr_t     err;
         const char* msg;
     } all[] = {
-        {error_t::success,         "success"},
-        {error_t::type,            "invalid or unknown type"},
-        {error_t::usage,           "bad api call or invalid argument"},
-        {error_t::not_supported,   "not supported by this algorithm or build"},
-        {error_t::empty_input,     "input buffer has invalid size or data"},
-        {error_t::bad_input,       "invalid input type, size or data"},
-        {error_t::small_output,    "output buffer is empty or too small"},
-        {error_t::bad_hash,        "invalid or unsupported hash type"},
-        {error_t::bad_cipher,      "invalid or unsupported cipher type"},
-        {error_t::cipher_args,     "incompatible or bad cipher input arguments"},
-        {error_t::cipher_auth,     "failed to authenticate cipher (aead)"},
-        {error_t::pk,              "invalid or unsupported PK type"},
-        {error_t::pk_export,       "requires PE_EXPORT module, check build options"},
-        {error_t::rsa_keygen,      "requires RSA_KEYGEN, check build options"},
-        {error_t::ecp,             "invalid or unsupported EC (elliptic curve) type"},
-        {error_t::unknown,         "unknown error"},
+        {mcerr_t::success,         "success"},
+        {mcerr_t::type,            "invalid or unknown type"},
+        {mcerr_t::usage,           "bad api call or invalid argument"},
+        {mcerr_t::not_supported,   "not supported by this algorithm or build"},
+        {mcerr_t::empty_input,     "input buffer has invalid size or data"},
+        {mcerr_t::bad_input,       "invalid input type, size or data"},
+        {mcerr_t::small_output,    "output buffer is empty or too small"},
+        {mcerr_t::bad_hash,        "invalid or unsupported hash type"},
+        {mcerr_t::bad_cipher,      "invalid or unsupported cipher type"},
+        {mcerr_t::cipher_args,     "incompatible or bad cipher input arguments"},
+        {mcerr_t::cipher_auth,     "failed to authenticate cipher (aead)"},
+        {mcerr_t::pk,              "invalid or unsupported PK type"},
+        {mcerr_t::pk_export,       "requires PE_EXPORT module, check build options"},
+        {mcerr_t::rsa_keygen,      "requires RSA_KEYGEN, check build options"},
+        {mcerr_t::ecp,             "invalid or unsupported EC (elliptic curve) type"},
+        {mcerr_t::unknown,         "unknown error"},
     };
 
     for (const auto& a : all) {

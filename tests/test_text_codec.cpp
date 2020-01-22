@@ -4,10 +4,10 @@
 #include "mbedcrypto/text_codec.hpp"
 
 #include <array>
-#include <iostream>
 //-----------------------------------------------------------------------------
 namespace {
 using namespace mbedcrypto;
+using mcerr_t = mbedcrypto::error_t;
 //-----------------------------------------------------------------------------
 
 // of test::short_binary()
@@ -41,9 +41,9 @@ TEST_CASE("hex tests", "[hex]") {
     SECTION("empty inputs") {
         bin_edit_t output;
         auto ec = to_hex(output, bin_view_t{});
-        REQUIRE(ec == make_error_code(error_t::empty_input));
+        REQUIRE(ec == make_error_code(mcerr_t::empty_input));
         ec = from_hex(output, bin_view_t{});
-        REQUIRE(ec == make_error_code(error_t::empty_input));
+        REQUIRE(ec == make_error_code(mcerr_t::empty_input));
     }
 
     SECTION("find output size") {
@@ -65,12 +65,12 @@ TEST_CASE("hex tests", "[hex]") {
         bin_edit_t wrapper{output};
         SECTION("to_hex") {
             auto ec = to_hex(wrapper, test::short_binary());
-            REQUIRE(ec           == make_error_code(error_t::small_output));
+            REQUIRE(ec           == make_error_code(mcerr_t::small_output));
             REQUIRE(wrapper.size == sizeof(HexShortBin)); // null-terminator
         }
         SECTION("from_hex") {
             auto ec = from_hex(wrapper, HexShortBin);
-            REQUIRE(ec           == make_error_code(error_t::small_output));
+            REQUIRE(ec           == make_error_code(mcerr_t::small_output));
             REQUIRE(wrapper.size == test::short_binary().size);
         }
     }
@@ -81,11 +81,11 @@ TEST_CASE("hex tests", "[hex]") {
         bin_edit_t wrapper{output};
         SECTION("bad size") {
             auto ec = from_hex(wrapper, "badc0de"); // invalid size: not even size
-            REQUIRE(ec == make_error_code(error_t::bad_input));
+            REQUIRE(ec == make_error_code(mcerr_t::bad_input));
         }
         SECTION("bad char") {
             auto ec = from_hex(wrapper, "abadcode"); // invalid char: o
-            REQUIRE(ec           == make_error_code(error_t::bad_input));
+            REQUIRE(ec           == make_error_code(mcerr_t::bad_input));
             REQUIRE(wrapper.size == 2); // 2 proper decoding
             REQUIRE(output[0]    == 0xab);
             REQUIRE(output[1]    == 0xad);
@@ -140,14 +140,14 @@ TEST_CASE("base64 tests", "[base64]") {
             std::array<char, 8> small;
             bin_edit_t wrapper{small};
             auto ec = to_base64(wrapper, test::short_text());
-            REQUIRE(ec           == make_error_code(error_t::small_output));
+            REQUIRE(ec           == make_error_code(mcerr_t::small_output));
             REQUIRE(wrapper.size == sizeof(Base64ShortText)); // both include null-terminator
         }
         SECTION("from_base64") {
             std::array<uint8_t, 4> small;
             bin_edit_t wrapper{small};
             auto ec = from_base64(wrapper, Base64ShortText);
-            REQUIRE(ec           == make_error_code(error_t::small_output));
+            REQUIRE(ec           == make_error_code(mcerr_t::small_output));
             REQUIRE(wrapper.size == std::strlen(test::short_text()));
         }
     }
@@ -158,18 +158,18 @@ TEST_CASE("base64 tests", "[base64]") {
             std::array<uint8_t, 64> arr;
             bin_edit_t wrapper{arr};
             auto ec = from_base64(wrapper, SillyInput);
-            REQUIRE(ec           == make_error_code(error_t::bad_input));
+            REQUIRE(ec           == make_error_code(mcerr_t::bad_input));
             REQUIRE(wrapper.size == 0);
         }
         SECTION("container") {
             std::vector<uint8_t> vec;
             auto ec = from_base64(auto_size_t{vec}, SillyInput);
-            REQUIRE(ec == make_error_code(error_t::bad_input));
+            REQUIRE(ec == make_error_code(mcerr_t::bad_input));
             REQUIRE(vec.empty());
         }
         SECTION("pair results") {
             auto p = from_base64<std::string>(SillyInput);
-            REQUIRE(p.second == make_error_code(error_t::bad_input));
+            REQUIRE(p.second == make_error_code(mcerr_t::bad_input));
             REQUIRE(p.first.empty());
         }
     }

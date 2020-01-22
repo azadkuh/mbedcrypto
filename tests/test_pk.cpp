@@ -8,6 +8,7 @@
 //-----------------------------------------------------------------------------
 namespace {
 using namespace mbedcrypto;
+using mcerr_t = mbedcrypto::error_t;
 }
 //-----------------------------------------------------------------------------
 
@@ -46,15 +47,15 @@ TEST_CASE("api tests", "[pk]") {
         REQUIRE(pk::type_of(ctx) == pk_t::rsa);
 
         ec = pk::setup(ctx, pk_t::unknown);
-        REQUIRE(ec == make_error_code(error_t::not_supported));
+        REQUIRE(ec == make_error_code(mcerr_t::not_supported));
         REQUIRE(pk::type_of(ctx) == pk_t::unknown);
 
         ec = pk::setup(ctx, pk_t::rsa_alt);
-        REQUIRE(ec == make_error_code(error_t::not_supported));
+        REQUIRE(ec == make_error_code(mcerr_t::not_supported));
         REQUIRE(pk::type_of(ctx) == pk_t::unknown);
 
         ec = pk::setup(ctx, pk_t::rsassa_pss);
-        REQUIRE(ec == make_error_code(error_t::not_supported));
+        REQUIRE(ec == make_error_code(mcerr_t::not_supported));
         REQUIRE(pk::type_of(ctx) == pk_t::unknown);
     }
 
@@ -83,15 +84,15 @@ TEST_CASE("api tests", "[pk]") {
             REQUIRE(pk::can_do(ctx, pk_t::ecdsa) == true);
         } else {
             auto ec = pk::setup(ctx, pk_t::ec);
-            REQUIRE(ec == make_error_code(error_t::not_supported));
+            REQUIRE(ec == make_error_code(mcerr_t::not_supported));
             REQUIRE(pk::type_of(ctx) == pk_t::unknown);
 
             ec = pk::setup(ctx, pk_t::ecdh);
-            REQUIRE(ec == make_error_code(error_t::not_supported));
+            REQUIRE(ec == make_error_code(mcerr_t::not_supported));
             REQUIRE(pk::type_of(ctx) == pk_t::unknown);
 
             ec = pk::setup(ctx, pk_t::ecdsa);
-            REQUIRE(ec == make_error_code(error_t::not_supported));
+            REQUIRE(ec == make_error_code(mcerr_t::not_supported));
             REQUIRE(pk::type_of(ctx) == pk_t::unknown);
         }
     }
@@ -103,7 +104,7 @@ TEST_CASE("rsa-key generation api", "[pk]") {
     auto pri = pk::make_context();
     auto ec  = make_rsa_key(*pri, keybits);
     if (!supports_rsa_keygen()) {
-        REQUIRE(ec == make_error_code(error_t::not_supported));
+        REQUIRE(ec == make_error_code(mcerr_t::not_supported));
         return;
     }
     // is rsa key generator is enabled
@@ -248,23 +249,23 @@ TEST_CASE("sign/verify by rsa key", "[pk]") {
         auto empty = pk::make_context();
         std::string sig1;
         ec = pk::sign(auto_size_t{sig1}, *empty, hashed_message, hash_type);
-        REQUIRE(ec == make_error_code(error_t::bad_input)); // context is empty (uninitialized)
+        REQUIRE(ec == make_error_code(mcerr_t::bad_input)); // context is empty (uninitialized)
         ec = pk::verify(*empty, hashed_message, hash_type, signature);
-        REQUIRE(ec == make_error_code(error_t::bad_input)); // context is empty (uninitialized)
+        REQUIRE(ec == make_error_code(mcerr_t::bad_input)); // context is empty (uninitialized)
 
         ec = pk::sign(auto_size_t{sig1}, *pub, hashed_message, hash_type);
         REQUIRE(ec); // can not sign with public key
 
         ec = pk::sign(auto_size_t{sig1}, *pri, test::long_text(), hash_type);
-        REQUIRE(ec == make_error_code(error_t::bad_input)); // invalid message size
+        REQUIRE(ec == make_error_code(mcerr_t::bad_input)); // invalid message size
 
         sig1.resize(10); // small output
         bin_edit_t box{sig1};
         ec = pk::sign(box, *pri, hashed_message, hash_type);
-        REQUIRE(ec == make_error_code(error_t::small_output));
+        REQUIRE(ec == make_error_code(mcerr_t::small_output));
 
         ec = pk::verify(*pub, test::long_text(), hash_type, signature);
-        REQUIRE(ec == make_error_code(error_t::bad_input));
+        REQUIRE(ec == make_error_code(mcerr_t::bad_input));
     }
 }
 
@@ -297,20 +298,20 @@ TEST_CASE("encrypt/decrypt by rsa key", "[pk]") {
         auto empty = pk::make_context();
         std::string enc1, dec1;
         ec = pk::encrypt(auto_size_t{enc1}, *empty, source);
-        REQUIRE(ec == make_error_code(error_t::bad_input));
+        REQUIRE(ec == make_error_code(mcerr_t::bad_input));
         ec = pk::decrypt(auto_size_t{dec1}, *empty, enc);
-        REQUIRE(ec == make_error_code(error_t::bad_input));
+        REQUIRE(ec == make_error_code(mcerr_t::bad_input));
 
         enc1.resize(4); // small size
         bin_edit_t box{enc1};
         ec = pk::encrypt(box, *pub, source);
-        REQUIRE(ec == make_error_code(error_t::small_output));
+        REQUIRE(ec == make_error_code(mcerr_t::small_output));
 
         ec = pk::encrypt(auto_size_t{enc1}, *pub, test::long_text());
-        REQUIRE(ec == make_error_code(error_t::bad_input)); // input is larger than max_crypt_size()
+        REQUIRE(ec == make_error_code(mcerr_t::bad_input)); // input is larger than max_crypt_size()
 
         ec = pk::decrypt(auto_size_t{dec1}, *pub, enc);
-        REQUIRE(ec == make_error_code(error_t::bad_input)); // can't decrypt by public key
+        REQUIRE(ec == make_error_code(mcerr_t::bad_input)); // can't decrypt by public key
     }
 }
 
@@ -322,12 +323,12 @@ TEST_CASE("ec key generation", "[pk]") {
     {
         // rsa_alt is not an elliptic curve algorithm
         auto ec  = pk::make_ec_key(*pri, pk_t::rsa_alt, curve_t::secp192r1);
-        REQUIRE(ec == make_error_code(error_t::usage));
+        REQUIRE(ec == make_error_code(mcerr_t::usage));
         // curve_t::curve25519 is limited to ecdh algorithm
         ec = pk::make_ec_key(*pri, pk_t::ec, curve_t::curve25519);
-        REQUIRE(ec == make_error_code(error_t::usage));
+        REQUIRE(ec == make_error_code(mcerr_t::usage));
         ec = pk::make_ec_key(*pri, pk_t::ecdsa, curve_t::curve25519);
-        REQUIRE(ec == make_error_code(error_t::usage));
+        REQUIRE(ec == make_error_code(mcerr_t::usage));
     }
 
     constexpr auto hash_type = hash_t::sha512;
@@ -604,10 +605,10 @@ TEST_CASE("ecdh key exchange", "[pk][ecdh]") {
 
         std::vector<uint8_t> pub;
         ec = pk::export_pub_key(auto_size_t{pub}, *pri, fmt);
-        REQUIRE(ec == make_error_code(error_t::not_supported)); // ecdsa can not do ecdh
+        REQUIRE(ec == make_error_code(mcerr_t::not_supported)); // ecdsa can not do ecdh
 
         std::vector<uint8_t> secret;
         ec = pk::make_shared_secret(auto_size_t{secret}, *pri, pub, fmt);
-        REQUIRE(ec == make_error_code(error_t::not_supported)); // ecdsa can not do ecdh
+        REQUIRE(ec == make_error_code(mcerr_t::not_supported)); // ecdsa can not do ecdh
     }
 }
