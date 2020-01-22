@@ -24,12 +24,13 @@
 //-----------------------------------------------------------------------------
 namespace mbedcrypto {
 namespace pk {
-//-----------------------------------------------------------------------------
-//              _     _  _       _                            _
-//  _ __  _  _ | |__ | |(_) __  | |__ ___  _  _   __ _  _ __ (_)
-// | '_ \| || || '_ \| || |/ _| | / // -_)| || | / _` || '_ \| |
-// | .__/ \_,_||_.__/|_||_|\__| |_\_\\___| \_, | \__,_|| .__/|_|
-// |_|                                     |__/        |_|
+/*-----------------------------------------------------------------------------
+                _     _  _       _                            _
+    _ __  _  _ | |__ | |(_) __  | |__ ___  _  _   __ _  _ __ (_)
+   | '_ \| || || '_ \| || |/ _| | / // -_)| || | / _` || '_ \| |
+   | .__/ \_,_||_.__/|_||_|\__| |_\_\\___| \_, | \__,_|| .__/|_|
+   |_|                                     |__/        |_|
+*/
 
 /// generic context for rsa/ec algorithms.
 /// simply you shall create a context by make_context() first, then use other
@@ -150,12 +151,13 @@ is_valid(const curve_info_t ci) noexcept {
 /// - curve is Montgomery or not supported (@sa curve_info_t)
 curve_info_t curve_info(curve_t) noexcept;
 
-//-----------------------------------------------------------------------------
-//  _                                 _              _
-// | |__ ___  _  _  __ _  ___  _ _   | |_  ___  ___ | | ___
-// | / // -_)| || |/ _` |/ -_)| ' \  |  _|/ _ \/ _ \| |(_-<
-// |_\_\\___| \_, |\__, |\___||_||_|  \__|\___/\___/|_|/__/
-//            |__/ |___/
+/*-----------------------------------------------------------------------------
+    _                                 _              _
+   | |__ ___  _  _  __ _  ___  _ _   | |_  ___  ___ | | ___
+   | / // -_)| || |/ _` |/ -_)| ' \  |  _|/ _ \/ _ \| |(_-<
+   |_\_\\___| \_, |\__, |\___||_||_|  \__|\___/\___/|_|/__/
+              |__/ |___/
+*/
 
 /** creates an RSA (private) key.
  * change the default exponent value if you know exactly what you're doing.
@@ -177,14 +179,15 @@ make_ec_key(context& d, curve_t c) noexcept {
 /// checks if a public-private pair of keys matches.
 bool is_pri_pub_pair(const context& pri, const context& pub) noexcept;
 
-//-----------------------------------------------------------------------------
-//  _                _    __
-// | |__ ___  _  _  (_)  / /___
-// | / // -_)| || | | | / // _ \
-// |_\_\\___| \_, | |_|/_/ \___/
-//            |__/
-//
-// @warning: ecdh (ephemeral) keys are not supported by these i/o functions.
+/*-----------------------------------------------------------------------------
+    _                _    __
+   | |__ ___  _  _  (_)  / /___
+   | / // -_)| || | | | / // _ \
+   |_\_\\___| \_, | |_|/_/ \___/
+              |__/
+
+   @warning: ecdh (ephemeral) keys are not supported by these i/o functions.
+*/
 
 /// (re)initializes the context by private key data.
 std::error_code import_pri_key(
@@ -226,12 +229,13 @@ export_pub_key(bin_edit_t& out, context&, key_io_t) noexcept;
 std::error_code export_pub_key(auto_size_t&& out, context&, key_io_t);
 
 
-//-----------------------------------------------------------------------------
-//                       _                       _
-//  __  _ _  _  _  _ __ | |_  ___    __ _  _ __ (_)
-// / _|| '_|| || || '_ \|  _|/ _ \  / _` || '_ \| |
-// \__||_|   \_, || .__/ \__|\___/  \__,_|| .__/|_|
-//           |__/ |_|                     |_|
+/*-----------------------------------------------------------------------------
+                         _                       _
+    __  _ _  _  _  _ __ | |_  ___    __ _  _ __ (_)
+   / _|| '_|| || || '_ \|  _|/ _ \  / _` || '_ \| |
+   \__||_|   \_, || .__/ \__|\___/  \__,_|| .__/|_|
+             |__/ |_|                     |_|
+*/
 
 /** signs a hashed message by private key of context.
  * @warning: the size of hashed_msg must be equal to the hash_t size.
@@ -275,34 +279,37 @@ std::error_code decrypt(bin_edit_t& out, context&, bin_view_t input) noexcept;
 /// overload
 std::error_code decrypt(auto_size_t&& out, context&, bin_view_t input);
 
-//-----------------------------------------------------------------------------
-//  ___  ___  ___   _  _   _                              _
-// | __|/ __||   \ | || | | |__ ___  _  _   ___ __ __ __ | |_   __ _  _ _   __ _  ___
-// | _|| (__ | |) || __ | | / // -_)| || | / -_)\ \ // _|| ' \ / _` || ' \ / _` |/ -_)
-// |___|\___||___/ |_||_| |_\_\\___| \_, | \___|/_\_\\__||_||_|\__,_||_||_|\__, |\___|
-//                                   |__/                                  |___/
+/*-----------------------------------------------------------------------------
+    ___  ___  ___   _  _   _                              _
+   | __|/ __||   \ | || | | |__ ___  _  _   ___ __ __ __ | |_   __ _  _ _   __ _  ___
+   | _|| (__ | |) || __ | | / // -_)| || | / -_)\ \ // _|| ' \ / _` || ' \ / _` |/ -_)
+   |___|\___||___/ |_||_| |_\_\\___| \_, | \___|/_\_\\__||_||_|\__,_||_||_|\__, |\___|
+                                     |__/                                  |___/
 
-/* ecdh and secure key exchange
+ecdh and secure key exchange
 
 usage #1:
 {{{
 by using the same curve & point format on both client/server sides:
 
-                                       curve_t    curve = ...;
-                                       ec_point_t fmt{};
-|--------------------------------------------------|--------------------------------------------------|
-|                server side                       |                 client side                      |
-|--------------------------------------------------|--------------------------------------------------|
-| auto srv = make_context();                       |  auto cli = make_context();                      |
-| auto ec = make_ec_key(*srv, pk_t::ecdh, curve);  |  auto ec = make_ec_key(*cli, pk_t::ecdh, curve); |
-| std::vector<uint8_t> srv_pub, key;               |  std::vector<uint8_t> cli_pub, key;              |
-| ec = export_pub_key(                             |  ec = export_pub_key(                            |
-|      auto_size_t{srv_pub}, *srv, fmt);           |       auto_size_t{cli_pub}, *cli, fmt);          |
-| # send srv_pub to client ------------------------|----------------> receive srv_pub from server  #  |
-| # receive cli_pub from client <------------------|----------------------- send cli_pub to server #  |
-| ec = make_shared_secret(                         |  ec = make_shared_secret(                        |
-|      auto_size_t{key}, *srv, cli_pub, fmt);      |       auto_size_t{key}, *cli, srv_pub, fmt);     |
-|--------------------------------------------------|--------------------------------------------------|
+                                    curve_t    curve = ...;
+                                    ec_point_t fmt{};
+|---------------------------------------------|----------------------------------------------|
+|                server side                  |                 client side                  |
+|---------------------------------------------|----------------------------------------------|
+| auto srv = make_context();                  |  auto cli = make_context();                  |
+| auto ec  = make_ec_key(                     |  auto ec  = make_ec_key(                     |
+|            *srv, pk_t::ecdh, curve);        |             *cli, pk_t::ecdh, curve);        |
+| std::vector<uint8_t> srv_pub, key;          |  std::vector<uint8_t> cli_pub, key;          |
+| ec = export_pub_key(                        |  ec = export_pub_key(                        |
+|      auto_size_t{srv_pub}, *srv, fmt);      |       auto_size_t{cli_pub}, *cli, fmt);      |
+|                                             |                                              |
+| # send srv_pub to client -------------------|--------------> receive srv_pub from server # |
+| # receive cli_pub from client <-------------|--------------- send cli_pub to server      # |
+|                                             |                                              |
+| ec = make_shared_secret(                    |  ec = make_shared_secret(                    |
+|      auto_size_t{key}, *srv, cli_pub, fmt); |       auto_size_t{key}, *cli, srv_pub, fmt); |
+|---------------------------------------------|----------------------------------------------|
 now both the client and the server have the same key.
 }}}
 
@@ -333,7 +340,6 @@ now both the client and the server have the same key.
 }}}
 
 */
-//-----------------------------------------------------------------------------
 
 /// elliptic curve point format
 struct ec_point_t {
