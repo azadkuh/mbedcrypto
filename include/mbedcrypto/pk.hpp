@@ -24,87 +24,26 @@
 namespace mbedcrypto {
 namespace pk {
 //-----------------------------------------------------------------------------
+//              _     _  _       _                            _
+//  _ __  _  _ | |__ | |(_) __  | |__ ___  _  _   __ _  _ __ (_)
+// | '_ \| || || '_ \| || |/ _| | / // -_)| || | / _` || '_ \| |
+// | .__/ \_,_||_.__/|_||_|\__| |_\_\\___| \_, | \__,_|| .__/|_|
+// |_|                                     |__/        |_|
 
-/// ASN.1 format to import/export public or private keys.
-/// @sa import_xxx_key() / export_xxx_key()
-enum class key_io_t {
-    pem, ///< plain text format, must include a null terminator ('\0')
-    der, ///< binary data format
-};
-
-/// the capability of a pk key based on algorithms and key validity
-struct capability {
-    bool encrypt = false; ///< can do the encryption?
-    bool decrypt = false; ///< can do the decryption?
-    bool sign    = false; ///< can do the signing?
-    bool verify  = false; ///< can do the verification?
-};
-
-/// elliptic curve information
-/// a valid curve_info_t has non-zero id and bitlen
-/// @warning: only short-Weierstrass curves are supported
-struct curve_info_t {
-    uint16_t tls_id = 0; ///< as defined by rfc-4492
-    size_t   bitlen = 0; ///< key bitlen
-};
-
-//-----------------------------------------------------------------------------
-
-constexpr inline bool
-operator==(const capability& a, const capability& b) {
-    return a.encrypt == b.encrypt
-        && a.decrypt == b.decrypt
-        && a.sign    == b.sign
-        && a.verify  == b.verify;
-}
-
-constexpr inline bool
-is_valid(const curve_info_t ci) noexcept {
-    return ci.tls_id > 0 && ci.bitlen > 0;
-}
-
-inline bool
-is_rsa(pk_t t) noexcept {
-    switch (t) {
-    case pk_t::rsa:
-    case pk_t::rsa_alt:
-    case pk_t::rsassa_pss:
-        return true;
-    default:
-        return false;
-    }
-}
-
-inline bool
-is_ec(pk_t t) noexcept {
-    switch (t) {
-    case pk_t::ec:
-    case pk_t::ecdh:
-    case pk_t::ecdsa:
-        return true;
-    default:
-        return false;
-    }
-}
-
-/// returns invalid info if:
-/// - EC is not enabled (@sa MBEDCRYPTO_PK_EC)
-/// - curve is Montgomery or not supported (@sa curve_info_t)
-curve_info_t curve_info(curve_t) noexcept;
-
-//-----------------------------------------------------------------------------
-// public-key api
-
-/// generic context for rsa/ec algorithms
+/// generic context for rsa/ec algorithms.
+/// simply you shall create a context by make_context() first, then use other
+/// pk api.
 struct context;
 
 using unique_context = std::unique_ptr<context, void(*)(context*)>;
 
 /// makes an empty PK context and manages its life time.
+/// @sa make_rsa_key() / make_ec_key() / import_xxx_key() / ...
 unique_context make_context();
 
 /// resets and initializes to the new compatible type.
-/// you rarely need to call this function directly.
+/// you rarely need to call this function directly, as you will create a new
+/// key-pair (keygens) or load/import it from a buffer.
 std::error_code setup(context&, pk_t new_type) noexcept;
 
 //-----------------------------------------------------------------------------
@@ -141,14 +80,157 @@ bool has_private_key(const context&) noexcept;
 /// returns true if the current context can do specific operation
 bool can_do(const context&, pk_t other_type) noexcept;
 
-/// returns capability based on algorithms, and/or pub/priv key.
-capability what_can_do(const context&) noexcept;
+//-----------------------------------------------------------------------------
+
+constexpr inline bool
+is_rsa(pk_t t) noexcept {
+    switch (t) {
+    case pk_t::rsa:
+    case pk_t::rsa_alt:
+    case pk_t::rsassa_pss:
+        return true;
+    default:
+        return false;
+    }
+}
+
+constexpr inline bool
+is_ec(pk_t t) noexcept {
+    switch (t) {
+    case pk_t::ec:
+    case pk_t::ecdh:
+    case pk_t::ecdsa:
+        return true;
+    default:
+        return false;
+    }
+}
 
 inline bool is_rsa(const context& d) noexcept { return is_rsa(type_of(d)); }
 inline bool is_ec(const context& d)  noexcept { return is_ec(type_of(d));  }
 
 //-----------------------------------------------------------------------------
-// cryptographic facilities
+/// the capability of a pk key based on algorithms and key validity
+struct capability {
+    bool encrypt = false; ///< can do the encryption?
+    bool decrypt = false; ///< can do the decryption?
+    bool sign    = false; ///< can do the signing?
+    bool verify  = false; ///< can do the verification?
+};
+
+constexpr inline bool
+operator==(const capability& a, const capability& b) {
+    return a.encrypt == b.encrypt
+        && a.decrypt == b.decrypt
+        && a.sign    == b.sign
+        && a.verify  == b.verify;
+}
+
+/// returns capability based on algorithms, and/or pub/priv key.
+capability what_can_do(const context&) noexcept;
+
+//-----------------------------------------------------------------------------
+
+/// elliptic curve information
+/// a valid curve_info_t has non-zero id and bitlen
+/// @warning: only short-Weierstrass curves are supported
+struct curve_info_t {
+    uint16_t tls_id = 0; ///< as defined by rfc-4492
+    size_t   bitlen = 0; ///< key bitlen
+};
+
+constexpr inline bool
+is_valid(const curve_info_t ci) noexcept {
+    return ci.tls_id > 0 && ci.bitlen > 0;
+}
+
+/// returns invalid info if:
+/// - EC is not enabled (@sa MBEDCRYPTO_PK_EC)
+/// - curve is Montgomery or not supported (@sa curve_info_t)
+curve_info_t curve_info(curve_t) noexcept;
+
+//-----------------------------------------------------------------------------
+//  _                                 _              _
+// | |__ ___  _  _  __ _  ___  _ _   | |_  ___  ___ | | ___
+// | / // -_)| || |/ _` |/ -_)| ' \  |  _|/ _ \/ _ \| |(_-<
+// |_\_\\___| \_, |\__, |\___||_||_|  \__|\___/\___/|_|/__/
+//            |__/ |___/
+
+/** creates an RSA (private) key.
+ * change the default exponent value if you know exactly what you're doing.
+ * @sa supports_rsa_keygen()
+ */
+std::error_code
+make_rsa_key(context&, size_t key_bitlen, size_t exponent = 65537) noexcept;
+
+/** creates an EC (private) key by an EC algorithm.
+ * @sa supports_ec_keygen() and is_ec()
+ */
+std::error_code make_ec_key(context&, pk_t algorithm, curve_t) noexcept;
+
+inline std::error_code
+make_ec_key(context& d, curve_t c) noexcept {
+    return make_ec_key(d, pk_t::ec, c);
+}
+
+/// checks if a public-private pair of keys matches.
+bool is_pri_pub_pair(const context& pri, const context& pub) noexcept;
+
+//-----------------------------------------------------------------------------
+//  _                _    __
+// | |__ ___  _  _  (_)  / /___
+// | / // -_)| || | | | / // _ \
+// |_\_\\___| \_, | |_|/_/ \___/
+//            |__/
+//
+// @warning: ecdh (ephemeral) keys are not supported by these i/o functions.
+
+/// (re)initializes the context by private key data.
+std::error_code import_pri_key(
+    context&,
+    bin_view_t private_key_data,
+    bin_view_t password = bin_view_t{}) noexcept;
+
+/// (re)initializes the context by public key data.
+std::error_code import_pub_key(context&, bin_view_t public_key_data) noexcept;
+
+/** (re)initializes the context by loading the private key from a file.
+ * password is a nullptr or a classic null terminated c string
+ */
+std::error_code
+open_pri_key(context&, const char* file_path, const char* password = nullptr) noexcept;
+
+/// (re)initializes the context by loading the public key from a file.
+std::error_code open_pub_key(context&, const char* file_path) noexcept;
+
+/// ASN.1 format to import/export public or private keys.
+/// @sa import_xxx_key() / export_xxx_key()
+enum class key_io_t {
+    pem, ///< plain text format, must include a null terminator ('\0')
+    der, ///< binary data format
+};
+
+/// exports private key
+std::error_code
+export_pri_key(bin_edit_t& out, context&, key_io_t) noexcept;
+
+/// overload with container adapter.
+std::error_code export_pri_key(auto_size_t&& out, context&, key_io_t);
+
+/// exports public key
+std::error_code
+export_pub_key(bin_edit_t& out, context&, key_io_t) noexcept;
+
+/// overload with container adapter.
+std::error_code export_pub_key(auto_size_t&& out, context&, key_io_t);
+
+
+//-----------------------------------------------------------------------------
+//                       _                       _
+//  __  _ _  _  _  _ __ | |_  ___    __ _  _ __ (_)
+// / _|| '_|| || || '_ \|  _|/ _ \  / _` || '_ \| |
+// \__||_|   \_, || .__/ \__|\___/  \__,_|| .__/|_|
+//           |__/ |_|                     |_|
 
 /** signs a hashed message by private key of context.
  * @warning: the size of hashed_msg must be equal to the hash_t size.
@@ -193,87 +275,70 @@ std::error_code decrypt(bin_edit_t& out, context&, bin_view_t input) noexcept;
 std::error_code decrypt(auto_size_t&& out, context&, bin_view_t input);
 
 //-----------------------------------------------------------------------------
-// key tools
+//  ___  ___  ___   _  _   _                              _
+// | __|/ __||   \ | || | | |__ ___  _  _   ___ __ __ __ | |_   __ _  _ _   __ _  ___
+// | _|| (__ | |) || __ | | / // -_)| || | / -_)\ \ // _|| ' \ / _` || ' \ / _` |/ -_)
+// |___|\___||___/ |_||_| |_\_\\___| \_, | \___|/_\_\\__||_||_|\__,_||_||_|\__, |\___|
+//                                   |__/                                  |___/
 
-/** creates an RSA (private) key.
- * change the default exponent value if you know exactly what you're doing.
- * @sa supports_rsa_keygen()
- */
-std::error_code
-make_rsa_key(context&, size_t key_bitlen, size_t exponent = 65537) noexcept;
+/* ecdh and secure key exchange
 
-/** creates an EC (private) key by an EC algorithm.
- * @sa supports_ec_keygen() and is_ec()
- */
-std::error_code make_ec_key(context&, pk_t algorithm, curve_t) noexcept;
+usage #1:
+{{{
+by using the same curve & point format on both client/server sides:
 
-inline std::error_code
-make_ec_key(context& d, curve_t c) noexcept {
-    return make_ec_key(d, pk_t::ec, c);
-}
+                                       curve_t    curve = ...;
+                                       ec_point_t fmt{};
+|--------------------------------------------------|--------------------------------------------------|
+|                server side                       |                 client side                      |
+|--------------------------------------------------|--------------------------------------------------|
+| auto srv = make_context();                       |  auto cli = make_context();                      |
+| auto ec = make_ec_key(*srv, pk_t::ecdh, curve);  |  auto ec = make_ec_key(*cli, pk_t::ecdh, curve); |
+| std::vector<uint8_t> srv_pub, key;               |  std::vector<uint8_t> cli_pub, key;              |
+| ec = export_pub_key(                             |  ec = export_pub_key(                            |
+|      auto_size_t{srv_pub}, *srv, fmt);           |       auto_size_t{cli_pub}, *cli, fmt);          |
+| # send srv_pub to client ------------------------|----------------> receive srv_pub from server  #  |
+| # receive cli_pub from client <------------------|----------------------- send cli_pub to server #  |
+| ec = make_shared_secret(                         |  ec = make_shared_secret(                        |
+|      auto_size_t{key}, *srv, cli_pub, fmt);      |       auto_size_t{key}, *cli, srv_pub, fmt);     |
+|--------------------------------------------------|--------------------------------------------------|
+now both the client and the server have the same key.
+}}}
 
-/// checks if a public-private pair of keys matches.
-bool is_pri_pub_pair(const context& pri, const context& pub) noexcept;
+usage #2:
+{{{
+by using TLS ServerKeyExchange & ClientKeyExchange format.
+in this scenario only server decides the curve type.
 
+|---------------------------------------|------------------------------------|
+|             server side               |            client side             |
+|---------------------------------------|------------------------------------|
+| auto srv = make_context();            |  auto cli = make_context();        |
+| std::vector<uint8_t> skex, key;       |  std::vector<uint8_t> ckex, key;   |
+| curve_t curve = ...;                  |                                    |
+| ec = make_tls_server_kex(             |                                    |
+|      auto_size_t{skex}, *srv, curve); |                                    |
+| # send skex to client ----------------|-------> receive skex from server # |
+|                                       |  ec = make_tls_client_kex(         |
+|                                       |       auto_size_t{ckex},           |
+|                                       |       auto_size_t{key},            |
+|                                       |       *cli,                        |
+|                                       |       skex);                       |
+| # receive ckex from client <----------|------------- send ckex to server # |
+| ec = make_tls_server_secret(          |                                    |
+|      auto_size_t{key}, *srv, ckex);   |                                    |
+|---------------------------------------|------------------------------------|
+now both the client and the server have the same key.
+}}}
+
+*/
 //-----------------------------------------------------------------------------
-// key i/o
-// @warning: ecdh (ephemeral) keys are not supported by these i/o functions.
-
-/// (re)initializes the context by private key data.
-std::error_code import_pri_key(
-    context&,
-    bin_view_t private_key_data,
-    bin_view_t password = bin_view_t{}) noexcept;
-
-/// (re)initializes the context by public key data.
-std::error_code import_pub_key(context&, bin_view_t public_key_data) noexcept;
-
-/** (re)initializes the context by loading the private key from a file.
- * password is a nullptr or a classic null terminated c string
- */
-std::error_code
-open_pri_key(context&, const char* file_path, const char* password = nullptr) noexcept;
-
-/// (re)initializes the context by loading the public key from a file.
-std::error_code open_pub_key(context&, const char* file_path) noexcept;
-
-/// exports private key
-std::error_code
-export_pri_key(bin_edit_t& out, context&, key_io_t) noexcept;
-
-/// overload with container adapter.
-std::error_code export_pri_key(auto_size_t&& out, context&, key_io_t);
-
-/// exports public key
-std::error_code
-export_pub_key(bin_edit_t& out, context&, key_io_t) noexcept;
-
-/// overload with container adapter.
-std::error_code export_pub_key(auto_size_t&& out, context&, key_io_t);
-
-//-----------------------------------------------------------------------------
-// ecdh and secure key exchange
-//
-// usage #1: by using the same curve & point format on both client/server sides:
-//                                        curve_t    curve = ...;
-//                                        ec_point_t fmt{};
-// # server side #                                  |  # client side #
-// auto srv = make_context();                       |  auto cli = make_context();
-// auto ec = make_ec_key(*srv, pk_t::ecdh, curve);  |  auto ec = make_ec_key(*cli, pk_t::ecdh, curve);
-// std::vector<uint8_t> srv_pub, key;               |  std::vector<uint8_t> cli_pub, key;
-// ec = export_pub_key(                             |  ec = export_pub_key(
-//      auto_size_t{srv_pub}, *srv, fmt);           |       auto_size_t{cli_pub}, *cli, fmt);
-// # send srv_pub to client                 ---> #  |  # <--- send cli_pub to server #
-// # receive cli_pub from client                    |  # receive srv_pub from server
-// ec = make_shared_secret(                         |  ec = make_shared_secret(
-//      auto_size_t{key}, *srv, cli_pub, fmt);      |       auto_size_t{key}, *cli, srv_pub, fmt);
-// # now both the client and the server have the same key.
 
 /// elliptic curve point format
 struct ec_point_t {
     enum pack_t {
         tls,    ///< rfc-4492: ECC Cipher Suites for TLS
-        binary, ///< compatible with mbedcrypto::mpi funcs
+        binary, ///< compatible with mbedcrypto::mpi api
     };
     pack_t pack       = pack_t::tls;
     bool   compressed = false; ///< deprecated by rfc-8422 and newer
@@ -299,27 +364,6 @@ make_shared_secret(
 /// overload with container adapter.
 std::error_code
 make_shared_secret(auto_size_t&& out, context&, bin_view_t peer_pub, ec_point_t);
-
-//-----------------------------------------------------------------------------
-//
-// usage #2: by using TLS ServerKeyExchange & ClientKeyExchange format.
-// in this scenario only server decides the curve type.
-//
-// # server side #                       |  # client side #
-// auto srv = make_context();            |  auto cli = make_context();
-// std::vector<uint8_t> skex, key;       |  std::vector<uint8_t> ckex, key;
-// curve_t curve = ...;                  |
-// ec = make_tls_server_kex(             |
-//      auto_size_t{skex}, *srv, curve); |
-// #          send skex to client --> #  |
-//                                       |  # receive skex from server
-//                                       |  ec = make_tls_client_kex(
-//                                       |       auto_size_t{ckex}, auto_size_t{key}, *cli, skex);
-//                                       |  # <-- send ckex to server
-// # receive ckex from client #          |
-// ec = make_tls_server_secret(          |
-//      auto_size_t{key}, *srv, ckex);   |
-// # now both the client and the server have the same key.
 
 /** checks if curve is supported by TLS ServerKeyExchange.
  * only a limited number of curves are supported by TLS (depend on TLS
