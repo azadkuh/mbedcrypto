@@ -1,11 +1,23 @@
 # mbedcrypto main library
+project(mbedcrypto)
+
+add_library(${PROJECT_NAME}
+    errors.cpp
+    types.cpp
+    text_codec.cpp
+    hash.cpp
+    cipher.cpp
+    rnd_generator.cpp
+    mpi.cpp
+    pk.cpp
+    )
 
 #------------------------------------------------------------------------------
 set(MBEDTLS_SRCDIR ${DIR_DEPS}/mbedtls/library)
 set(MBEDTLS_INCDIR ${DIR_DEPS}/mbedtls/include)
 
-add_library(${PROJECT_NAME}
-    # mbedtls mandatory c files
+# mbedtls mandatory c files
+target_sources(${PROJECT_NAME} PRIVATE
     ${MBEDTLS_SRCDIR}/error.c
     ${MBEDTLS_SRCDIR}/base64.c
     ${MBEDTLS_SRCDIR}/md5.c
@@ -34,25 +46,7 @@ add_library(${PROJECT_NAME}
     ${MBEDTLS_SRCDIR}/pkcs5.c
     ${MBEDTLS_SRCDIR}/platform_util.c
     ${MBEDTLS_SRCDIR}/platform.c
-    # mbedcrypto cxx files
-    errors.cpp
-    types.cpp
-    text_codec.cpp
-    hash.cpp
-    cipher.cpp
-    rnd_generator.cpp
-    mpi.cpp
-    pk.cpp
     )
-
-target_include_directories(${PROJECT_NAME} PUBLIC
-        $<INSTALL_INTERFACE:include>
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
-        $<BUILD_INTERFACE:${MBEDTLS_INCDIR}>
-        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
-    )
-mbedcrypto_setup_platforms(${PROJECT_NAME})
-add_library(mbedcrypto::mbedcrypto ALIAS ${PROJECT_NAME})
 
 #------------------------------------------------------------------------------
 # optional mbedtls definitions and sources based on user's decision
@@ -124,8 +118,8 @@ if(MBEDCRYPTO_CIPHER_ARC4)
     target_sources(${PROJECT_NAME} PRIVATE ${MBEDTLS_SRCDIR}/arc4.c)
 endif()
 
-#  public key options, is mandatory part
-if(TRUE)
+#  public-key (rsa) infrastructure
+if(TRUE) # mandatory parts
     set(MBEDTLS_ASN1_WRITE_C ON)
     set(MBEDTLS_PK_WRITE_C   ON)
     set(MBEDTLS_PEM_WRITE_C  ON)
@@ -168,9 +162,18 @@ endif()
 configure_file(mbedcrypto_mbedtls_config.h.in ${CMAKE_BINARY_DIR}/mbedcrypto_mbedtls_config.h)
 configure_file(mbedcrypto_config.h.in         ${CMAKE_BINARY_DIR}/mbedcrypto_config.h)
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE
+target_compile_definitions(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:MBEDTLS_CONFIG_FILE=\"mbedcrypto_mbedtls_config.h\">
     )
+target_include_directories(${PROJECT_NAME} PUBLIC
+    $<INSTALL_INTERFACE:include>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
+    $<BUILD_INTERFACE:${MBEDTLS_INCDIR}>
+    )
+
+mbedcrypto_setup_platforms(${PROJECT_NAME})
+add_library(mbedcrypto::mbedcrypto ALIAS ${PROJECT_NAME})
 
 #------------------------------------------------------------------------------
 include(GNUInstallDirs)

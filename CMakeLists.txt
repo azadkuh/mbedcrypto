@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
-project(mbedcrypto
-    VERSION 2.0.0
-    LANGUAGES C CXX
+project(libmbedcrypto
+    VERSION      2.0.0
+    DESCRIPTION  "a portable, small and fast c++14 library for cryptography"
+    HOMEPAGE_URL "https://github.com/azadkuh/mbedcrypto"
     )
 
 include("${CMAKE_SOURCE_DIR}/cmake/setup_platforms.cmake")
@@ -10,7 +11,7 @@ include("${CMAKE_SOURCE_DIR}/cmake/setup_platforms.cmake")
 # build options
 option(MBEDCRYPTO_STATIC_CRT "build by static c/c++ runtime" ON)
 
-# cryptograohic features
+# cryptographic features
 
 ## optional hash algorithms:
 ## note: md5, sha1/sha224/sha256/sha384/sha512 are mandatory (not optional)
