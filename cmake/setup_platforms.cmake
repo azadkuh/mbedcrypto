@@ -31,7 +31,7 @@ function(mbedcrypto_setup_platforms tgt)
         _setup_win32_builds(${tgt})
     endif()
     if(IS_GNUXX OR IS_CLANG)
-        _setup_clang_gcc_options(${tgt})
+        _setup_clang_gxx_options(${tgt})
     elseif(MSVC)
         _setup_msvc_options(${tgt})
     endif()
@@ -39,11 +39,11 @@ endfunction()
 
 #------------------------------------------------------------------------------
 # private api
-function(_setup_clang_gcc_options tgt)
+function(_setup_clang_gxx_options tgt)
     target_compile_options(${tgt} PRIVATE
         -Wall -Wextra -W -Wwrite-strings -Wshadow -pedantic -Wcast-align
         -Wunused -Wno-unused-parameter -Wpointer-arith
-        -Wnon-virtual-dtor -Woverloaded-virtual
+        $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor -Woverloaded-virtual>
         $<$<CONFIG:Release>:-fvisibility=hidden>
         )
     if(IS_GNUXX OR (IS_CLANG AND IS_LINUX))
