@@ -38,7 +38,7 @@ _pri_min_size(const context& d, key_io_t kio) noexcept {
     const auto&      m       = is_ec(type_of(d)) ? m_ec : m_rsa;
     const auto       i       = kio == key_io_t::der ? 0 : 1;
     const auto       ks      = key_size(d);
-    return m[i] * ks + c[i];
+    return static_cast<size_t>(m[i] * ks + c[i]);
 }
 
 // found by a linear interpolation of different rsa/ec * pem/der key samples
@@ -50,7 +50,7 @@ _pub_min_size(const context& d, key_io_t kio) noexcept {
     const auto&      m       = is_ec(type_of(d)) ? m_ec : m_rsa;
     const auto       i       = kio == key_io_t::der ? 0 : 1;
     const auto       ks      = key_size(d);
-    return m[i] * ks + c[i];
+    return static_cast<size_t>(m[i] * ks + c[i]);
 }
 
 // TODO: requires performance optimization, use memcpy instead of byte copy
@@ -174,7 +174,7 @@ _export_pri_key(bin_edit_t& out, context& d, key_io_t kio) noexcept {
             ret = mbedtls_pk_write_key_der(&d.pk, out.data, out.size);
             if (ret < 0)
                 return mbedtls::make_error_code(ret);
-            _shift_left(out, static_cast<size_t>(out.size - ret));
+            _shift_left(out, out.size - static_cast<size_t>(ret));
         }
     }
     return std::error_code{};
@@ -199,7 +199,7 @@ _export_pub_key(bin_edit_t& out, context& d, key_io_t kio) noexcept {
             ret = mbedtls_pk_write_pubkey_der(&d.pk, out.data, out.size);
             if (ret < 0)
                 return mbedtls::make_error_code(ret);
-            _shift_left(out, static_cast<size_t>(out.size - ret));
+            _shift_left(out, out.size - static_cast<size_t>(ret));
         }
     }
     return std::error_code{};

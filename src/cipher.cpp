@@ -96,7 +96,8 @@ struct engine {
         }
 #endif // defined(MBEDTLS_GCM_C) || defined(MBEDTLS_CHACHAPOLY_C)
         // key size in bitlen
-        ret = mbedtls_cipher_setkey(&ctx_, ci.key.data, ci.key.size << 3, op);
+        ret = mbedtls_cipher_setkey(
+            &ctx_, ci.key.data, static_cast<int>(ci.key.size << 3), op);
         if (ret != 0)
             return mbedtls::make_error_code(ret);
         if ((ret = try_set_padding(ci.padding)) != 0)
@@ -184,8 +185,8 @@ struct engine {
                     return mbedtls::make_error_code(ret);
 #endif // MBEDTLS_CHACHAPOLY_C
             }
-            ret =
-                mbedtls_cipher_setkey(&ctx_, ci.key.data, ci.key.size << 3, m);
+            ret = mbedtls_cipher_setkey(
+                &ctx_, ci.key.data, static_cast<int>(ci.key.size << 3), m);
             if (ret != 0)
                 return mbedtls::make_error_code(ret);
             if (ninf->mode == MBEDTLS_MODE_ECB) {
@@ -258,7 +259,10 @@ struct engine {
             if (ret != 0)
                 return mbedtls::make_error_code(ret);
             ret = mbedtls_cipher_setkey(
-                &ctx_, ci.key.data, ci.key.size << 3, MBEDTLS_ENCRYPT);
+                &ctx_,
+                ci.key.data,
+                static_cast<int>(ci.key.size << 3),
+                MBEDTLS_ENCRYPT);
             if (ret != 0)
                 return mbedtls::make_error_code(ret);
             ret = mbedtls_cipher_auth_encrypt(&ctx_,
@@ -292,7 +296,10 @@ struct engine {
             if (ret != 0)
                 return mbedtls::make_error_code(ret);
             ret = mbedtls_cipher_setkey(
-                &ctx_, ci.key.data, ci.key.size << 3, MBEDTLS_DECRYPT);
+                &ctx_,
+                ci.key.data,
+                static_cast<int>(ci.key.size << 3),
+                MBEDTLS_DECRYPT);
             if (ret != 0)
                 return mbedtls::make_error_code(ret);
             ret = mbedtls_cipher_auth_decrypt(&ctx_,

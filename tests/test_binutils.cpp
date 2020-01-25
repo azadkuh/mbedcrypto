@@ -150,7 +150,7 @@ TEST_CASE("binary edit", "[binutils]") {
         auto_size_t ob{v};
         ob.resize(8);
         for (size_t i = 0; i < 8; ++i)
-            ob.data[i] = i;
+            ob.data[i] = static_cast<uint8_t>(i);
         REQUIRE(v == std::vector<uint8_t>{0, 1, 2, 3, 4, 5, 6, 7});
         REQUIRE(bin_view_t{ob} == std::vector<uint8_t>{0, 1, 2, 3, 4, 5, 6, 7});
     }

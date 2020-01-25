@@ -26,7 +26,7 @@ feed_all(mbedtls_ctr_drbg_context* ctx, bin_edit_t& out) noexcept {
     auto* end   = out.data + out.size;
     while (start < end) {
         const auto*  next = start + MaxChunkSize;
-        const size_t len  = next < end ? MaxChunkSize : (end - start);
+        const size_t len  = next < end ? MaxChunkSize : static_cast<size_t>(end - start);
         int          ret  = mbedtls_ctr_drbg_random(ctx, start, len);
         if (ret != 0)
             return ret;

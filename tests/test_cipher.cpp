@@ -165,7 +165,7 @@ protected:
             pbuf += out.size;
         }
 
-        size_t processed = (pbuf - &buffer[0]);
+        const auto processed = static_cast<size_t>(pbuf - &buffer[0]);
         buffer.resize(processed);
     }
 };

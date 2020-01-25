@@ -76,7 +76,7 @@ from_hex(bin_edit_t& output, bin_view_t input) noexcept {
     } else {
         const auto* src = reinterpret_cast<const char*>(input.data);
         for (size_t i = 0; i < input.size; ++i, ++src) {
-            char ch = *src;
+            auto ch = static_cast<uint8_t>(*src);
             if (ch >= '0' && ch <= '9')
                 ch -= '0';
             else if (ch >= 'A' && ch <= 'F')
@@ -88,7 +88,7 @@ from_hex(bin_edit_t& output, bin_view_t input) noexcept {
                 return make_error_code(error_t::bad_input);
             }
             auto& des = output.data[i >> 1];
-            des       = (i & 1) ? (des + ch) : (ch << 4);
+            des       = (i & 1) ? (des + ch) : static_cast<uint8_t>(ch << 4);
         }
     }
 

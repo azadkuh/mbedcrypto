@@ -63,7 +63,7 @@ chunker(bin_view_t input, size_t chunk_size, Func&& func, Args&&... args) {
     const auto* end   = input.data + input.size;
     while (start < end) {
         const auto*  next = start + chunk_size;
-        const size_t len  = next < end ? chunk_size : (end - start);
+        const size_t len  = next < end ? chunk_size : static_cast<size_t>(end - start);
         func(start, len, std::forward<Args>(args)...);
         start += len;
     }
