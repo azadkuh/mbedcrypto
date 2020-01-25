@@ -41,9 +41,12 @@ endfunction()
 # private api
 function(_setup_clang_gxx_options tgt)
     target_compile_options(${tgt} PRIVATE
-        -Wall -Wextra -W -Wwrite-strings -Wshadow=local -pedantic -Wcast-align
-        -Wunused -Wno-unused-parameter -Wpointer-arith
-        $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor -Woverloaded-virtual>
+        -Wall -Wextra -Wpedantic -pedantic-errors
+        -Wwrite-strings -Wcast-align -Wpointer-arith
+        -Wno-c++98-compat -Wno-unused-parameter
+        $<$<COMPILE_LANGUAGE:CXX>:-Werror -Wsign-conversion -Wnon-virtual-dtor -Woverloaded-virtual>
+        $<$<C_COMPILER_ID:GNU>:-Wshadow=local>
+        $<$<C_COMPILER_ID:Clang,AppleClang>:-Wshadow>
         $<$<CONFIG:Release>:-fvisibility=hidden>
         )
     if (MBEDCRYPTO_STATIC_CRT)
