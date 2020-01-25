@@ -1,7 +1,7 @@
 # mbedcrypto main library
 project(mbedcrypto)
 
-add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME} STATIC
     errors.cpp
     types.cpp
     text_codec.cpp
@@ -16,7 +16,7 @@ add_library(${PROJECT_NAME}
 set(MBEDTLS_SRCDIR ${DIR_DEPS}/mbedtls/library)
 set(MBEDTLS_INCDIR ${DIR_DEPS}/mbedtls/include)
 
-# mbedtls mandatory c files
+# mbedtls bacis modules (mandatory c files)
 target_sources(${PROJECT_NAME} PRIVATE
     ${MBEDTLS_SRCDIR}/error.c
     ${MBEDTLS_SRCDIR}/base64.c

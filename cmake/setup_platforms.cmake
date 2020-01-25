@@ -21,19 +21,19 @@ if(${CMAKE_SIZEOF_VOID_P} LESS 8)
 else()
     set(ARCH_TYPE 64)
 endif()
-message(STATUS "compiling by ${CMAKE_CXX_COMPILER_ID}"
-    "(v${CMAKE_CXX_COMPILER_VERSION}) ${ARCH_TYPE}bit ...")
-
+message(STATUS "[[using: "
+    "${CMAKE_CXX_COMPILER_ID}(v${CMAKE_CXX_COMPILER_VERSION})"
+    "${ARCH_TYPE}bit]]")
 
 function(mbedcrypto_setup_platforms tgt)
     target_compile_features(${tgt} PRIVATE cxx_std_14)
-    if(WIN32)
-        _setup_win32_builds(${tgt})
-    endif()
     if(IS_GNUXX OR IS_CLANG)
         _setup_clang_gxx_options(${tgt})
     elseif(MSVC)
         _setup_msvc_options(${tgt})
+    endif()
+    if(WIN32)
+        _setup_win32_builds(${tgt})
     endif()
 endfunction()
 
@@ -41,36 +41,15 @@ endfunction()
 # private api
 function(_setup_clang_gxx_options tgt)
     target_compile_options(${tgt} PRIVATE
-        -Wall -Wextra -W -Wwrite-strings -Wshadow -pedantic -Wcast-align
+        -Wall -Wextra -W -Wwrite-strings -Wshadow=local -pedantic -Wcast-align
         -Wunused -Wno-unused-parameter -Wpointer-arith
         $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor -Woverloaded-virtual>
         $<$<CONFIG:Release>:-fvisibility=hidden>
         )
-    if(IS_GNUXX OR (IS_CLANG AND IS_LINUX))
-        find_package(Threads REQUIRED)
-        target_link_libraries(${tgt} PRIVATE Threads::Threads ${CMAKE_DL_LIBS})
-        # use same settings for clang++/g++ under linux
-        # as clang++ does not support c++17 stl completely (filesystem, ...)
-        # these flags can not be set by set_target_properties() / target_compile_options()
-        set(flag ${CMAKE_CXX_FLAGS})
-        string(REPLACE "-static-libstdc++" ""  flag "${flag}")
-        string(REPLACE "-static-libgcc"    ""  flag "${flag}")
-        string(REGEX REPLACE " +"          " " flag "${flag}") # remove extra whitespaces
-        if (MBEDCRYPTO_STATIC_CRT)
-            set(flag "${flag} -static-libstdc++ -static-libgcc")
+    if (MBEDCRYPTO_STATIC_CRT)
+        if(IS_GNUXX)
+            target_link_options(${tgt} PRIVATE -static-libstdc++ -static-libgcc)
         endif()
-        set(CMAKE_CXX_FLAGS "${flag}" CACHE STRING "" FORCE)
-    endif()
-endfunction()
-
-function(_setup_win32_builds tgt)
-    # base definitions
-    target_compile_definitions(${tgt} PRIVATE
-        -DWIN32_LEAN_AND_MEAN -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS
-        -D_UNICODE -DUNICODE
-        )
-    if(${ARCH_TYPE} EQUAL 64)
-        target_compile_definitions(${tgt} PRIVATE -DWIN64)
     endif()
 endfunction()
 
@@ -89,3 +68,13 @@ function(_setup_msvc_options tgt)
     endforeach()
 endfunction()
 
+function(_setup_win32_builds tgt)
+    # base definitions
+    target_compile_definitions(${tgt} PRIVATE
+        -DWIN32_LEAN_AND_MEAN -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS
+        -D_UNICODE -DUNICODE
+        )
+    if(${ARCH_TYPE} EQUAL 64)
+        target_compile_definitions(${tgt} PRIVATE -DWIN64)
+    endif()
+endfunction()
