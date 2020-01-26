@@ -25,59 +25,55 @@ message(STATUS "[[using: "
     "${CMAKE_CXX_COMPILER_ID}(v${CMAKE_CXX_COMPILER_VERSION})"
     "${ARCH_TYPE}bit]]")
 
+#------------------------------------------------------------------------------
+
+# common settings for compilers
 function(mbedcrypto_setup_platforms tgt)
     target_compile_features(${tgt} PRIVATE cxx_std_14)
     if(IS_GNUXX OR IS_CLANG)
-        _setup_clang_gxx_options(${tgt})
+        target_compile_options(${tgt} PRIVATE
+            -Wall -Wextra -Wpedantic -pedantic-errors
+            -Wwrite-strings -Wcast-align -Wpointer-arith
+            -Wno-c++98-compat -Wno-unused-parameter
+            $<$<COMPILE_LANGUAGE:CXX>:-Werror -Wsign-conversion -Wnon-virtual-dtor -Woverloaded-virtual>
+            $<$<C_COMPILER_ID:GNU>:-Wshadow=local>
+            $<$<C_COMPILER_ID:Clang,AppleClang>:-Wshadow>
+            $<$<CONFIG:Release>:-fvisibility=hidden>
+            )
     elseif(MSVC)
-        _setup_msvc_options(${tgt})
+        target_compile_options(${tgt} PRIVATE
+            -W3 -nologo -MP -Zc:strictStrings
+            )
     endif()
     if(WIN32)
-        _setup_win32_builds(${tgt})
+        # base definitions
+        target_compile_definitions(${tgt} PRIVATE
+            -DWIN32_LEAN_AND_MEAN -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS
+            -D_UNICODE -DUNICODE
+            )
+        if(${ARCH_TYPE} EQUAL 64)
+            target_compile_definitions(${tgt} PRIVATE -DWIN64)
+        endif()
     endif()
 endfunction()
 
-#------------------------------------------------------------------------------
-# private api
-function(_setup_clang_gxx_options tgt)
-    target_compile_options(${tgt} PRIVATE
-        -Wall -Wextra -Wpedantic -pedantic-errors
-        -Wwrite-strings -Wcast-align -Wpointer-arith
-        -Wno-c++98-compat -Wno-unused-parameter
-        $<$<COMPILE_LANGUAGE:CXX>:-Werror -Wsign-conversion -Wnon-virtual-dtor -Woverloaded-virtual>
-        $<$<C_COMPILER_ID:GNU>:-Wshadow=local>
-        $<$<C_COMPILER_ID:Clang,AppleClang>:-Wshadow>
-        $<$<CONFIG:Release>:-fvisibility=hidden>
-        )
-    if (MBEDCRYPTO_STATIC_CRT)
-        if(IS_GNUXX)
+# setup c/c++ runtime
+function(mbedcrypto_setup_crt tgt)
+    if(IS_GNUXX)
+        if(MBEDCRYPTO_STATIC_CRT)
             target_link_options(${tgt} PRIVATE -static-libstdc++ -static-libgcc)
         endif()
-    endif()
-endfunction()
-
-function(_setup_msvc_options tgt)
-    target_compile_options(${tgt} PRIVATE -W3 -nologo -MP -Zc:strictStrings)
-    foreach(flag
-            CMAKE_C_FLAGS_RELEASE   CMAKE_C_FLAGS_MINSIZEREL   CMAKE_C_FLAGS_DEBUG
-            CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_DEBUG
-            )
-        if(MBEDCRYPTO_STATIC_CRT)
-            string(REGEX REPLACE "/MD" "/MT" ${flag} "${${flag}}")
-        else()
-            string(REGEX REPLACE "/MT" "/MD" ${flag} "${${flag}}")
-        endif()
-        set(${flag} "${${flag}}" CACHE STRING "msvc flags" FORCE)
-    endforeach()
-endfunction()
-
-function(_setup_win32_builds tgt)
-    # base definitions
-    target_compile_definitions(${tgt} PRIVATE
-        -DWIN32_LEAN_AND_MEAN -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS
-        -D_UNICODE -DUNICODE
-        )
-    if(${ARCH_TYPE} EQUAL 64)
-        target_compile_definitions(${tgt} PRIVATE -DWIN64)
+    elseif(MSVC)
+        foreach(flag
+                CMAKE_C_FLAGS_RELEASE   CMAKE_C_FLAGS_MINSIZEREL   CMAKE_C_FLAGS_DEBUG
+                CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_DEBUG
+                )
+            if(MBEDCRYPTO_STATIC_CRT)
+                string(REGEX REPLACE "/MD" "/MT" ${flag} "${${flag}}")
+            else()
+                string(REGEX REPLACE "/MT" "/MD" ${flag} "${${flag}}")
+            endif()
+            set(${flag} "${${flag}}" CACHE STRING "msvc flags" FORCE)
+        endforeach()
     endif()
 endfunction()

@@ -10,9 +10,6 @@
 #define MBEDCRYPTO_CONFIG_H
 //-----------------------------------------------------------------------------
 
-// mbedcrypto has been built by static c/c++ runtime
-#cmakedefine MBEDCRYPTO_STATIC_CRT
-
 // message digest (hash)
 #cmakedefine MBEDCRYPTO_HASH_MD2
 #cmakedefine MBEDCRYPTO_HASH_MD4

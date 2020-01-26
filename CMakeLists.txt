@@ -9,7 +9,6 @@ include("${CMAKE_SOURCE_DIR}/cmake/setup_platforms.cmake")
 
 #-----------------------------------------------------------------------------
 # build options
-option(MBEDCRYPTO_STATIC_CRT "build by static c/c++ runtime" ON)
 
 # cryptographic features
 
@@ -48,6 +47,7 @@ add_subdirectory(src)
 
 option(BUILD_TESTS "build test units and apps" ON)
 if(BUILD_TESTS)
+    option(MBEDCRYPTO_STATIC_CRT "build test app by static c/c++ runtime" ON)
     enable_testing()
     add_subdirectory(tests)
 endif()
