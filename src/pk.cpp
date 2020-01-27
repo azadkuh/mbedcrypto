@@ -237,7 +237,7 @@ _keypair_of(const context& d) noexcept {
 }
 
 struct ecdh_t {
-    mbedtls_ecdh_context ctx;
+    mbedtls_ecdh_context ctx{};
     ecdh_t() noexcept {
         mbedtls_ecdh_init(&ctx);
     }
@@ -570,22 +570,13 @@ make_ec_key(context& d, pk_t algo, curve_t curve) noexcept {
 std::error_code
 verify(context& d, bin_view_t hash_msg, hash_t ht, bin_view_t sig) noexcept {
     const auto hsize = hash_size(ht);
-    if (hash_msg.size != hsize) {
+    if (hash_msg.size != hsize)
         return make_error_code(error_t::bad_input);
-    } else if (type_of(d) != pk_t::rsa && !can_do(d, pk_t::ecdsa)) {
+    if (type_of(d) != pk_t::rsa && !can_do(d, pk_t::ecdsa))
         return make_error_code(error_t::bad_input);
-    } else {
-        int ret = mbedtls_pk_verify(
-            &d.pk,
-            to_native(ht),
-            hash_msg.data,
-            hash_msg.size,
-            sig.data,
-            sig.size);
-        if (ret != 0)
-            return mbedtls::make_error_code(ret);
-    }
-    return std::error_code{};
+    int ret = mbedtls_pk_verify(
+        &d.pk, to_native(ht), hash_msg.data, hash_msg.size, sig.data, sig.size);
+    return (ret != 0) ? mbedtls::make_error_code(ret) : std::error_code{};
 }
 
 std::error_code

@@ -31,12 +31,12 @@ find_native_info(hash_t algo) noexcept {
 
 struct impl_base
 {
-    mbedtls_md_context_t ctx;
+    mbedtls_md_context_t ctx{};
 
     void init() noexcept  { mbedtls_md_init(&ctx); }
     void reset() noexcept { mbedtls_md_free(&ctx); }
 
-    explicit impl_base() noexcept { init(); }
+    impl_base() noexcept { init(); }
     ~impl_base() { reset(); }
 
     int setup(const mbedtls_md_info_t* info , bool hmac) noexcept {

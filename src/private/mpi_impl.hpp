@@ -18,7 +18,7 @@ namespace mbedcrypto {
 //-----------------------------------------------------------------------------
 
 struct mpi_impl {
-    mbedtls_mpi ctx_;
+    mbedtls_mpi ctx_{};
 
     mpi_impl() noexcept {
         mbedtls_mpi_init(&ctx_);
@@ -56,7 +56,8 @@ struct mpi_impl {
     }
 
     mpi_impl& operator=(const mpi_impl& o) noexcept {
-        return operator =(o.ctx_);
+        operator =(o.ctx_);
+        return *this;
     }
 
     mpi_impl& operator=(mpi_impl&& o) noexcept {

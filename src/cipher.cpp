@@ -74,7 +74,7 @@ min_output_size(size_t input, const mbedtls_cipher_info_t& inf) noexcept {
 //-----------------------------------------------------------------------------
 
 struct engine {
-    mbedtls_cipher_context_t ctx_;
+    mbedtls_cipher_context_t ctx_{};
 
     engine() noexcept     { mbedtls_cipher_init(&ctx_);  }
     ~engine()             { mbedtls_cipher_free(&ctx_);  }

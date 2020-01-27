@@ -22,8 +22,8 @@ namespace pk {
 struct context
 {
     bool               has_pri_key = false;
-    ctr_drbg           rnd;
-    mbedtls_pk_context pk;
+    ctr_drbg           rnd{};
+    mbedtls_pk_context pk{};
 
     context() {
         rnd.setup("mbedcrypto pki implementation");

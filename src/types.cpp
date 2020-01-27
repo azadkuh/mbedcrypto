@@ -458,19 +458,19 @@ supports(padding_t e) noexcept {
     if (e == padding_t::none)
         return true;
 #if defined(MBEDTLS_CIPHER_PADDING_PKCS7)
-    else if (e == padding_t::pkcs7)
+    if (e == padding_t::pkcs7)
         return true;
 #endif
 #if defined(MBEDTLS_CIPHER_PADDING_ONE_AND_ZEROS)
-    else if (e == padding_t::one_and_zeros)
+    if (e == padding_t::one_and_zeros)
         return true;
 #endif
 #if defined(MBEDTLS_CIPHER_PADDING_ZEROS_AND_LEN)
-    else if (e == padding_t::zeros_and_len)
+    if (e == padding_t::zeros_and_len)
         return true;
 #endif
 #if defined(MBEDTLS_CIPHER_PADDING_ZEROS)
-    else if (e == padding_t::zeros)
+    if (e == padding_t::zeros)
         return true;
 #endif
     return false;
@@ -481,39 +481,39 @@ supports(cipher_bm bm) noexcept {
     if (bm == cipher_bm::ecb)
         return true; // always supported
 #if defined(MBEDTLS_CIPHER_MODE_CBC)
-    else if (bm == cipher_bm::cbc)
+    if (bm == cipher_bm::cbc)
         return true;
 #endif
 #if defined(MBEDTLS_CIPHER_MODE_CFB)
-    else if (bm == cipher_bm::cfb)
+    if (bm == cipher_bm::cfb)
         return true;
 #endif
 #if defined(MBEDTLS_CIPHER_MODE_OFB)
-    else if (bm == cipher_bm::ofb)
+    if (bm == cipher_bm::ofb)
         return true;
 #endif
 #if defined(MBEDTLS_CIPHER_MODE_CTR)
-    else if (bm == cipher_bm::ctr)
+    if (bm == cipher_bm::ctr)
         return true;
 #endif
 #if defined(MBEDTLS_GCM_C)
-    else if (bm == cipher_bm::gcm)
+    if (bm == cipher_bm::gcm)
         return true;
 #endif
 #if defined(MBEDTLS_CCM_C)
-    else if (bm == cipher_bm::ccm)
+    if (bm == cipher_bm::ccm)
         return true;
 #endif
 #if defined(MBEDTLS_CIPHER_MODE_XTS)
-    else if (bm == cipher_bm::xts)
+    if (bm == cipher_bm::xts)
         return true;
 #endif
 #if defined(MBEDTLS_CIPHER_MODE_STREAM)
-    else if (bm == cipher_bm::stream)
+    if (bm == cipher_bm::stream)
         return true;
 #endif
 #if defined(MBEDTLS_CHACHAPOLY_C)
-    else if (bm == cipher_bm::chachapoly)
+    if (bm == cipher_bm::chachapoly)
         return true;
 #endif
     return false;
@@ -538,55 +538,55 @@ supports(curve_t e) noexcept {
     if (e == curve_t::unknown)
         return false;
 #if defined(MBEDTLS_ECP_DP_SECP192R1_ENABLED)
-    else if (e == curve_t::secp192r1)
+    if (e == curve_t::secp192r1)
         return true;
 #endif
 #if defined(MBEDTLS_ECP_DP_SECP224R1_ENABLED)
-    else if (e == curve_t::secp224r1)
+    if (e == curve_t::secp224r1)
         return true;
 #endif
 #if defined(MBEDTLS_ECP_DP_SECP256R1_ENABLED)
-    else if (e == curve_t::secp256r1)
+    if (e == curve_t::secp256r1)
         return true;
 #endif
 #if defined(MBEDTLS_ECP_DP_SECP384R1_ENABLED)
-    else if (e == curve_t::secp384r1)
+    if (e == curve_t::secp384r1)
         return true;
 #endif
 #if defined(MBEDTLS_ECP_DP_SECP521R1_ENABLED)
-    else if (e == curve_t::secp521r1)
+    if (e == curve_t::secp521r1)
         return true;
 #endif
 #if defined(MBEDTLS_ECP_DP_SECP192K1_ENABLED)
-    else if (e == curve_t::secp192k1)
+    if (e == curve_t::secp192k1)
         return true;
 #endif
 #if defined(MBEDTLS_ECP_DP_SECP224K1_ENABLED)
-    else if (e == curve_t::secp224k1)
+    if (e == curve_t::secp224k1)
         return true;
 #endif
 #if defined(MBEDTLS_ECP_DP_SECP256K1_ENABLED)
-    else if (e == curve_t::secp256k1)
+    if (e == curve_t::secp256k1)
         return true;
 #endif
 #if defined(MBEDTLS_ECP_DP_BP256R1_ENABLED)
-    else if (e == curve_t::bp256r1)
+    if (e == curve_t::bp256r1)
         return true;
 #endif
 #if defined(MBEDTLS_ECP_DP_BP384R1_ENABLED)
-    else if (e == curve_t::bp384r1)
+    if (e == curve_t::bp384r1)
         return true;
 #endif
 #if defined(MBEDTLS_ECP_DP_BP512R1_ENABLED)
-    else if (e == curve_t::bp512r1)
+    if (e == curve_t::bp512r1)
         return true;
 #endif
 #if defined(MBEDTLS_ECP_DP_CURVE25519_ENABLED)
-    else if (e == curve_t::curve25519)
+    if (e == curve_t::curve25519)
         return true;
 #endif
 #if defined(MBEDTLS_ECP_DP_CURVE448_ENABLED)
-    else if (e == curve_t::curve448)
+    if (e == curve_t::curve448)
         return true;
 #endif
     return false;
@@ -594,23 +594,22 @@ supports(curve_t e) noexcept {
 
 bool
 supports(features f) noexcept {
-    if (f == features::aes_ni) {
 #if defined(MBEDTLS_HAVE_X86_64) && defined(MBEDTLS_AESNI_C)
+    if (f == features::aes_ni)
         return mbedtls_aesni_has_support(MBEDTLS_AESNI_AES) == 1;
 #endif
-    } else if (f == features::aead) {
 #if defined(MBEDTLS_CIPHER_MODE_AEAD)
+    if (f == features::aead)
         return true;
 #endif
-    } else if (f == features::pk_keygen) {
 #if defined(MBEDTLS_GENPRIME)
+    if (f == features::pk_keygen)
         return true;
 #endif
-    } else if (f == features::pk_ec) {
 #if defined(MBEDTLS_ECP_C)
+    if (f == features::pk_ec)
         return true;
 #endif
-    }
     return false;
 }
 

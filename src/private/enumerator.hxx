@@ -17,7 +17,7 @@ namespace details {
 inline char
 to_lower_ascii(char ch) noexcept {
     constexpr char Shift = 'a' - 'A';
-    return (ch >= 'A' && ch <= 'Z') ? ch + Shift : ch;
+    return (ch >= 'A' && ch <= 'Z') ? static_cast<char>(ch + Shift) : ch;
 }
 
 inline bool
