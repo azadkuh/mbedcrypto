@@ -389,8 +389,8 @@ _make_client_kex(
     const auto* cinfo = _curve_info(skex);
     if (cinfo == nullptr)
         return make_error_code(error_t::bad_input);
-    const size_t ckex_min_len   = (cinfo->bit_size >> 2) + 2;
-    const size_t secret_min_len = (cinfo->bit_size >> 3) + 1;
+    const size_t ckex_min_len   = size_t(cinfo->bit_size >> 2) + 2;
+    const size_t secret_min_len = size_t(cinfo->bit_size >> 3) + 1;
     if (is_empty(secret) || is_empty(ckex)) {
         secret.size = secret_min_len;
         ckex.size   = ckex_min_len;
