@@ -1,7 +1,7 @@
 project(mbedcrypto CXX)
 
-set(MBEDTLS_SRCDIR ${CMAKE_SOURCE_DIR}/3rdparty/mbedtls/library)
-set(MBEDTLS_INCDIR ${CMAKE_SOURCE_DIR}/3rdparty/mbedtls/include)
+set(MBEDTLS_SRCDIR ${CMAKE_SOURCE_DIR}/.3rdparty/mbedtls/library)
+set(MBEDTLS_INCDIR ${CMAKE_SOURCE_DIR}/.3rdparty/mbedtls/include)
 #------------------------------------------------------------------------------
 # mbedcrypto main files
 add_library(${PROJECT_NAME}
