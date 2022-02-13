@@ -26,15 +26,15 @@ function status() {
 function fetch_catch2() {
     status ${CATCH}
     mkdir -p catch2
-    curl -ss -L "https://github.com/${CATCH}/raw/master/single_include/catch2/catch.hpp" -o catch2/catch.hpp
+    curl -ss -L "https://github.com/catchorg/Catch2/releases/download/v2.13.8/catch.hpp" -o catch2/catch.hpp
     echo "    done."
 }
 
 function fetch_mbedtls() {
     status ${MBEDTLS}
     rm -rf mbedtls*
-    curl -ss -L "https://github.com/${MBEDTLS}/archive/master.tar.gz" | tar xz
-    mv mbedtls-master mbedtls
+    curl -ss -L "https://github.com/ARMmbed/mbedtls/archive/refs/tags/mbedtls-2.16.12.tar.gz" | tar xz
+    mv mbedtls-* mbedtls
     echo "    done."
 }
 
